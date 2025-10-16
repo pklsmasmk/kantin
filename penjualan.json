@@ -1,0 +1,99 @@
+[
+    {
+        "nama": "yusuf gg",
+        "metode": "Cash",
+        "total": 107910,
+        "keterangan": "-",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Ayam Geprek",
+                "qty": 3,
+                "harga": 15000
+            },
+            {
+                "nama": "Roti Bakar",
+                "qty": 3,
+                "harga": 14000
+            },
+            {
+                "nama": "Sate Ayam",
+                "qty": 1,
+                "harga": 10000
+            },
+            {
+                "nama": "Es Jeruk",
+                "qty": 2,
+                "harga": 6000
+            }
+        ],
+        "diskon": 10900,
+        "pajak": 9810,
+        "uang_masuk": 120000,
+        "kembalian": 12090,
+        "tanggal": "2025-10-15 12:21:45"
+    },
+    {
+        "nama": "didin",
+        "metode": "Cash",
+        "total": 50337,
+        "keterangan": "-",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Mie Ayam",
+                "qty": 1,
+                "harga": 12000
+            },
+            {
+                "nama": "Nasi Goreng",
+                "qty": 1,
+                "harga": 15000
+            },
+            {
+                "nama": "Bakso",
+                "qty": 1,
+                "harga": 10000
+            },
+            {
+                "nama": "Sate Ayam",
+                "qty": 1,
+                "harga": 10000
+            }
+        ],
+        "diskon": 4700,
+        "pajak": 8037,
+        "uang_masuk": 100000,
+        "kembalian": 49663,
+        "tanggal": "2025-10-15 12:24:18"
+    },
+    {
+        "nama": "ree",
+        "metode": "Cash",
+        "total": 57330,
+        "keterangan": "-",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Mie Ayam",
+                "qty": 2,
+                "harga": 12000
+            },
+            {
+                "nama": "Es Teh Manis",
+                "qty": 2,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            }
+        ],
+        "diskon": 4900,
+        "pajak": 13230,
+        "uang_masuk": 100000,
+        "kembalian": 42670,
+        "tanggal": "2025-10-16 12:43:55"
+    }
+]

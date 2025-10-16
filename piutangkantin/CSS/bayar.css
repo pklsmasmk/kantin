@@ -1,0 +1,290 @@
+body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .payment-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .history-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .total-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #2c3e50;
+            margin: 20px 0;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .btn-bayar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .btn-bayar:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
+        }
+        
+        .table th {
+            border: none;
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .badge-status {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        
+        .info-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        /* CSS khusus untuk waktu pembayaran */
+        .time-input-container {
+            position: relative;
+        }
+        
+        .time-input {
+            padding-right: 45px;
+        }
+        
+        .time-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            pointer-events: none;
+        }
+        
+        .payment-time-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .payment-datetime {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+        
+        .payment-date {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .payment-time {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .time-highlight {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffd43b;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .current-time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #e74c3c;
+        }
+        
+        .time-separator {
+            color: #ddd;
+            margin: 0 5px;
+        }
+        
+        .history-time {
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: #6c757d;
+            border: 1px solid #e9ecef;
+        }
+        
+        /* Styling untuk form group waktu */
+        .time-form-group {
+            background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+            border: 1px solid #e0e7ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .time-form-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 15px;
+        }
+        
+        .time-form-label i {
+            font-size: 1.2rem;
+        }
+        
+        .datetime-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        @media (max-width: 768px) {
+            .datetime-inputs {
+                flex-direction: column;
+            }
+        }
+        
+        /* Styling untuk real-time clock */
+        .live-clock {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .live-clock .time {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+        
+        .live-clock .date {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .live-clock .timezone {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        /* Animation untuk waktu baru */
+        @keyframes highlightTime {
+            0% { background-color: #fff3cd; }
+            50% { background-color: #ffeaa7; }
+            100% { background-color: transparent; }
+        }
+        
+        .new-payment {
+            animation: highlightTime 2s ease-in-out;
+        }
+        
+        /* Styling untuk timeline history */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 0 0 3px #667eea;
+        }
+        
+        .timeline-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            color: #721c24;
+        }
+
+        /* Auto update time button */
+        .btn-time-now {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .btn-time-now:hover {
+            background: #218838;
+        }

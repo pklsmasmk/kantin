@@ -1,0 +1,68 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #fafafa;
+  color: #333;
+}
+.offcanvas-start {
+  width: 240px;
+  background: #1c1c1c;
+}
+.offcanvas-start a {
+  color: #ffffffcc;
+  transition: 0.3s;
+}
+.offcanvas-start a:hover,
+.offcanvas-start a.active {
+  background: #333333;
+  color: #fff;
+}
+.navbar {
+  padding: 0.6rem 1rem;
+}
+.search-input {
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 0.5rem 0.75rem;
+  transition: 0.3s;
+}
+.search-input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+.menu-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: #fff;
+}
+.menu-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+.menu-img {
+  height: 120px;
+  object-fit: cover;
+  border-bottom: 1px solid #eee;
+}
+.addCart {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.addCart i {
+  font-size: 1rem;
+}
+#cartList tr td {
+  vertical-align: middle;
+  font-size: 0.85rem;
+}
+.sticky-top {
+  top: 80px !important;
+}
+html {
+  scroll-behavior: smooth;
+}
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease;
+}
