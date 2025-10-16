@@ -1,0 +1,1 @@
+doa 1000 bahasa
