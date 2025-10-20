@@ -6,8 +6,7 @@ $(document).ready(function () {
 
   let bayar = "";
   let sedangInput = false;
-
-  // --- Inisialisasi tampilan ---
+  
   $("#subtotal").text(subtotal.toLocaleString("id-ID"));
   $("#disc").text(disc.toLocaleString("id-ID"));
   $("#tax").text(tax.toLocaleString("id-ID"));
@@ -21,14 +20,12 @@ $(document).ready(function () {
     else $("#inputBayar").text(parseInt(bayar).toLocaleString("id-ID"));
   }
 
-  // --- Aktifkan input manual ketika klik ---
   $("#inputBayar").on("click", function () {
     sedangInput = true;
     bayar = "";
     updateInputDisplay();
   });
 
-  // --- Numpad klik ---
   $(".numKey").on("click", function () {
     sedangInput = true;
     const val = $(this).text();
@@ -36,7 +33,6 @@ $(document).ready(function () {
     updateInputDisplay();
   });
 
-  // --- Clear, Backspace ---
   $("#clearInput").on("click", function () {
     bayar = "";
     updateInputDisplay();
@@ -47,7 +43,6 @@ $(document).ready(function () {
     updateInputDisplay();
   });
 
-  // --- Tombol cepat ---
   $("#btnPas").on("click", function () {
     bayar = grandTotal.toString();
     updateInputDisplay();
@@ -60,7 +55,6 @@ $(document).ready(function () {
     updateInputDisplay();
   });
 
-  // === Input Keyboard ===
   $(document).on("keydown", function (e) {
     if (!sedangInput) return;
 
@@ -79,7 +73,17 @@ $(document).ready(function () {
     }
   });
 
-  // === Tombol Konfirmasi ===
+  $("#metodePembayaran").on("change", function() {
+    const metode = $(this).val();
+    if (metode === "Piutang") {
+      $("#namaPelanggan").prop("required", true);
+      $("#namaPelanggan").parent().show();
+    } else {
+      $("#namaPelanggan").prop("required", false);
+      $("#namaPelanggan").parent().show();
+    }
+  });
+
   $("#confirmBtn").click(function (e) {
     e.preventDefault();
 
@@ -88,10 +92,10 @@ $(document).ready(function () {
     const keterangan = $("#keterangan").val().trim();
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
 
-    // 🔹 Ambil daftar makanan dari localStorage
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-    // === Jika Piutang ===
+    console.log("🔍 Data items yang akan dikirim:", makananList);
+
     if (metode === "Piutang") {
       if (!pelanggan) {
         alert("Nama pelanggan wajib diisi untuk piutang!");
@@ -109,6 +113,10 @@ $(document).ready(function () {
       });
       localStorage.setItem("piutangList", JSON.stringify(piutangList));
 
+      localStorage.setItem("pendingPiutangNama", pelanggan);
+      localStorage.setItem("pendingPiutangTotal", grandTotal);
+      localStorage.setItem("pendingPiutangKet", "Piutang Kantin - " + keterangan);
+
       const dataKirim = {
         nama: pelanggan,
         metode: metode,
@@ -118,7 +126,7 @@ $(document).ready(function () {
         items: makananList,
         diskon: disc,
         pajak: tax,
-        uang_masuk: 0, // ✅ biar konsisten formatnya
+        uang_masuk: 0,
         kembalian: 0
       };
 
@@ -129,23 +137,34 @@ $(document).ready(function () {
         type: "POST",
         data: JSON.stringify(dataKirim),
         contentType: "application/json; charset=utf-8",
+        beforeSend: function () {
+          $("#confirmBtn").prop("disabled", true).text("Menyimpan Piutang...");
+        },
         success: function (res) {
           if (res.status === "success") {
             alert("✅ Transaksi piutang disimpan untuk: " + pelanggan);
+            
+            localStorage.removeItem("currentSubtotal");
+            localStorage.removeItem("currentDiscount");
+            localStorage.removeItem("currentTax");
+            localStorage.removeItem("currentTotal");
+            localStorage.removeItem("cartItems");
+
+            window.location.href = "piutangkantin/tambah.php";
           } else {
             alert("⚠️ Data gagal disimpan di server!");
+            $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");
           }
-          window.location.href = "piutangkantin/tambah.php";
         },
         error: function (xhr) {
           alert("Gagal menyimpan data piutang!");
           console.error(xhr.responseText);
-        },
+          $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");
+        }
       });
       return;
     }
 
-    // === Jika Lunas ===
     if (bayarFinal < grandTotal) {
       alert("Uang tidak cukup!");
       return;
@@ -162,8 +181,8 @@ $(document).ready(function () {
       items: makananList,
       diskon: disc,
       pajak: tax,
-      uang_masuk: bayarFinal, // ✅ uang masuk dikirim
-      kembalian: kembalian    // ✅ kembalian dikirim
+      uang_masuk: bayarFinal,
+      kembalian: kembalian
     };
 
     console.log("📤 Data penjualan dikirim:", dataKirim);
@@ -185,7 +204,6 @@ $(document).ready(function () {
           alert("⚠️ Data gagal disimpan di server!");
         }
 
-        // 🔹 Bersihkan data transaksi
         localStorage.removeItem("currentSubtotal");
         localStorage.removeItem("currentDiscount");
         localStorage.removeItem("currentTax");
@@ -204,9 +222,5 @@ $(document).ready(function () {
     });
   });
 
-  // 🔹 Debug untuk cek isi keranjang
-  $("#confirmBtn").on("click", function () {
-    const cekMakanan = JSON.parse(localStorage.getItem("cartItems")) || [];
-    console.log("🔍 Data items yang akan dikirim:", cekMakanan);
-  });
+  $("#metodePembayaran").trigger("change");
 });

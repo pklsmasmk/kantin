@@ -204,5 +204,16 @@
         "paymentMethod": "Cash",
         "description": "uuuu",
         "createdAt": "2025-10-13 04:09:47"
+    },
+    {
+        "id": "rec_68f1d58a1d08c",
+        "type": "piutang",
+        "name": "hhhh",
+        "amount": 15000,
+        "dueDate": "2025-10-17",
+        "status": "belum lunas",
+        "paymentMethod": "Cash",
+        "description": "Piutang Kantin - uhuhuhuhuh",
+        "createdAt": "2025-10-17 07:35:06"
     }
 ]

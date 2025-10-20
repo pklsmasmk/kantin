@@ -95,5 +95,256 @@
         "uang_masuk": 100000,
         "kembalian": 42670,
         "tanggal": "2025-10-16 12:43:55"
+    },
+    {
+        "nama": "fffff",
+        "metode": "Piutang",
+        "total": 63855,
+        "keterangan": "-",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Es Teh Manis",
+                "qty": 2,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 3,
+                "harga": 15000
+            }
+        ],
+        "diskon": 5500,
+        "pajak": 14355,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:19:06"
+    },
+    {
+        "nama": "yusuf gg",
+        "metode": "Piutang",
+        "total": 86400,
+        "keterangan": "-",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Ayam Geprek",
+                "qty": 3,
+                "harga": 15000
+            },
+            {
+                "nama": "Es Teh Manis",
+                "qty": 3,
+                "harga": 5000
+            },
+            {
+                "nama": "Es Jeruk",
+                "qty": 1,
+                "harga": 6000
+            },
+            {
+                "nama": "Roti Bakar",
+                "qty": 1,
+                "harga": 14000
+            }
+        ],
+        "diskon": 8000,
+        "pajak": 14400,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:19:41"
+    },
+    {
+        "nama": "yusuf gg",
+        "metode": "Piutang",
+        "total": 86400,
+        "keterangan": "-",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Ayam Geprek",
+                "qty": 3,
+                "harga": 15000
+            },
+            {
+                "nama": "Es Teh Manis",
+                "qty": 3,
+                "harga": 5000
+            },
+            {
+                "nama": "Es Jeruk",
+                "qty": 1,
+                "harga": 6000
+            },
+            {
+                "nama": "Roti Bakar",
+                "qty": 1,
+                "harga": 14000
+            }
+        ],
+        "diskon": 8000,
+        "pajak": 14400,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:22:05"
+    },
+    {
+        "nama": "yusuf gg",
+        "metode": "Piutang",
+        "total": 81396,
+        "keterangan": "ahhhh",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Es Teh Manis",
+                "qty": 1,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            },
+            {
+                "nama": "Roti Bakar",
+                "qty": 4,
+                "harga": 14000
+            }
+        ],
+        "diskon": 7600,
+        "pajak": 12996,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:29:34"
+    },
+    {
+        "nama": "yusuf gg",
+        "metode": "Piutang",
+        "total": 81396,
+        "keterangan": "ahhhh",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Es Teh Manis",
+                "qty": 1,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            },
+            {
+                "nama": "Roti Bakar",
+                "qty": 4,
+                "harga": 14000
+            }
+        ],
+        "diskon": 7600,
+        "pajak": 12996,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:33:31"
+    },
+    {
+        "nama": "hhhh",
+        "metode": "Piutang",
+        "total": 15000,
+        "keterangan": "uhuhuhuhuh",
+        "status": "Piutang",
+        "items": [
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            }
+        ],
+        "diskon": 0,
+        "pajak": 0,
+        "uang_masuk": 0,
+        "kembalian": 0,
+        "tanggal": "2025-10-17 12:34:50"
+    },
+    {
+        "nama": "albern",
+        "metode": "Cash",
+        "total": 77220,
+        "keterangan": "-",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Nasi Goreng",
+                "qty": 2,
+                "harga": 15000
+            },
+            {
+                "nama": "Mie Ayam",
+                "qty": 4,
+                "harga": 12000
+            }
+        ],
+        "diskon": 7800,
+        "pajak": 7020,
+        "uang_masuk": 100000,
+        "kembalian": 22780,
+        "tanggal": "2025-10-17 12:37:00"
+    },
+    {
+        "nama": "nino",
+        "metode": "Cash",
+        "total": 39960,
+        "keterangan": "-",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Mie Ayam",
+                "qty": 1,
+                "harga": 12000
+            },
+            {
+                "nama": "Es Teh Manis",
+                "qty": 2,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            }
+        ],
+        "diskon": 3700,
+        "pajak": 6660,
+        "uang_masuk": 50000,
+        "kembalian": 10040,
+        "tanggal": "2025-10-20 08:25:20"
+    },
+    {
+        "nama": "nino",
+        "metode": "Cash",
+        "total": 39960,
+        "keterangan": "gg",
+        "status": "Lunas",
+        "items": [
+            {
+                "nama": "Mie Ayam",
+                "qty": 1,
+                "harga": 12000
+            },
+            {
+                "nama": "Es Teh Manis",
+                "qty": 2,
+                "harga": 5000
+            },
+            {
+                "nama": "Ayam Geprek",
+                "qty": 1,
+                "harga": 15000
+            }
+        ],
+        "diskon": 3700,
+        "pajak": 6660,
+        "uang_masuk": 50000,
+        "kembalian": 10040,
+        "tanggal": "2025-10-20 08:25:30"
     }
 ]

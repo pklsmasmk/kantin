@@ -8,7 +8,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="100">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto1.avif" class="card-img-top menu-img" alt="Nasi Goreng">
+                <img src="public/img/foto1.avif" class="card-img-top menu-img" alt="Nasi Goreng">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Nasi Goreng</h6>
                   <p class="card-text text-muted mb-2">Rp15.000</p>
@@ -21,7 +21,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="150">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto2.avif" class="card-img-top menu-img" alt="Mie Ayam">
+                <img src="public/img/foto2.avif" class="card-img-top menu-img" alt="Mie Ayam">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Mie Ayam</h6>
                   <p class="card-text text-muted mb-2">Rp12.000</p>
@@ -34,7 +34,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="200">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto3.avif" class="card-img-top menu-img" alt="Es Teh Manis">
+                <img src="public/img/foto3.avif" class="card-img-top menu-img" alt="Es Teh Manis">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Es Teh Manis</h6>
                   <p class="card-text text-muted mb-2">Rp5.000</p>
@@ -47,7 +47,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="250">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto4.avif" class="card-img-top menu-img" alt="Ayam Geprek">
+                <img src="public/img/foto4.avif" class="card-img-top menu-img" alt="Ayam Geprek">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Ayam Geprek</h6>
                   <p class="card-text text-muted mb-2">Rp15.000</p>
@@ -60,7 +60,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="300">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto5.avif" class="card-img-top menu-img" alt="Bakso">
+                <img src="public/img/foto5.avif" class="card-img-top menu-img" alt="Bakso">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Bakso</h6>
                   <p class="card-text text-muted mb-2">Rp10.000</p>
@@ -73,7 +73,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="350">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto6.avif" class="card-img-top menu-img" alt="Sate Ayam">
+                <img src="public/img/foto6.avif" class="card-img-top menu-img" alt="Sate Ayam">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Sate Ayam</h6>
                   <p class="card-text text-muted mb-2">Rp10.000</p>
@@ -86,7 +86,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="400">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto7.avif" class="card-img-top menu-img" alt="Es Jeruk">
+                <img src="public/img/foto7.avif" class="card-img-top menu-img" alt="Es Jeruk">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Es Jeruk</h6>
                   <p class="card-text text-muted mb-2">Rp6.000</p>
@@ -99,7 +99,7 @@
 
             <div class="col" data-aos="fade-up" data-aos-delay="450">
               <div class="card h-100 text-center border-0 shadow-sm menu-card">
-                <img src="img/foto8.avif" class="card-img-top menu-img" alt="Roti Bakar">
+                <img src="public/img/foto8.avif" class="card-img-top menu-img" alt="Roti Bakar">
                 <div class="card-body d-flex flex-column">
                   <h6 class="card-title fw-bold mb-1">Roti Bakar</h6>
                   <p class="card-text text-muted mb-2">Rp14.000</p>

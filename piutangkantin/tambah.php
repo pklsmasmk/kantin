@@ -52,6 +52,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (saveData($file, $records) !== false) {
                 $_SESSION['success'] = ' Data berhasil ditambahkan!';
+                
+                echo "<script>
+                    localStorage.removeItem('pendingPiutangNama');
+                    localStorage.removeItem('pendingPiutangTotal');
+                    localStorage.removeItem('pendingPiutangKet');
+                </script>";
+                
                 header('Location: ' . ($type === 'hutang' ? 'hutang.php' : 'piutang.php'));
                 exit;
             } else {
@@ -62,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -96,23 +104,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Form Tambah Data Hutang/Piutang
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" id="piutangForm">
                         <input type="hidden" name="action" value="add">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Jenis</label>
-                                <select name="type" class="form-select" required>
+                                <select name="type" class="form-select" required id="typeSelect">
                                     <option value="hutang">Hutang</option>
-                                    <option value="piutang">Piutang</option>
+                                    <option value="piutang" selected>Piutang</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nama</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <input type="text" name="name" class="form-control" required id="nameInput">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jumlah (Rp)</label>
-                                <input type="number" name="amount" class="form-control" min="1" required>
+                                <input type="number" name="amount" class="form-control" min="1" required id="amountInput">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal Jatuh Tempo</label>
@@ -131,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Keterangan</label>
-                                <input type="text" name="description" class="form-control" placeholder="Opsional">
+                                <input type="text" name="description" class="form-control" placeholder="Opsional" id="descInput">
                             </div>
                         </div>
                         <div class="d-flex justify-content-end mt-4">
@@ -149,20 +157,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const nama = localStorage.getItem("pendingPiutangNama");
-  const total = localStorage.getItem("pendingPiutangTotal");
-  const ket = localStorage.getItem("pendingPiutangKet");
+    const nama = localStorage.getItem("pendingPiutangNama");
+    const total = localStorage.getItem("pendingPiutangTotal");
+    const ket = localStorage.getItem("pendingPiutangKet");
 
-  if (nama && total) {
-    document.querySelector("select[name='type']").value = "piutang";
-    document.querySelector("input[name='name']").value = nama;
-    document.querySelector("input[name='amount']").value = total;
-    if (ket) document.querySelector("input[name='description']").value = ket;
+    if (nama && total) {
+        document.querySelector("select[name='type']").value = "piutang";
+        document.querySelector("input[name='name']").value = nama;
+        document.querySelector("input[name='amount']").value = total;
+        if (ket) document.querySelector("input[name='description']").value = ket;
 
-    localStorage.removeItem("pendingPiutangNama");
-    localStorage.removeItem("pendingPiutangTotal");
-    localStorage.removeItem("pendingPiutangKet");
-  }
+        alert("Data piutang dari transaksi kantin telah dimuat otomatis. Silakan review dan simpan.");
+    }
+
+    document.getElementById('piutangForm').addEventListener('submit', function() {
+        localStorage.removeItem("pendingPiutangNama");
+        localStorage.removeItem("pendingPiutangTotal");
+        localStorage.removeItem("pendingPiutangKet");
+    });
 });
 </script>
 </body>

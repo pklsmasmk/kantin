@@ -268,7 +268,7 @@ session_start();
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="pembayaran.js"></script>
+  <script src="public/js/pembayaran.js"></script>
 </body>
 
 </html>
