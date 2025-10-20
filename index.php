@@ -44,6 +44,9 @@
         case 'dungo':
           include("konten/dungo.php");
           break;
+        case 'retur':
+          include("retur/index.php");
+          break;
         
         default:
           include("konten/ori.php");
