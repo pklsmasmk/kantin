@@ -42,7 +42,7 @@
     <?php
       switch ($_GET["q"] ?? "") {
         case 'dungo':
-          include("konten/dungo.php");
+          include("konten/dungo.php");   
           break;
         
         default:
@@ -57,7 +57,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>AOS.init({ duration: 700, once: true });</script>
-  <script src="public/js/script.js"></script>
+  <script src=" public/js/script.js"></script>
 </body>
 
 </html>
