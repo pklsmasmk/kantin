@@ -117,7 +117,7 @@
                             Saldo awal: <?= format_rupiah($history[0]["saldo_awal"]) ?> • Saldo akhir: <?= format_rupiah($history[0]["saldo_akhir"]) ?> •
                             <?= format_datetime($history[0]["waktu_mulai"]) ?>
                         <?php else: ?>
-                            Silahkan isi Field diatas untuk memulai shift Anda
+                            Silahkan isi field diatas untuk memulai shift Anda
                         <?php endif; ?>
                     </small>
                     
