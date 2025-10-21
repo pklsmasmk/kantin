@@ -140,7 +140,7 @@
                             <span>Rekap Shift</span>
                         </a>
                         <a href="../index.php" class="action-btn cart-btn">
-                            <span>Pergi ke Keranjang</span>
+                            <span>Pergi ke Menu Utama</span>
                         </a>
                     </div>
                 </form>
