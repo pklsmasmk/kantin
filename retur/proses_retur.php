@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

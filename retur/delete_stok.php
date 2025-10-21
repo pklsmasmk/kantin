@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once 'config.php'; // Include file config
+require_once '../Database/config.php'; // Include file config
 
 $conn = getDBConnection();
 

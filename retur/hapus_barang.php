@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 if (!isset($_POST['id'])) {
     echo "error: ID tidak ditemukan";

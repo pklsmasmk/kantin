@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 if (!isset($_GET['id'])) {
     echo json_encode(["error" => "ID tidak ditemukan"]);

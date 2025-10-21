@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 $sql = "SELECT r.*, b.nama as nama_barang 
         FROM retur_barang r 
