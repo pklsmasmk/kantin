@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 $sql = "SELECT * FROM riwayat_transaksi ORDER BY tanggal DESC LIMIT 50";
 $result = $conn->query($sql);

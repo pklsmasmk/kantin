@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+include '../Database/config.php';
 
 $sql = "SELECT id, tipe FROM db_stok ORDER BY tipe";
 $result = $conn->query($sql);
