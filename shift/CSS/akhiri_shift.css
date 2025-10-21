@@ -1,0 +1,455 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #8B7355;
+    --primary-dark: #6B5B3D;
+    --success-color: #28A745;
+    --danger-color: #DC3545;
+    --warning-color: #FFC107;
+    --light-bg: #FAF8F3;
+    --card-bg: #FFFFFF;
+    --border-color: #E8E2D5;
+    --text-primary: #3C3530;
+    --text-secondary: #6C757D;
+    --shadow: 0 2px 12px rgba(139, 117, 85, 0.1);
+    --radius: 8px;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: var(--light-bg);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.akhiri-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.akhiri-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-color);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.card-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.shift-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.summary-section,
+.transaksi-section,
+.konfirmasi-section {
+    padding: 25px;
+}
+
+.summary-section h2,
+.transaksi-section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    background: var(--light-bg);
+    padding: 15px;
+    border-radius: var(--radius);
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.summary-item.total {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.summary-item.total .summary-label {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.income { color: var(--success-color); }
+.expense { color: var(--danger-color); }
+.awal { color: var(--primary-color); }
+.total-amount { color: #FFD700; font-size: 1.2rem; }
+
+.selisih-info {
+    background: var(--light-bg);
+    padding: 15px;
+    border-radius: var(--radius);
+    text-align: center;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.selisih-positif {
+    background: #f0f9f0;
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.selisih-negatif {
+    background: #fdf2f2;
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+}
+
+.selisih-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.selisih-label {
+    font-size: 0.9rem;
+}
+
+.selisih-value {
+    font-size: 1.1rem;
+}
+
+.rumus-info {
+    background: var(--light-bg);
+    padding: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.rumus-info h4 {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.rumus-text {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.rumus-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.transaksi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.transaksi-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px;
+    background: var(--light-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.transaksi-info {
+    flex: 1;
+}
+
+.transaksi-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.transaksi-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.transaksi-type {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.type-penjualan {
+    background: #e8f5e8;
+    color: var(--success-color);
+}
+
+.type-pengeluaran {
+    background: #fde8e8;
+    color: var(--danger-color);
+}
+
+.type-income {
+    background: #e8f5e8;
+    color: var(--success-color);
+}
+
+.type-expense {
+    background: #fde8e8;
+    color: var(--danger-color);
+}
+
+.transaksi-desc {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.transaksi-amount {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.amount-income { color: var(--success-color); }
+.amount-expense { color: var(--danger-color); }
+
+.transaksi-total {
+    text-align: center;
+    padding: 10px;
+    background: var(--light-bg);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-secondary);
+    background: var(--light-bg);
+    border-radius: var(--radius);
+    border: 1px dashed var(--border-color);
+}
+
+.empty-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.7;
+}
+
+.warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    background: #fff3e0;
+    padding: 20px;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--warning-color);
+    margin-bottom: 20px;
+}
+
+.warning-icon {
+    font-size: 1.5rem;
+}
+
+.warning-content h3 {
+    color: #e65100;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.warning-content p {
+    color: #e65100;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.warning-content ul {
+    margin-left: 20px;
+    color: #e65100;
+    font-size: 0.9rem;
+}
+
+.warning-content li {
+    margin-bottom: 5px;
+}
+
+.konfirmasi-form {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+}
+
+.btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    
+    .container {
+        max-width: 100%;
+    }
+    
+    .card-header {
+        padding: 20px;
+    }
+    
+    .summary-section,
+    .transaksi-section,
+    .konfirmasi-section {
+        padding: 20px;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .transaksi-item {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .transaksi-amount {
+        align-self: flex-end;
+    }
+    
+    .warning-box {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .selisih-content {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-header h1 {
+        font-size: 1.3rem;
+    }
+    
+    .shift-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

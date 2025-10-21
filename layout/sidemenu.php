@@ -9,7 +9,7 @@
         <a class="nav-link px-3" href="#"><i class="bi bi-house me-2"></i>Beranda</a>
         <a class="nav-link px-3" href="index.php"><i class="bi bi-receipt me-2"></i>Transaksi Penjualan</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-people me-2"></i>Manajemen</a>
-        <a class="nav-link px-3" href="#"><i class="bi bi-clock-history me-2"></i>Shift</a>
+        <a class="nav-link px-3" href="/?q=shift"><i class="bi bi-clock-history me-2"></i>Shift</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-basket me-2"></i>Barang / Jasa</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-cash-stack me-2"></i>Keuangan</a>
         <a class="nav-link px-3" href="laporan.php"><i class="bi bi-graph-up me-2"></i>Laporan</a>

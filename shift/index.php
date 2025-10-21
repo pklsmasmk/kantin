@@ -1,6 +1,5 @@
 <?php
     include("PHP/Back.php");
-    include("../Database/config.php");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -8,10 +7,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Shift Kasir - UAM</title>
-    <link rel="stylesheet" href="CSS/shift.css" />
-    <link rel="stylesheet" href="CSS/modal.css" />
-    <link rel="stylesheet" href="CSS/tambahan.css" />
-    <link rel="stylesheet" href="CSS/tambahan_histori.css" />
+    <link rel="stylesheet" href="../shift/CSS/shift.css" />
+    <link rel="stylesheet" href="../shift/CSS/modal.css" />
+    <link rel="stylesheet" href="../shift/CSS/tambahan.css" />
+    <link rel="stylesheet" href="../shift/CSS/tambahan_histori.css" />
 </head>
 <body>
     <div class="container" role="main" aria-label="Halaman Shift Kasir">
@@ -137,10 +136,10 @@
                     </button>
 
                     <div class="action-buttons">
-                        <a href="?action=rekap_shift" class="action-btn manage-cash-btn" <?= !$currentShift ? 'style="opacity: 0.6; pointer-events: none;"' : '' ?>>
+                        <a href="/shift/Rekap_Shift/rekap_shift.php" class="action-btn manage-cash-btn" <?= !$currentShift ? 'style="opacity: 0.6; pointer-events: none;"' : '' ?>>
                             <span>Rekap Shift</span>
                         </a>
-                        <a href="#" class="action-btn cart-btn">
+                        <a href="../index.php" class="action-btn cart-btn">
                             <span>Pergi ke Keranjang</span>
                         </a>
                     </div>
@@ -490,7 +489,7 @@
 
                     <ul class="history-list compact-view">
                         <?php foreach ($displayHistory as $item): 
-                            $rekap_info = get_rekap_data_for_shift($item['id'], $rekap_file);
+                            $rekap_info = get_rekap_data_for_shift($pdo, $item['id']); // BENAR
                             $is_synced = $rekap_info !== null;
                             
                             $saldo_awal = $rekap_info['saldo_awal'] ?? $item['saldo_awal'] ?? 0;
@@ -498,7 +497,7 @@
                             $selisih = $rekap_info['selisih'] ?? ($saldo_akhir - $saldo_awal);
                             $waktu_mulai = $rekap_info['waktu_mulai'] ?? $item['waktu_mulai'] ?? $item['waktu'];
                             $waktu_selesai = $rekap_info['waktu_selesai'] ?? $item['waktu_selesai'] ?? null;
-                            ?>
+                        ?>
 
                             <li class="history-card compact-card" 
                                 data-shift-id="<?= $item['id'] ?>" 
@@ -575,15 +574,15 @@
             json_encode(
                 array_combine(
                     array_column($displayHistory, 'id'),
-                    array_map(function($item) use ($rekap_file) {
-                        return get_rekap_data_for_shift($item['id'], $rekap_file);
+                    array_map(function($item) use ($pdo) {
+                        return get_rekap_data_for_shift($pdo, $item['id']);
                     }, $displayHistory)
                 ),
                 JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE
             ) 
         ?>;
     </script>
-    <script src="JS/shift.js"></script>
-    <script src="JS/shift_history.js"></script>
+    <script src="../shift/JS/shift.js"></script>
+    <script src="../shift/JS/shift_history.js"></script>
 </body>
 </html>

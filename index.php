@@ -47,7 +47,10 @@
         case 'retur':
           include("retur/index.php");
           break;
-        
+        case 'shift':
+          include("shift/index.php");
+          break;
+
         default:
           include("konten/ori.php");
           break;
