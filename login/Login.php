@@ -1,15 +1,20 @@
 <?php
 session_start();
-include "../Database/config.php";
+include "Database/config.php"; // koneksi PDO dari bawah
 
 if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username'");
-    $data = mysqli_fetch_assoc($query);
+    // Gunakan prepared statement untuk keamanan
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+    $stmt->bindParam(':username', $username);
+    $stmt->execute();
+
+    $data = $stmt->fetch();
 
     if ($data) {
+        // Cek apakah password cocok (baik hashed maupun plain)
         if (password_verify($password, $data['password']) || $password === $data['password']) {
 
             $_SESSION['id_user'] = $data['id'];
@@ -59,7 +64,6 @@ if (isset($_POST['login'])) {
                         </form>
                     </div>
                 </div>
-                <p class="text-center text-muted mt-3 mb-0">&copy; Kantin Uam</p>
             </div>
         </div>
     </div>

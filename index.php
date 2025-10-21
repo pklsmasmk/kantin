@@ -50,6 +50,9 @@
         case 'shift':
           include("shift/index.php");
           break;
+        case 'login':
+          include("login/Login.php");
+          break;
 
         default:
           include("konten/ori.php");
