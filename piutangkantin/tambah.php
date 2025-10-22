@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dueDate = $_POST['dueDate'] ?? date('Y-m-d');
         $paymentMethod = $_POST['paymentMethod'] ?? 'Cash';
         $description = trim($_POST['description'] ?? '');
+        $items = $_POST['items'] ?? []; // tambahan
 
         if ($name !== '' && $amount > 0) {
             $newRecord = [
@@ -45,20 +46,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'status' => 'belum lunas',
                 'paymentMethod' => $paymentMethod,
                 'description' => $description,
+                'items' => $items,
                 'createdAt' => date('Y-m-d H:i:s')
             ];
 
             $records[] = $newRecord;
 
             if (saveData($file, $records) !== false) {
-                $_SESSION['success'] = ' Data berhasil ditambahkan!';
+                $_SESSION['success'] = 'Data berhasil ditambahkan!';
                 header('Location: ' . ($type === 'hutang' ? 'hutang.php' : 'piutang.php'));
                 exit;
             } else {
-                $_SESSION['error'] = ' Gagal menyimpan data ke file.';
+                $_SESSION['error'] = 'Gagal menyimpan data ke file.';
             }
         } else {
-            $_SESSION['error'] = ' Nama dan jumlah wajib diisi dengan benar.';
+            $_SESSION['error'] = 'Nama dan jumlah wajib diisi dengan benar.';
         }
     }
 }
@@ -134,6 +136,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="text" name="description" class="form-control" placeholder="Opsional">
                             </div>
                         </div>
+
+                        <!-- Bagian tambahan untuk menampilkan detail item -->
+                        <div id="itemList" class="mt-4" style="display:none;">
+                            <h6>Detail Item:</h6>
+                            <ul class="list-group" id="itemContainer"></ul>
+                        </div>
+
                         <div class="d-flex justify-content-end mt-4">
                             <a href="index.php" class="btn btn-secondary me-2">Batal</a>
                             <button type="submit" class="btn btn-primary">
@@ -152,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const nama = localStorage.getItem("pendingPiutangNama");
   const total = localStorage.getItem("pendingPiutangTotal");
   const ket = localStorage.getItem("pendingPiutangKet");
+  const items = JSON.parse(localStorage.getItem("pendingPiutangItems") || "[]");
 
   if (nama && total) {
     document.querySelector("select[name='type']").value = "piutang";
@@ -159,9 +169,32 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("input[name='amount']").value = total;
     if (ket) document.querySelector("input[name='description']").value = ket;
 
+    // tampilkan daftar item jika ada
+    if (items.length > 0) {
+      const listContainer = document.getElementById("itemList");
+      const itemUl = document.getElementById("itemContainer");
+      listContainer.style.display = "block";
+      items.forEach(it => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex justify-content-between";
+        li.textContent = `${it.nama} x${it.qty} - Rp${it.harga}`;
+        itemUl.appendChild(li);
+      });
+
+      // tambahkan input hidden agar ikut tersimpan
+      const form = document.querySelector("form");
+      const inputHidden = document.createElement("input");
+      inputHidden.type = "hidden";
+      inputHidden.name = "items";
+      inputHidden.value = JSON.stringify(items);
+      form.appendChild(inputHidden);
+    }
+
+    // hapus localStorage setelah digunakan
     localStorage.removeItem("pendingPiutangNama");
     localStorage.removeItem("pendingPiutangTotal");
     localStorage.removeItem("pendingPiutangKet");
+    localStorage.removeItem("pendingPiutangItems");
   }
 });
 </script>

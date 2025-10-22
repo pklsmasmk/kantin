@@ -88,14 +88,13 @@ $("#payBtn").on("click", function () {
     return;
   }
 
-  // 🔥 Tambahan baru: simpan semua data makanan + total ke localStorage
   localStorage.setItem("cartItems", JSON.stringify(cart));
   localStorage.setItem("currentSubtotal", $("#cartSubtotal").text().replace(/[^\d]/g, ""));
   localStorage.setItem("currentDiscount", $("#cartDiscount").text().replace(/[^\d]/g, ""));
   localStorage.setItem("currentTax", $("#cartTax").text().replace(/[^\d]/g, ""));
   localStorage.setItem("currentTotal", $("#cartTotal").text().replace(/[^\d]/g, ""));
 
-  window.location.href = "pembayaran.php";
+  window.location.href = "penjualan/pembayaran.php";
 });
 
 $("#searchMenu").on("input", function () {
