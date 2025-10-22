@@ -1,9 +1,10 @@
 <?php
 session_start();
 
-function loadData()
+// Function untuk load data piutang dari file terpisah
+function loadPiutangData()
 {
-    $file = 'data.json';
+    $file = 'piutang.json';
     if (file_exists($file)) {
         $json = file_get_contents($file);
         return json_decode($json, true) ?: [];
@@ -11,9 +12,10 @@ function loadData()
     return [];
 }
 
-function saveData($records)
+// Function untuk save data piutang ke file terpisah
+function savePiutangData($records)
 {
-    file_put_contents('data.json', json_encode($records, JSON_PRETTY_PRINT));
+    file_put_contents('piutang.json', json_encode($records, JSON_PRETTY_PRINT));
 }
 
 function formatRupiah($amount)
@@ -55,9 +57,10 @@ function hitungPembayaran($record)
     ];
 }
 
+// Handle POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $records = loadData();
+    $records = loadPiutangData(); // Load dari piutangb.json
 
     if ($action === 'update_status') {
         $id = $_POST['id'] ?? '';
@@ -68,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
         }
-        saveData($records);
+        savePiutangData($records); // Save ke piutangb.json
         $_SESSION['success'] = 'Status berhasil diubah!';
     } elseif ($action === 'delete') {
         $id = $_POST['id'] ?? '';
@@ -76,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return $record['id'] != $id;
         });
         $records = array_values($records);
-        saveData($records);
+        savePiutangData($records); // Save ke piutangb.json
         $_SESSION['success'] = 'Data berhasil dihapus!';
     }
 
@@ -87,18 +90,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $filterStatus = $_GET['status'] ?? 'all';
 $searchTerm = $_GET['search'] ?? '';
 
-$records = loadData();
+// Load data hanya dari piutangb.json
+$piutangRecords = loadPiutangData();
 
-$piutangRecords = array_filter($records, function ($record) use ($filterStatus, $searchTerm) {
-    $isPiutang = $record['type'] === 'piutang';
-    $matchesStatus = $filterStatus === 'all' || $record['status'] === str_replace('_', ' ', $filterStatus);
-    $matchesSearch = empty($searchTerm) || stripos($record['name'], $searchTerm) !== false;
+// Filter data
+if ($filterStatus !== 'all' || !empty($searchTerm)) {
+    $piutangRecords = array_filter($piutangRecords, function ($record) use ($filterStatus, $searchTerm) {
+        $matchesStatus = $filterStatus === 'all' || $record['status'] === str_replace('_', ' ', $filterStatus);
+        $matchesSearch = empty($searchTerm) || stripos($record['name'], $searchTerm) !== false;
+        
+        return $matchesStatus && $matchesSearch;
+    });
+    $piutangRecords = array_values($piutangRecords);
+}
 
-    return $isPiutang && $matchesStatus && $matchesSearch;
-});
-
-$piutangRecords = array_values($piutangRecords);
-
+// Hitung statistik
 $totalPiutang = 0;
 $jumlahPiutang = count($piutangRecords);
 $piutangBelumLunas = 0;
@@ -175,7 +181,6 @@ foreach ($piutangRecords as $record) {
                     <div class="col-md-4">
                         <select name="status" class="form-select">
                             <option value="all" <?= $filterStatus === 'all' ? 'selected' : '' ?>>Semua Status</option>
-                            <option value="belum_lunas" <?= $filterStatus === 'jatuh_tempo_terdekat' ? 'selected' : '' ?>>Jatuh tempo terdekat</option>
                             <option value="belum_lunas" <?= $filterStatus === 'belum_lunas' ? 'selected' : '' ?>>Belum lunas</option>
                             <option value="lunas" <?= $filterStatus === 'lunas' ? 'selected' : '' ?>>Lunas</option>
                         </select>

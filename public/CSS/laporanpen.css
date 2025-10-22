@@ -1,0 +1,57 @@
+body {
+  background: #f5f7fa;
+  font-family: "Poppins", sans-serif;
+}
+
+.sidebar {
+  background: #fff;
+  border-right: 1px solid #e9ecef;
+  min-height: 70vh;
+}
+
+.sidebar .list-group-item {
+  border: 0;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.sidebar .list-group-item:hover {
+  background: #f8fafb;
+  cursor: pointer;
+}
+
+.selected {
+  background: #eaf8ef !important;
+  border-left: 4px solid #28a745 !important;
+}
+
+.receipt-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.small-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.badge-piutang {
+  background: #ffc107;
+  color: #212529;
+}
+
+.item-row {
+  border-bottom: 1px dashed #dee2e6;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.item-name {
+  font-weight: 600;
+}
+
+.item-detail {
+  font-size: 13px;
+  color: #6c757d;
+}

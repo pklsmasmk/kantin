@@ -7,7 +7,6 @@ $(document).ready(function () {
   let bayar = "";
   let sedangInput = false;
 
-  // --- Inisialisasi tampilan ---
   $("#subtotal").text(subtotal.toLocaleString("id-ID"));
   $("#disc").text(disc.toLocaleString("id-ID"));
   $("#tax").text(tax.toLocaleString("id-ID"));
@@ -17,26 +16,24 @@ $(document).ready(function () {
   $("#totalNav").text("Rp " + grandTotal.toLocaleString("id-ID"));
 
   function updateInputDisplay() {
-    if (bayar === "") $("#inputBayar").text("0");
-    else $("#inputBayar").text(parseInt(bayar).toLocaleString("id-ID"));
+    $("#inputBayar").text(
+      bayar === "" ? "0" : parseInt(bayar).toLocaleString("id-ID")
+    );
   }
 
-  // --- Aktifkan input manual ketika klik ---
   $("#inputBayar").on("click", function () {
     sedangInput = true;
     bayar = "";
     updateInputDisplay();
   });
 
-  // --- Numpad klik ---
   $(".numKey").on("click", function () {
     sedangInput = true;
-    const val = $(this).text();
-    bayar += val.replace(/\D/g, "");
+    const val = $(this).text().replace(/\D/g, "");
+    bayar += val;
     updateInputDisplay();
   });
 
-  // --- Clear, Backspace ---
   $("#clearInput").on("click", function () {
     bayar = "";
     updateInputDisplay();
@@ -47,7 +44,6 @@ $(document).ready(function () {
     updateInputDisplay();
   });
 
-  // --- Tombol cepat ---
   $("#btnPas").on("click", function () {
     bayar = grandTotal.toString();
     updateInputDisplay();
@@ -55,19 +51,18 @@ $(document).ready(function () {
 
   $(".btnQuick").on("click", function () {
     sedangInput = true;
-    const value = $(this).data("value");
+    const value = parseInt($(this).data("value"));
     bayar = (parseInt(bayar || "0") + value).toString();
     updateInputDisplay();
   });
 
-  // === Input Keyboard ===
   $(document).on("keydown", function (e) {
     if (!sedangInput) return;
 
     if (e.key >= "0" && e.key <= "9") {
       bayar += e.key;
       updateInputDisplay();
-    } else if (e.key === "Backspace" || e.key === "Delete") {
+    } else if (["Backspace", "Delete"].includes(e.key)) {
       bayar = bayar.slice(0, -1);
       updateInputDisplay();
     } else if (e.key === "Enter") {
@@ -79,7 +74,15 @@ $(document).ready(function () {
     }
   });
 
-  // === Tombol Konfirmasi ===
+  $("#metodePembayaran").on("change", function () {
+    const metode = $(this).val();
+    if (metode === "Piutang") {
+      $("#namaPelanggan").prop("required", true).parent().show();
+    } else {
+      $("#namaPelanggan").prop("required", false).parent().show();
+    }
+  });
+
   $("#confirmBtn").click(function (e) {
     e.preventDefault();
 
@@ -87,18 +90,21 @@ $(document).ready(function () {
     const pelanggan = $("#namaPelanggan").val().trim();
     const keterangan = $("#keterangan").val().trim();
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
-
-    // 🔹 Ambil daftar makanan dari localStorage
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-    // === Jika Piutang ===
+    console.log("🔍 Data items yang akan dikirim:", makananList);
+
     if (metode === "Piutang") {
       if (!pelanggan) {
         alert("Nama pelanggan wajib diisi untuk piutang!");
         return;
       }
 
-      let piutangList = JSON.parse(localStorage.getItem("piutangList")) || [];
+      localStorage.setItem("pendingPiutangNama", pelanggan);
+      localStorage.setItem("pendingPiutangTotal", grandTotal);
+      localStorage.setItem("pendingPiutangKet", keterangan || "-");
+
+      const piutangList = JSON.parse(localStorage.getItem("piutangList")) || [];
       piutangList.push({
         nama: pelanggan,
         total: grandTotal,
@@ -111,41 +117,50 @@ $(document).ready(function () {
 
       const dataKirim = {
         nama: pelanggan,
-        metode: metode,
+        metode,
         total: grandTotal,
         keterangan: keterangan || "-",
         status: "Piutang",
         items: makananList,
         diskon: disc,
         pajak: tax,
-        uang_masuk: 0, // ✅ biar konsisten formatnya
-        kembalian: 0
+        uang_masuk: 0,
+        kembalian: 0,
       };
 
       console.log("📤 Data piutang dikirim:", dataKirim);
 
       $.ajax({
-        url: "simpan_penjualan.php",
+        url: "../penjualan/simpan_penjualan.php",
         type: "POST",
         data: JSON.stringify(dataKirim),
         contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        beforeSend: function () {
+          $("#confirmBtn").prop("disabled", true).text("Menyimpan Piutang...");
+        },
         success: function (res) {
-          if (res.status === "success") {
+          console.log("✅ Respon server:", res);
+          if (res && res.status === "success") {
             alert("✅ Transaksi piutang disimpan untuk: " + pelanggan);
+            window.location.href = "../piutangkantin/tambah.php";
           } else {
             alert("⚠️ Data gagal disimpan di server!");
           }
-          window.location.href = "piutangkantin/tambah.php";
         },
         error: function (xhr) {
-          alert("Gagal menyimpan data piutang!");
+          alert("❌ Gagal menyimpan data piutang!");
           console.error(xhr.responseText);
+        },
+        complete: function () {
+          $("#confirmBtn")
+            .prop("disabled", false)
+            .text("Konfirmasi Pembayaran");
         },
       });
       return;
     }
 
-    // === Jika Lunas ===
     if (bayarFinal < grandTotal) {
       alert("Uang tidak cukup!");
       return;
@@ -155,47 +170,44 @@ $(document).ready(function () {
 
     const dataKirim = {
       nama: pelanggan || "Umum",
-      metode: metode,
+      metode,
       total: grandTotal,
       keterangan: keterangan || "-",
       status: "Lunas",
       items: makananList,
       diskon: disc,
       pajak: tax,
-      uang_masuk: bayarFinal, // ✅ uang masuk dikirim
-      kembalian: kembalian    // ✅ kembalian dikirim
+      uang_masuk: bayarFinal,
+      kembalian,
     };
 
     console.log("📤 Data penjualan dikirim:", dataKirim);
 
     $.ajax({
-      url: "simpan_penjualan.php",
+      url: "../../penjualan/simpan_penjualan.php",
       type: "POST",
       data: JSON.stringify(dataKirim),
       contentType: "application/json; charset=utf-8",
+      dataType: "json",
       beforeSend: function () {
         $("#confirmBtn").prop("disabled", true).text("Menyimpan...");
       },
       success: function (res) {
-        if (res.status === "success") {
+        console.log("✅ Respon server:", res);
+        if (res && res.status === "success") {
           alert(
-            `✅ Pembayaran Berhasil!\nMetode: ${metode}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
+            `✅ Pembayaran Berhasil!\nMetode: ${metode}\nKembalian: Rp ${kembalian.toLocaleString(
+              "id-ID"
+            )}`
           );
+          localStorage.clear();
+          window.location.href = "../index.php";
         } else {
           alert("⚠️ Data gagal disimpan di server!");
         }
-
-        // 🔹 Bersihkan data transaksi
-        localStorage.removeItem("currentSubtotal");
-        localStorage.removeItem("currentDiscount");
-        localStorage.removeItem("currentTax");
-        localStorage.removeItem("currentTotal");
-        localStorage.removeItem("cartItems");
-
-        window.location.href = "index.php";
       },
       error: function (xhr) {
-        alert("Gagal menyimpan data penjualan!");
+        alert("❌ Gagal menyimpan data penjualan!");
         console.error(xhr.responseText);
       },
       complete: function () {
@@ -204,9 +216,5 @@ $(document).ready(function () {
     });
   });
 
-  // 🔹 Debug untuk cek isi keranjang
-  $("#confirmBtn").on("click", function () {
-    const cekMakanan = JSON.parse(localStorage.getItem("cartItems")) || [];
-    console.log("🔍 Data items yang akan dikirim:", cekMakanan);
-  });
+  $("#metodePembayaran").trigger("change");
 });
