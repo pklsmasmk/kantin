@@ -6,7 +6,10 @@ if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
+<<<<<<< HEAD
     // Gunakan prepared statement untuk keamanan
+=======
+>>>>>>> a76702e (tambah sign in)
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
     $stmt->bindParam(':username', $username);
     $stmt->execute();
@@ -22,7 +25,7 @@ if (isset($_POST['login'])) {
             $_SESSION['nama'] = $data['nama'];
             $_SESSION['role'] = $data['id_role'];
 
-            header("Location: index.php");
+            header("Location: ../index.php");
             exit;
         } else {
             echo "<script>alert('Password salah!'); window.location='Login.php';</script>";

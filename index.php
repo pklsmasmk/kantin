@@ -24,12 +24,15 @@
           <i class="bi bi-shop me-1 text-info"></i>Kantin<small class="text-info fst-italic">UAM</small>
         </a>
       </div>
-      <div>
-        <button class="btn btn-outline-light position-relative">
+      <div class="d-flex align-items-center">
+        <button class="btn btn-outline-light position-relative me-2">
           <i class="bi bi-cart3 fs-5"></i>
           <span id="cartCount"
             class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle">0</span>
         </button>
+        <a href="../login/Login.php" class="btn btn-info text-white fw-semibold">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+        </a>
       </div>
     </div>
   </nav>
@@ -50,10 +53,13 @@
         case 'shift':
           include("shift/index.php");
           break;
+<<<<<<< HEAD
         case 'login':
           include("login/Login.php");
           break;
 
+=======
+>>>>>>> a76702e (tambah sign in)
         default:
           include("konten/ori.php");
           break;
