@@ -53,13 +53,10 @@
         case 'shift':
           include("shift/index.php");
           break;
-<<<<<<< HEAD
         case 'login':
           include("login/Login.php");
           break;
 
-=======
->>>>>>> a76702e (tambah sign in)
         default:
           include("konten/ori.php");
           break;

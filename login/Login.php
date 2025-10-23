@@ -1,15 +1,11 @@
 <?php
 session_start();
-include "Database/config.php"; // koneksi PDO dari bawah
+include "Database/config.php";
 
 if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-<<<<<<< HEAD
-    // Gunakan prepared statement untuk keamanan
-=======
->>>>>>> a76702e (tambah sign in)
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
     $stmt->bindParam(':username', $username);
     $stmt->execute();
@@ -17,7 +13,6 @@ if (isset($_POST['login'])) {
     $data = $stmt->fetch();
 
     if ($data) {
-        // Cek apakah password cocok (baik hashed maupun plain)
         if (password_verify($password, $data['password']) || $password === $data['password']) {
 
             $_SESSION['id_user'] = $data['id'];
