@@ -2,12 +2,27 @@
 session_start();
 include("../Database/config.php");
 
+// Debug session
+error_log("=== DEBUG REKAP_SHIFT.PHP ===");
 error_log("Session shift: " . print_r($_SESSION['shift'] ?? 'Tidak ada session shift', true));
+error_log("Session shift_current: " . print_r($_SESSION['shift_current'] ?? 'Tidak ada session current', true));
+error_log("All session: " . print_r($_SESSION, true));
 
+// Jika tidak ada session shift, coba redirect
 if (!isset($_SESSION['shift'])) {
-    error_log("Redirect ke index.php - tidak ada session shift");
-    header("Location: ../index.php");
-    exit;
+    error_log("Tidak ada session shift, coba gunakan shift_current");
+    
+    if (isset($_SESSION['shift_current'])) {
+        $_SESSION['shift'] = $_SESSION['shift_current'];
+        error_log("Berhasil menggunakan shift_current sebagai session shift");
+    } else {
+        error_log("Tidak ada shift current, redirect ke index.php");
+        echo "<script>
+            alert('Tidak ada shift yang aktif. Silakan mulai shift terlebih dahulu.');
+            window.location.href = '../index.php';
+        </script>";
+        exit;
+    }
 }
 
 date_default_timezone_set('Asia/Jakarta');
@@ -15,6 +30,10 @@ date_default_timezone_set('Asia/Jakarta');
 $shift = $_SESSION['shift'];
 $transaksi = $_SESSION['transaksi'] ?? [];
 
+error_log("Shift data yang digunakan: " . print_r($shift, true));
+error_log("Jumlah transaksi: " . count($transaksi));
+
+// Rest of your existing calculation code...
 $total_penjualan_tunai = 0;
 $total_pengeluaran_utama = 0;
 $total_pemasukan_lain = 0;
@@ -34,8 +53,7 @@ foreach ($transaksi as $t) {
     }
 }
 
-error_log("Shift data: " . print_r($shift, true));
-
+// Your existing get_or_create_rekap function and other code...
 function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
     $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
     $stmt->execute([$shift_data['id']]);
