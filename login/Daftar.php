@@ -6,6 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $passwordPlain = $_POST['password'];
     $passwordHash = password_hash($passwordPlain, PASSWORD_DEFAULT);
     $nama = 'karyawan';
+    // Cek apakah username sudah ada
 
     $cek = $pdo->prepare("SELECT * FROM users WHERE username = ?");
     $cek->execute([$username]);
@@ -13,6 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($cek->rowCount() > 0) {
         $pesan = "Username sudah digunakan!";
     } else {
+
+        // Masukkan data baru
+
         $stmt = $pdo->prepare("INSERT INTO users (username, password, nama) VALUES (?, ?, ?)");
         if ($stmt->execute([$username, $passwordHash, $nama])) {
             $pesan = "Pendaftaran berhasil! Silakan login.";

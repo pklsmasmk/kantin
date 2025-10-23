@@ -56,7 +56,6 @@
         case 'login':
           include("login/Login.php");
           break;
-
         default:
           include("konten/ori.php");
           break;
