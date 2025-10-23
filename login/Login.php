@@ -1,5 +1,6 @@
 <?php
-session_start();
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
 include "../Database/config.php";
 
 if (isset($_POST['login'])) {
@@ -25,10 +26,10 @@ if (isset($_POST['login'])) {
             header("Location: ../index.php");
             exit;
         } else {
-            echo "<script>alert('Password salah!'); window.location='Login.php';</script>";
+            echo "<script>alert('Password salah!'); window.location='/?q=login';</script>";
         }
     } else {
-        echo "<script>alert('Username tidak ditemukan!'); window.location='Login.php';</script>";
+        echo "<script>alert('Username tidak ditemukan!'); window.location='/?q=login';</script>";
     }
 }
 ?>

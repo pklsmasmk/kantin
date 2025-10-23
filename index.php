@@ -10,7 +10,7 @@ session_start();
   <title>Kantin UAM - Kasir</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="public/CSS/style.css">
+  <link rel="stylesheet" href="CSS/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
@@ -176,7 +176,7 @@ session_start();
 
 
         ?>
-          <a href="../login/Login.php" class="btn btn-info text-white fw-semibold">
+          <a href="/?q=login" class="btn btn-info text-white fw-semibold">
             <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
           </a>
         <?php
@@ -216,7 +216,7 @@ session_start();
                 <!-- Optional divider -->
                 <li class="divider"></li>
                 <li>
-                  <a href="/login/Logout.php">
+                  <a href="/?q=logout">
                     <span class="material-symbols-outlined">logout</span> Logout
                   </a>
                 </li>
@@ -236,23 +236,7 @@ session_start();
 
   <main class="container-fluid mt-5 pt-3">
     <?php
-    switch ($_GET["q"] ?? "") {
-      case 'dungo':
-        include("konten/dungo.php");
-        break;
-      case 'retur':
-        include("retur/index.php");
-        break;
-      case 'shift':
-        include("shift/index.php");
-        break;
-      case 'login':
-        include("login/Login.php");
-        break;
-      default:
-        include("konten/ori.php");
-        break;
-    }
+      include("config/pilihanapp.php");
     ?>
   </main>
 
@@ -266,7 +250,7 @@ session_start();
       once: true
     });
   </script>
-  <script src="public/js/script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 
 </html>
