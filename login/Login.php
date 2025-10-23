@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "Database/config.php";
+include "../Database/config.php";
 
 if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
@@ -19,6 +19,8 @@ if (isset($_POST['login'])) {
             $_SESSION['username'] = $data['username'];
             $_SESSION['nama'] = $data['nama'];
             $_SESSION['role'] = $data['id_role'];
+            $_SESSION['namalengkap'] = $data['namalengkap'];
+            $_SESSION['email'] = $data['email'];
 
             header("Location: ../index.php");
             exit;
