@@ -9,7 +9,7 @@ session_start();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pembayaran - Kantin UAM</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../public/css/pembayaran.css">
+  <link rel="stylesheet" href="../css/pembayaran.css">
 </head>
 
 <body>
@@ -99,7 +99,7 @@ session_start();
   </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="../public/js/pembayaran.js"></script>
+  <script src="../js/pembayaran.js"></script>
 </body>
 
 </html>
