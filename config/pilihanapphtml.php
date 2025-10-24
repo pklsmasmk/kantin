@@ -18,6 +18,9 @@
       case 'logout':
         include("../login/Logout.php");
         break;
+      case 'daftar':
+        include("../login/Daftar.php");
+        break;
       default:
         include("../konten/ori.php");
         break;

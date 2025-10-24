@@ -60,7 +60,7 @@ if (isset($_POST['login'])) {
                             </div>
                             <div class="d-grid gap-2">
                                 <button type="submit" name="login" class="btn btn-primary">Masuk</button>
-                                <a href="Daftar.php" class="btn btn-outline-secondary">Daftar Akun</a>
+                                <a href="/?q=daftar" class="btn btn-outline-secondary">Daftar Akun</a>
                             </div>
                         </form>
                     </div>
