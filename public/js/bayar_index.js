@@ -89,12 +89,13 @@ $("#payBtn").on("click", function () {
   }
 
   localStorage.setItem("cartItems", JSON.stringify(cart));
-  localStorage.setItem("currentSubtotal", $("#cartSubtotal").text().replace(/[^\d]/g, ""));
-  localStorage.setItem("currentDiscount", $("#cartDiscount").text().replace(/[^\d]/g, ""));
-  localStorage.setItem("currentTax", $("#cartTax").text().replace(/[^\d]/g, ""));
-  localStorage.setItem("currentTotal", $("#cartTotal").text().replace(/[^\d]/g, ""));
+  localStorage.setItem("currentSubtotal", JSON.stringify("89"));
+  // localStorage.setItem("currentSubtotal", $("#cartSubtotal").text().replace(/[^\d]/g, ""));
+  // localStorage.setItem("currentDiscount", $("#cartDiscount").text().replace(/[^\d]/g, ""));
+  // localStorage.setItem("currentTax", $("#cartTax").text().replace(/[^\d]/g, ""));
+  // localStorage.setItem("currentTotal", $("#cartTotal").text().replace(/[^\d]/g, ""));
 
-  window.location.href = "penjualan/pembayaran.php";
+  window.location.href = "/?q=penjualan";
 });
 
 $("#searchMenu").on("input", function () {

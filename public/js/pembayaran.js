@@ -1,4 +1,10 @@
+  console.log("aaaa");
+  console.log(localStorage);
 $(document).ready(function () {
+
+  console.log("bbbb");
+  console.log(localStorage);
+
   const subtotal = parseInt(localStorage.getItem("currentSubtotal")) || 0;
   const disc = parseInt(localStorage.getItem("currentDiscount")) || 0;
   const tax = parseInt(localStorage.getItem("currentTax")) || 0;
@@ -131,7 +137,7 @@ $(document).ready(function () {
       console.log("📤 Data piutang dikirim:", dataKirim);
 
       $.ajax({
-        url: "../penjualan/simpan_penjualan.php",
+        url: "/?q=simpan_penjualan",
         type: "POST",
         data: JSON.stringify(dataKirim),
         contentType: "application/json; charset=utf-8",
@@ -184,7 +190,7 @@ $(document).ready(function () {
     console.log("📤 Data penjualan dikirim:", dataKirim);
 
     $.ajax({
-      url: "../../penjualan/simpan_penjualan.php",
+      url: "/?q=simpan_penjualan",
       type: "POST",
       data: JSON.stringify(dataKirim),
       contentType: "application/json; charset=utf-8",
@@ -208,7 +214,7 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         alert("❌ Gagal menyimpan data penjualan!");
-        console.error(xhr.responseText);
+
       },
       complete: function () {
         $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");

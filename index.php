@@ -8,6 +8,8 @@ session_start();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kantin UAM - Kasir</title>
+  <link rel="icon" href="data:,">
+  <link rel="icon" href="data:,">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="CSS/style.css">
@@ -246,7 +248,7 @@ session_start();
 
   <div style="height: 50px;"></div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>  
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>
     AOS.init({
@@ -254,7 +256,7 @@ session_start();
       once: true
     });
   </script>
-  <script src="js/script.js"></script>
+  <!-- <script src="js/bayar_index.js"></script> -->
       <?php
     include("config/pilihanappjs.php");
     ?>

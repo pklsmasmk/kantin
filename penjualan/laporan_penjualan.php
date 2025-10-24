@@ -28,16 +28,14 @@ foreach ($rows as $row) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Laporan Penjualan - Kantin UAM</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="../public/css/laporanpen.css">
 </head>
 
 <body>
   <nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold text-success" href="laporan.php"><i class="bi bi-shop"></i> Kantin UAM</a>
+      <a class="navbar-brand fw-bold text-success" href="/?q=laporan"><i class="bi bi-shop"></i> Kantin UAM</a>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" href="laporan.php"><i class="bi bi-arrow-left"></i> Kembali</a>
+        <a class="btn btn-outline-secondary" href="/?q=laporan"><i class="bi bi-arrow-left"></i> Kembali</a>
       </div>
     </div>
   </nav>
@@ -159,6 +157,5 @@ foreach ($rows as $row) {
   <script>const transactions = <?= json_encode($data ?: []); ?>;</script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="../public/js/laporanpen.js"></script>
 </body>
 </html>

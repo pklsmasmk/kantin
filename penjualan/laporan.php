@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Laporan - Kantin UAM</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="../public/css/laporan.css">
 </head>
 
 <body>
@@ -27,7 +25,7 @@
 
     <div class="row justify-content-center g-4 mt-4">
       <div class="col-md-4 col-sm-6">
-        <a href="laporan_penjualan.php" class="text-decoration-none">
+        <a href="/?q=laporan_penjualan" class="text-decoration-none">
           <div class="card-option text-center p-4">
             <div class="icon-box bg-primary-light">
               <i class="bi bi-receipt-cutoff"></i>
