@@ -13,7 +13,8 @@ session_start();
   <link rel="stylesheet" href="CSS/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <style>
     .dropdown-container {
       display: inline-block;
@@ -135,9 +136,9 @@ session_start();
               border-bottom: 1px solid #333;
 
               /* 
-					 * removes border from Li after the divider element
-					 * best used in combination with top borders on other LIs 
-					 */
+           * removes border from Li after the divider element
+           * best used in combination with top borders on other LIs 
+           */
               &~li {
                 border: none;
               }
@@ -151,6 +152,9 @@ session_start();
       display: block;
     }
   </style>
+  <?php
+    include("config/pilihanappcss.php");
+  ?>
 </head>
 
 <body class="bg-light">
@@ -175,15 +179,15 @@ session_start();
         if (!isset($_SESSION["username"])) {
 
 
-        ?>
+          ?>
           <a href="/?q=login" class="btn btn-info text-white fw-semibold">
             <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
           </a>
-        <?php
+          <?php
         } else {
 
 
-        ?>
+          ?>
           <div class="dropdown-container">
             <details class="dropdown right">
               <summary class="avatar">
@@ -193,8 +197,8 @@ session_start();
                 <!-- Optional: user details area w/ gray bg -->
                 <li>
                   <p>
-                    <span class="block bold"><?=$_SESSION['namalengkap']?></span>
-                    <span class="block italic"><?=$_SESSION['email']?></span>
+                    <span class="block bold"><?= $_SESSION['namalengkap'] ?></span>
+                    <span class="block italic"><?= $_SESSION['email'] ?></span>
                   </p>
                 </li>
                 <!-- Menu links -->
@@ -223,7 +227,7 @@ session_start();
               </ul>
             </details>
           </div>
-        <?php
+          <?php
         }
         ?>
       </div>
@@ -236,12 +240,12 @@ session_start();
 
   <main class="container-fluid mt-5 pt-3">
     <?php
-      include("config/pilihanapp.php");
+    include("config/pilihanapphtml.php");
     ?>
   </main>
 
   <div style="height: 50px;"></div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>  
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script>
@@ -251,6 +255,9 @@ session_start();
     });
   </script>
   <script src="js/script.js"></script>
+      <?php
+    include("config/pilihanappjs.php");
+    ?>
 </body>
 
 </html>

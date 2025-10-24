@@ -1,7 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once '../Database/config.php'; // Include file config
-
+require_once '../Database/config.php';
 $conn = getDBConnection();
 
 // Ambil data dari POST request
