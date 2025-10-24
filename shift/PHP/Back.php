@@ -468,19 +468,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
     }
 }
 
+// Cari bagian penanganan aksi rekap_shift dan ganti dengan:
 if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
+    error_log("Aksi rekap_shift dipanggil");
+    error_log("Shift current: " . print_r($_SESSION["shift_current"] ?? 'Tidak ada', true));
+    
     if (isset($_SESSION["shift_current"])) {
+        // Set session shift untuk rekap_shift.php
         $_SESSION['shift'] = $_SESSION["shift_current"];
         
+        // Inisialisasi transaksi jika belum ada
         if (!isset($_SESSION['transaksi'])) {
             $_SESSION['transaksi'] = [];
         }
         
-        sync_to_rekap($pdo, $_SESSION["shift_current"]);
+        // Sync ke database
+        $sync_result = sync_to_rekap($pdo, $_SESSION["shift_current"]);
+        error_log("Sync result: " . print_r($sync_result, true));
         
+        // Redirect ke halaman rekap
+        error_log("Redirect ke Rekap_Shift/rekap_shift.php");
         header("Location: Rekap_Shift/rekap_shift.php");
         exit;
     } else {
+        error_log("Tidak ada shift current, tampilkan error");
         $_SESSION["error"] = "Silakan mulai shift terlebih dahulu sebelum melihat rekap shift.";
         header("Location: " . $_SERVER["PHP_SELF"] . "?tab=current");
         exit;

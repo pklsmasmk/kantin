@@ -1,13 +1,17 @@
 <?php
-session_start();
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
 include "../Database/config.php";
 
 if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $query = mysqli_query($conn, "SELECT * FROM users WHERE username = '$username'");
-    $data = mysqli_fetch_assoc($query);
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
+    $stmt->bindParam(':username', $username);
+    $stmt->execute();
+
+    $data = $stmt->fetch();
 
     if ($data) {
         if (password_verify($password, $data['password']) || $password === $data['password']) {
@@ -16,14 +20,16 @@ if (isset($_POST['login'])) {
             $_SESSION['username'] = $data['username'];
             $_SESSION['nama'] = $data['nama'];
             $_SESSION['role'] = $data['id_role'];
+            $_SESSION['namalengkap'] = $data['namalengkap'];
+            $_SESSION['email'] = $data['email'];
 
-            header("Location: index.php");
+            header("Location: ../index.php");
             exit;
         } else {
-            echo "<script>alert('Password salah!'); window.location='Login.php';</script>";
+            echo "<script>alert('Password salah!'); window.location='/?q=login';</script>";
         }
     } else {
-        echo "<script>alert('Username tidak ditemukan!'); window.location='Login.php';</script>";
+        echo "<script>alert('Username tidak ditemukan!'); window.location='/?q=login';</script>";
     }
 }
 ?>
@@ -59,7 +65,6 @@ if (isset($_POST['login'])) {
                         </form>
                     </div>
                 </div>
-                <p class="text-center text-muted mt-3 mb-0">&copy; Kantin Uam</p>
             </div>
         </div>
     </div>

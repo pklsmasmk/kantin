@@ -204,5 +204,17 @@
         "paymentMethod": "Cash",
         "description": "uuuu",
         "createdAt": "2025-10-13 04:09:47"
+    },
+    {
+        "id": "rec_68f84e55f10e8",
+        "type": "piutang",
+        "name": "hmhmm",
+        "amount": 55000,
+        "dueDate": "2025-10-22",
+        "status": "belum lunas",
+        "paymentMethod": "Cash",
+        "description": "mmmm",
+        "items": [],
+        "createdAt": "2025-10-22 05:24:05"
     }
 ]

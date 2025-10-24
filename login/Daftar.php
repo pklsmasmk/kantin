@@ -1,25 +1,27 @@
 <?php
-include "koneksi.php";
+include "../Database/config.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $username = trim($_POST['username']);
+    $passwordPlain = $_POST['password'];
+    $passwordHash = password_hash($passwordPlain, PASSWORD_DEFAULT);
     $nama = 'karyawan';
+    // Cek apakah username sudah ada
 
-    $cek = $conn->prepare("SELECT * FROM users WHERE username=?");
-    $cek->bind_param("s", $username);
-    $cek->execute();
-    $result = $cek->get_result();
+    $cek = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+    $cek->execute([$username]);
 
-    if ($result->num_rows > 0) {
+    if ($cek->rowCount() > 0) {
         $pesan = "Username sudah digunakan!";
     } else {
-        $stmt = $conn->prepare("INSERT INTO users (username, password, nama) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $username, $password, $nama);
-        if ($stmt->execute()) {
+
+        // Masukkan data baru
+
+        $stmt = $pdo->prepare("INSERT INTO users (username, password, nama) VALUES (?, ?, ?)");
+        if ($stmt->execute([$username, $passwordHash, $nama])) {
             $pesan = "Pendaftaran berhasil! Silakan login.";
         } else {
-            $pesan = "Gagal mendaftar: " . $stmt->error;
+            $pesan = "Gagal mendaftar.";
         }
     }
 }
