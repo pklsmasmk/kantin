@@ -27,7 +27,7 @@ function formatCurrency(num) {
 function loadItems() {
     console.log("🔄 Memuat data dari server...");
     
-    fetch('tampil_stok.php')
+    fetch('/?q=retur__tampilstok')
         .then(response => {
             if (!response.ok) {
                 throw new Error('HTTP error! status: ' + response.status);

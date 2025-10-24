@@ -4,7 +4,10 @@
         include("../konten/dungo.php");
         break;
       case 'retur':
-        include("../retur/index.php");
+        include("../retur/html/index.php");
+        break;
+      case 'retur__tampilstok':
+        include("../retur/html/tampil_stok.php");
         break;
       case 'shift':
         include("../shift/index.php");
