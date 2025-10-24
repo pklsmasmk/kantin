@@ -55,6 +55,35 @@ header {
     color: var(--text-primary);
 }
 
+.avatar {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.avatar:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.avatar:hover img {
+    transform: scale(1.1);
+}
+
 .tabs {
     display: flex;
     background: #f0ede6;

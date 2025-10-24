@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return parseInt(value.replace(/[^\d]/g, '')) || 0;
     }
 
-    // FUNGSI: Ambil saldo tersedia dari halaman - VERSI FINAL
     function getSaldoTersedia() {
         const saldoTersediaElement = document.querySelector('.saldo-tersedia');
         if (saldoTersediaElement) {
@@ -36,7 +35,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
-        // Fallback: ambil dari saldo akhir di ringkasan (card ke-3)
         const saldoAkhirElement = document.querySelector('.saldo-card:nth-child(3) .saldo-value');
         if (saldoAkhirElement) {
             return parseRupiah(saldoAkhirElement.textContent);
@@ -45,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return 0;
     }
 
-    // FUNGSI: Update real-time saldo tersedia - VERSI FINAL
     function updateSaldoTersedia() {
         const jumlahSetoran = document.getElementById('jumlah_setoran');
         
@@ -60,7 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 e.target.value = '';
             }
 
-            // Validasi terhadap saldo tersedia (SALDO AKHIR)
             const jumlahNumeric = parseRupiah(value);
             const saldoTersedia = getSaldoTersedia();
             
@@ -241,7 +237,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (confirmedCashdrawer) confirmedCashdrawer.value = dataForm.cashdrawer;
         if (confirmedSaldoAwal) confirmedSaldoAwal.value = dataForm.saldoAwal;
         
-        // PERUBAHAN: ganti 'active' menjadi 'aktif'
         confirmationModal.classList.add('aktif');
         document.body.style.overflow = 'hidden';
         
@@ -253,7 +248,6 @@ document.addEventListener("DOMContentLoaded", function () {
     function sembunyikanModalKonfirmasi() {
         if (!confirmationModal) return;
         
-        // PERUBAHAN: ganti 'active' menjadi 'aktif'
         confirmationModal.classList.remove('aktif');
         document.body.style.overflow = '';
         
@@ -327,7 +321,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            // Validasi form
             const dataForm = validasiFormShift();
             if (!dataForm) {
                 return;
@@ -409,14 +402,12 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         document.addEventListener('keydown', function(e) {
-            // PERUBAHAN: ganti 'active' menjadi 'aktif'
             if (e.key === 'Escape' && confirmationModal.classList.contains('aktif')) {
                 sembunyikanModalKonfirmasi();
             }
         });
 
         confirmationModal.addEventListener('keydown', function(e) {
-            // PERUBAHAN: ganti 'active' menjadi 'aktif'
             if (e.key === 'Enter' && confirmationModal.classList.contains('aktif')) {
                 e.preventDefault();
                 confirmBtn.click();
@@ -519,7 +510,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
 
-        // Panggil fungsi update real-time
         updateSaldoTersedia();
         
         if (jumlahSetoran) {

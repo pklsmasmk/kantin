@@ -12,19 +12,12 @@
       case 'shift':
         include("../shift/index.php");
         break;
-      case 'shift__Rekap_Shift__rekap_shift':
-        include("../shift/Rekap_Shift/rekap_shift.php");
+      case 'login':
+        include("../login/Login.php");
         break;
-      case 'shift__Rekap_Shift__rekap_detail':
-        include("../shift/Rekap_Shift/rekap_detail.php");
+      case 'logout':
+        include("../login/Logout.php");
         break;
-      case 'shift__Akhiri__akhiri_shift':
-        include("../shift/Akhiri/akhiri_shift.php");
-        break;  
-      case 'shift__Akhiri__akhiri_sukses':
-        include("../shift/Akhiri/akhiri_sukses.php");
-        break;    
-        
       default:
         include("../konten/ori.php");
         break;

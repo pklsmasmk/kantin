@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('Asia/Jakarta');
 
-include("Database/config.php");
+include("../Database/config.php");
 
 if (!isset($pdo) || !($pdo instanceof PDO)) {
     die("Error: Koneksi database tidak valid. Periksa file config.php");
@@ -57,7 +57,6 @@ function save_shift_data($pdo, $data) {
 
 function sync_to_rekap($pdo, $shift_data) {
     try {
-        // Cek apakah rekap sudah ada
         $stmt = $pdo->prepare("SELECT id FROM rekap_shift WHERE shift_id = ?");
         $stmt->execute([$shift_data['id']]);
         $existing = $stmt->fetch();
@@ -65,7 +64,6 @@ function sync_to_rekap($pdo, $shift_data) {
         $selisih = $shift_data['saldo_akhir'] - $shift_data['saldo_awal'];
         
         if ($existing) {
-            // Update existing
             $stmt = $pdo->prepare("
                 UPDATE rekap_shift SET 
                     cashdrawer = ?, saldo_awal = ?, saldo_akhir = ?, selisih = ?,
@@ -83,7 +81,6 @@ function sync_to_rekap($pdo, $shift_data) {
                 $shift_data['id']
             ]);
         } else {
-            // Insert new
             $stmt = $pdo->prepare("
                 INSERT INTO rekap_shift 
                 (shift_id, cashdrawer, saldo_awal, saldo_akhir, total_penjualan, total_pengeluaran, 
@@ -95,8 +92,7 @@ function sync_to_rekap($pdo, $shift_data) {
                 $shift_data['id'],
                 $shift_data['cashdrawer'],
                 $shift_data['saldo_awal'],
-                $shift_data['saldo_akhir'],
-                0, 0, 0, 0, // totals
+                $shift_data['saldo_akhir'],0, 0, 0, 0, 
                 $selisih,
                 $shift_data['waktu_mulai'],
                 $shift_data['waktu_selesai'] ?? null,
@@ -128,7 +124,6 @@ function sync_from_rekap($pdo, $shift_id) {
         $rekap = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($rekap) {
-            // Update shift history dengan data dari rekap
             $stmt = $pdo->prepare("
                 UPDATE shifts SET 
                     saldo_akhir = ?, saldo_awal = ?, cashdrawer = ?,
@@ -317,7 +312,6 @@ function update_current_shift_from_rekap($pdo, $current_shift) {
         
         $_SESSION["shift_current"] = $current_shift;
         
-        // Update juga di database
         save_shift_data($pdo, $current_shift);
     }
     
@@ -338,9 +332,6 @@ function format_time($datetime) {
     return $date ? $date->format("H:i") : $datetime;
 }
 
-session_start();
-
-// Inisialisasi data dari database
 if (!isset($_SESSION["shift_history"])) {
     $_SESSION["shift_history"] = read_shift_data($pdo);
 }
@@ -377,14 +368,12 @@ if ($currentShift) {
     $saldo_akhir_display = $saldo_akhir_riwayat;
 }
 
-// Ambil cashdrawers dari database jika ada tabel cashdrawers
 $cashdrawers = [
     "Kasir 01 - Cashdrawer 1",
     "Kasir 02 - Cashdrawer 2", 
     "Kasir 03 - Cashdrawer 3",
 ];
 
-// Coba ambil dari database jika tabel cashdrawers ada
 try {
     $stmt = $pdo->prepare("SELECT nama FROM cashdrawers WHERE is_active = TRUE ORDER BY nama");
     $stmt->execute();
@@ -393,7 +382,6 @@ try {
         $cashdrawers = $db_cashdrawers;
     }
 } catch (PDOException $e) {
-    // Jika tabel tidak ada, gunakan default cashdrawers
     $cashdrawers = [
         "Kasir 01 - Cashdrawer 1",
         "Kasir 02 - Cashdrawer 2", 
@@ -424,7 +412,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
                 } elseif ($jumlah_value > $saldo_tersedia) {
                     $_SESSION["error"] = "Saldo tidak mencukupi. Saldo tersedia: " . format_rupiah($saldo_tersedia);
                 } else {
-                    // Simpan setoran ke database
                     $setoran_id = uniqid('setoran_', true);
                     $stmt = $pdo->prepare("
                         INSERT INTO setoran 
@@ -443,7 +430,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
                         $_SESSION['shift_current']['id'] ?? null
                     ]);
 
-                    // Update saldo akhir jika ada shift aktif
                     if ($currentShift) {
                         $new_saldo_akhir = $currentShift['saldo_akhir'] - $jumlah_value;
                         
@@ -468,25 +454,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
     }
 }
 
-// Cari bagian penanganan aksi rekap_shift dan ganti dengan:
 if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
     error_log("Aksi rekap_shift dipanggil");
     error_log("Shift current: " . print_r($_SESSION["shift_current"] ?? 'Tidak ada', true));
     
     if (isset($_SESSION["shift_current"])) {
-        // Set session shift untuk rekap_shift.php
         $_SESSION['shift'] = $_SESSION["shift_current"];
         
-        // Inisialisasi transaksi jika belum ada
         if (!isset($_SESSION['transaksi'])) {
             $_SESSION['transaksi'] = [];
         }
         
-        // Sync ke database
         $sync_result = sync_to_rekap($pdo, $_SESSION["shift_current"]);
         error_log("Sync result: " . print_r($sync_result, true));
         
-        // Redirect ke halaman rekap
         error_log("Redirect ke Rekap_Shift/rekap_shift.php");
         header("Location: Rekap_Shift/rekap_shift.php");
         exit;
@@ -521,10 +502,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
         } else {
             $saldo_akhir = $saldo_warisan + $saldo_value;
             
-            $shift = [
+            $_SESSION = [
                 "id"         => uniqid("shift_", true),
-                "nama"       => "User Kasir", 
-                "role"       => "Kasir",
+                "nama"       => "namalengkap", 
+                "role"       => "nama",
                 "cashdrawer" => $cashdrawer,
                 "saldo_awal" => $saldo_value, 
                 "saldo_akhir" => $saldo_akhir,
@@ -547,8 +528,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
         }
     }
 
-    header("Location: " . $_SERVER["PHP_SELF"] . "?tab=current");
-    exit;
+    function safe_redirect($url) {
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit;
+    } else {
+        echo "<script>window.location.href='" . $url . "';</script>";
+        exit;
+    }
+}
+
+safe_redirect($_SERVER["PHP_SELF"] . "?tab=current");
 }
 
 $active_tab = isset($_GET['tab']) && in_array($_GET['tab'], ['current', 'setoran', 'history']) ? $_GET['tab'] : 'current';

@@ -1,14 +1,10 @@
 <?php
-session_start();
-include("../Database/config.php");
 
-// Debug session
 error_log("=== DEBUG REKAP_SHIFT.PHP ===");
 error_log("Session shift: " . print_r($_SESSION['shift'] ?? 'Tidak ada session shift', true));
 error_log("Session shift_current: " . print_r($_SESSION['shift_current'] ?? 'Tidak ada session current', true));
 error_log("All session: " . print_r($_SESSION, true));
 
-// Jika tidak ada session shift, coba redirect
 if (!isset($_SESSION['shift'])) {
     error_log("Tidak ada session shift, coba gunakan shift_current");
     
@@ -33,7 +29,6 @@ $transaksi = $_SESSION['transaksi'] ?? [];
 error_log("Shift data yang digunakan: " . print_r($shift, true));
 error_log("Jumlah transaksi: " . count($transaksi));
 
-// Rest of your existing calculation code...
 $total_penjualan_tunai = 0;
 $total_pengeluaran_utama = 0;
 $total_pemasukan_lain = 0;
@@ -53,7 +48,6 @@ foreach ($transaksi as $t) {
     }
 }
 
-// Your existing get_or_create_rekap function and other code...
 function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
     $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
     $stmt->execute([$shift_data['id']]);
@@ -153,7 +147,6 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
 <head>
     <meta charset="UTF-8">
     <title>Rekap Shift</title>
-    <link rel="stylesheet" href="../CSS/rekap.css">
 </head>
 <body>
     <div class="container">
@@ -259,14 +252,14 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
             </div>
 
             <div class="btns">
-                <a href="rekap_detail.php" class="btn btn-green">
+                <a href="/?q=shift__Rekap_Shift__rekap_detail" class="btn btn-green">
                     REKAP DETAIL 
                     <?php if (count($transaksi) > 0): ?>
                         <span class="badge"><?= count($transaksi) ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="../Akhiri/akhiri_shift.php" class="btn btn-red">AKHIRI SHIFT</a>
-                <a href="../index.php" class="btn btn-secondary">KEMBALI</a>
+                <a href="/?q=shift__Akhiri__akhiri_shift" class="btn btn-red">AKHIRI SHIFT</a>
+                <a href="/?q=shift" class="btn btn-secondary">KEMBALI</a>
             </div>
 
             <div class="last-updated">

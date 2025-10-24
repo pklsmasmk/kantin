@@ -1,4 +1,5 @@
 <?php
+    ob_start();
     include("PHP/Back.php");
 ?>
 <!DOCTYPE html>
@@ -7,10 +8,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Shift Kasir - UAM</title>
-    <link rel="stylesheet" href="../shift/CSS/shift.css" />
-    <link rel="stylesheet" href="../shift/CSS/modal.css" />
-    <link rel="stylesheet" href="../shift/CSS/tambahan.css" />
-    <link rel="stylesheet" href="../shift/CSS/tambahan_histori.css" />
+    <link rel="stylesheet" href="../CSS/shift.css" />
+    <link rel="stylesheet" href="../CSS/modal.css" />
+    <link rel="stylesheet" href="../CSS/tambahan.css" />
+    <link rel="stylesheet" href="../CSS/tambahan_histori.css" />
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group strong {
+            display: block;
+            padding: 12px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .form-group strong:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(139, 115, 85, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 16px;
+            }
+            
+            .form-group strong {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container" role="main" aria-label="Halaman Shift Kasir">
@@ -39,12 +82,12 @@
             </nav>
 
             <section class="user-info">
-                <div class="avatar">
-                    <span>Ka</span>
-                </div>
+                <summary class="avatar">
+                    <img src="https://gravatar.com/avatar/00000000000000000000000000000000?d=mp">
+                </summary>
                 <div class="user-name-role">
-                    <strong>User Kasir</strong>
-                    <small>Kasir</small>
+                    <strong><?=$_SESSION['namalengkap']?></strong>
+                    <strong><?=$_SESSION['nama']?></strong>
                 </div>
             </section>
 
@@ -136,7 +179,7 @@
                     </button>
 
                     <div class="action-buttons">
-                        <a href="/shift/Rekap_Shift/rekap_shift.php" class="action-btn manage-cash-btn" <?= !$currentShift ? 'style="opacity: 0.6; pointer-events: none;"' : '' ?>>
+                        <a href="/?q=shift__Rekap_Shift__rekap_shift" class="action-btn manage-cash-btn" <?= !$currentShift ? 'style="opacity: 0.6; pointer-events: none;"' : '' ?>>
                             <span>Rekap Shift</span>
                         </a>
                         <a href="../index.php" class="action-btn cart-btn">
@@ -234,8 +277,7 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="penyetor">Nama Penyetor *</label>
-                                <input type="text" id="penyetor" name="penyetor" required 
-                                    placeholder="Masukkan nama penyetor" value="<?= htmlspecialchars($currentShift['nama'] ?? 'User Kasir') ?>">
+                                <strong><?=$_SESSION['namalengkap']?></strong>
                             </div>
                             
                             <div class="form-group">
@@ -489,7 +531,7 @@
 
                     <ul class="history-list compact-view">
                         <?php foreach ($displayHistory as $item): 
-                            $rekap_info = get_rekap_data_for_shift($pdo, $item['id']); // BENAR
+                            $rekap_info = get_rekap_data_for_shift($pdo, $item['id']);
                             $is_synced = $rekap_info !== null;
                             
                             $saldo_awal = $rekap_info['saldo_awal'] ?? $item['saldo_awal'] ?? 0;
@@ -542,7 +584,7 @@
                                 </div>
 
                                 <div class="compact-user">
-                                    <small><?= htmlspecialchars($item["nama"]) ?> • <?= htmlspecialchars($item["role"]) ?></small>
+                                    <small><?= htmlspecialchars($_SESSION["namalengkap"]) ?> • <?= htmlspecialchars($_SESSION["nama"]) ?></small>
                                 </div>
 
                                 <div class="view-detail-btn">
@@ -582,7 +624,7 @@
             ) 
         ?>;
     </script>
-    <script src="../shift/JS/shift.js"></script>
-    <script src="../shift/JS/shift_history.js"></script>
+    <script src="../JS/shift.js"></script>
+    <script src="../JS/shift_history.js"></script>
 </body>
 </html>

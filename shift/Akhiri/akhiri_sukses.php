@@ -1,5 +1,4 @@
 <?php
-
 date_default_timezone_set('Asia/Jakarta');
 
 $shift_id = $_GET['shift_id'] ?? '';
@@ -35,7 +34,7 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
             </div>
 
             <div class="action-buttons">
-                <a href="../index.php?tab=history" class="btn btn-primary">
+                <a href="/?q=shift&tab=history" class="btn btn-primary">
                     <span>📊</span>
                     Lihat Riwayat Shift
                 </a>

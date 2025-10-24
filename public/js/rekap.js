@@ -6,21 +6,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (akhirBtn) {
         akhirBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            window.location.href = "../Akhiri/akhiri_shift.php";
+            window.location.href = "/?q=shift__Akhiri__akhiri_shift";
         });
     }
 
     if (rekapBtn) {
         rekapBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            window.location.href = "rekap_detail.php";
+            window.location.href = "/?q=shift__Rekap_Shift__rekap_detail";
         });
     }
 
     if (kembaliBtn) {
         kembaliBtn.addEventListener("click", (e) => {
             e.preventDefault();
-            window.location.href = "../index.php";
+            window.location.href = "/?q=shift";
         });
     }
 

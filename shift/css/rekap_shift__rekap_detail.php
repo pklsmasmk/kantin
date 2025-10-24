@@ -1,0 +1,1 @@
+<link rel="stylesheet" href="CSS/rekap_detail.css">

@@ -1,0 +1,1 @@
+<script src="js/rekap_detail.js"></script>
