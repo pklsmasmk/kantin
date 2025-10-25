@@ -59,7 +59,7 @@ if (isset($_POST['login'])) {
                                 <input type="password" class="form-control" name="password" id="password" required>
                             </div>
                             <div class="d-grid gap-2">
-                                <button type="submit" name="login" class="btn btn-primary">Masuk</button>
+                                <button type="submit" name="login" class="btn btn-success">Masuk</button>
                                 <a href="/?q=daftar" class="btn btn-outline-secondary">Daftar Akun</a>
                             </div>
                         </form>

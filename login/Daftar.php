@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label">Password</label>
           <input type="password" name="password" class="form-control" required>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Daftar</button>
+        <button type="submit" class="btn btn-success w-100">Daftar</button>
       </form>
 
       <p class="mt-3 text-center">Sudah punya akun? <a href="/?q=login">Login</a></p>
