@@ -1,5 +1,11 @@
 <?php
+ob_start(); // Tambahkan di paling atas
 date_default_timezone_set('Asia/Jakarta');
+
+// Mulai session jika belum dimulai
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 include("../Database/config.php");
 
@@ -332,6 +338,7 @@ function format_time($datetime) {
     return $date ? $date->format("H:i") : $datetime;
 }
 
+// Inisialisasi data
 if (!isset($_SESSION["shift_history"])) {
     $_SESSION["shift_history"] = read_shift_data($pdo);
 }
@@ -353,6 +360,9 @@ if ($currentShift) {
 }
 
 $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
+
+// PERBAIKAN: Definisikan variabel $saldo_akhir
+$saldo_akhir = $saldo_warisan;
 
 if ($currentShift) {
     $saldo_awal_hari_ini = $currentShift['saldo_awal'];
@@ -382,16 +392,13 @@ try {
         $cashdrawers = $db_cashdrawers;
     }
 } catch (PDOException $e) {
-    $cashdrawers = [
-        "Kasir 01 - Cashdrawer 1",
-        "Kasir 02 - Cashdrawer 2", 
-        "Kasir 03 - Cashdrawer 3",
-    ];
+    // Tetap gunakan default cashdrawers
 }
 
+// Handle form setoran
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
     if ($_POST['setoran_action'] === 'add') {
-        $penyetor = trim($_POST['penyetor'] ?? '');
+        $penyetor = trim($_POST['penyetor'] ?? $_SESSION['namalengkap'] ?? '');
         $jumlah_input = $_POST['jumlah_setoran'] ?? '';
         $jenis_setoran = $_POST['jenis_setoran'] ?? '';
         $metode_setoran = $_POST['metode_setoran'] ?? '';
@@ -449,15 +456,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
             }
         }
         
-        header("Location: " . $_SERVER["PHP_SELF"] . "?tab=setoran");
+        // Gunakan JavaScript redirect untuk menghindari header error
+        echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=setoran';</script>";
         exit;
     }
 }
 
+// Handle rekap shift
 if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
-    error_log("Aksi rekap_shift dipanggil");
-    error_log("Shift current: " . print_r($_SESSION["shift_current"] ?? 'Tidak ada', true));
-    
     if (isset($_SESSION["shift_current"])) {
         $_SESSION['shift'] = $_SESSION["shift_current"];
         
@@ -466,19 +472,18 @@ if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
         }
         
         $sync_result = sync_to_rekap($pdo, $_SESSION["shift_current"]);
-        error_log("Sync result: " . print_r($sync_result, true));
         
-        error_log("Redirect ke Rekap_Shift/rekap_shift.php");
-        header("Location: Rekap_Shift/rekap_shift.php");
+        // Gunakan JavaScript redirect
+        echo "<script>window.location.href='Rekap_Shift/rekap_shift.php';</script>";
         exit;
     } else {
-        error_log("Tidak ada shift current, tampilkan error");
         $_SESSION["error"] = "Silakan mulai shift terlebih dahulu sebelum melihat rekap shift.";
-        header("Location: " . $_SERVER["PHP_SELF"] . "?tab=current");
+        echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=current';</script>";
         exit;
     }
 }
 
+// Handle mulai shift
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
     $cashdrawer = isset($_POST["cashdrawer"]) ? trim($_POST["cashdrawer"]) : "";
     $saldo_awal = isset($_POST["saldo_awal"]) ? trim($_POST["saldo_awal"]) : "";
@@ -500,6 +505,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
             ];
             $_SESSION["show_confirmation"] = true;
         } else {
+            // PERBAIKAN: Hitung saldo_akhir dengan benar
+            $saldo_akhir = $saldo_value + $saldo_warisan;
+            
             $shift = [
                 "id"         => uniqid("shift_", true),
                 "nama"       => $_SESSION['namalengkap'] ?? "namalengkap", 
@@ -530,17 +538,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
         }
     }
 
-    function safe_redirect($url) {
-    if (!headers_sent()) {
-        header("Location: " . $url);
-        exit;
-    } else {
-        echo "<script>window.location.href='" . $url . "';</script>";
-        exit;
-    }
-}
-
-safe_redirect($_SERVER["PHP_SELF"] . "?tab=current");
+    // Gunakan JavaScript redirect
+    echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=current';</script>";
+    exit;
 }
 
 $active_tab = isset($_GET['tab']) && in_array($_GET['tab'], ['current', 'setoran', 'history']) ? $_GET['tab'] : 'current';
@@ -552,4 +552,6 @@ $error = $_SESSION["error"] ?? null;
 $success = $_SESSION["success"] ?? null;
 
 unset($_SESSION["error"], $_SESSION["success"]);
+
+ob_end_flush();
 ?>

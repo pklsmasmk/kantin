@@ -539,25 +539,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 const tombolSubmit = this.querySelector('.setoran-submit');
-                const penyetor = document.getElementById('penyetor');
                 const jumlah = document.getElementById('jumlah_setoran');
                 const jenis = document.getElementById('jenis_setoran');
                 const metode = document.getElementById('metode_setoran');
                 const keterangan = document.getElementById('keterangan_setoran');
 
-                if (!penyetor || !jumlah || !jenis || !metode || !keterangan) {
+                if (!jumlah || !jenis || !metode || !keterangan) {
                     e.preventDefault();
                     tampilkanError('Form tidak lengkap. Silakan refresh halaman.');
                     return;
                 }
 
-                const nilaiPenyetor = penyetor.value.trim();
                 const nilaiJumlah = jumlah.value;
                 const nilaiJenis = jenis.value;
                 const nilaiMetode = metode.value;
                 const nilaiKeterangan = keterangan.value.trim();
 
-                if (!nilaiPenyetor || !nilaiJumlah || !nilaiJenis || !nilaiMetode || !nilaiKeterangan) {
+                if (!nilaiJumlah || !nilaiJenis || !nilaiMetode || !nilaiKeterangan) {
                     e.preventDefault();
                     tampilkanError('Semua field bertanda * harus diisi.');
                     return;
@@ -571,7 +569,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-                // Validasi terhadap saldo tersedia (SALDO AKHIR)
                 const saldoTersedia = getSaldoTersedia();
                 if (jumlahNumerik > saldoTersedia) {
                     e.preventDefault();
