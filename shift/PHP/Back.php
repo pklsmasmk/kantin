@@ -1,8 +1,7 @@
 <?php
-ob_start(); // Tambahkan di paling atas
+ob_start(); 
 date_default_timezone_set('Asia/Jakarta');
 
-// Mulai session jika belum dimulai
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -338,7 +337,6 @@ function format_time($datetime) {
     return $date ? $date->format("H:i") : $datetime;
 }
 
-// Inisialisasi data
 if (!isset($_SESSION["shift_history"])) {
     $_SESSION["shift_history"] = read_shift_data($pdo);
 }
@@ -361,7 +359,6 @@ if ($currentShift) {
 
 $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
 
-// PERBAIKAN: Definisikan variabel $saldo_akhir
 $saldo_akhir = $saldo_warisan;
 
 if ($currentShift) {
@@ -392,10 +389,8 @@ try {
         $cashdrawers = $db_cashdrawers;
     }
 } catch (PDOException $e) {
-    // Tetap gunakan default cashdrawers
 }
 
-// Handle form setoran
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
     if ($_POST['setoran_action'] === 'add') {
         $penyetor = trim($_POST['penyetor'] ?? $_SESSION['namalengkap'] ?? '');
@@ -404,6 +399,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
         $metode_setoran = $_POST['metode_setoran'] ?? '';
         $keterangan = trim($_POST['keterangan_setoran'] ?? '');
         $detail_lainnya = trim($_POST['detail_lainnya'] ?? '');
+        
+        $bukti_transfer_name = null;
+        $bukti_transfer_path = null;
+        
+        if ($metode_setoran === 'transfer' && isset($_FILES['bukti_transfer']) && $_FILES['bukti_transfer']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = "uploads/bukti_transfer/";
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+            
+            $file = $_FILES['bukti_transfer'];
+            $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'];
+            $max_file_size = 5 * 1024 * 1024;
+            
+            if (in_array(strtolower($file_extension), $allowed_extensions) && $file['size'] <= $max_file_size) {
+                $bukti_transfer_name = uniqid('bukti_', true) . '.' . $file_extension;
+                $bukti_transfer_path = $upload_dir . $bukti_transfer_name;
+                
+                if (!move_uploaded_file($file['tmp_name'], $bukti_transfer_path)) {
+                    $_SESSION["error"] = "Gagal mengupload bukti transfer.";
+                    echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=setoran';</script>";
+                    exit;
+                }
+            } else {
+                $_SESSION["error"] = "File bukti transfer tidak valid. Format: JPG, PNG, PDF, DOC (Maks. 5MB)";
+                echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=setoran';</script>";
+                exit;
+            }
+        } elseif ($metode_setoran === 'transfer') {
+            $_SESSION["error"] = "Bukti transfer wajib diupload untuk metode transfer.";
+            echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=setoran';</script>";
+            exit;
+        }
 
         if (empty($penyetor) || empty($jumlah_input) || empty($jenis_setoran) || empty($metode_setoran) || empty($keterangan)) {
             $_SESSION["error"] = "Semua field bertanda * harus diisi.";
@@ -456,13 +485,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['setoran_action'])) {
             }
         }
         
-        // Gunakan JavaScript redirect untuk menghindari header error
         echo "<script>window.location.href='" . $_SERVER["PHP_SELF"] . "?tab=setoran';</script>";
         exit;
     }
 }
 
-// Handle rekap shift
 if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
     if (isset($_SESSION["shift_current"])) {
         $_SESSION['shift'] = $_SESSION["shift_current"];
@@ -473,7 +500,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
         
         $sync_result = sync_to_rekap($pdo, $_SESSION["shift_current"]);
         
-        // Gunakan JavaScript redirect
         echo "<script>window.location.href='Rekap_Shift/rekap_shift.php';</script>";
         exit;
     } else {
@@ -483,7 +509,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
     }
 }
 
-// Handle mulai shift
 if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
     $cashdrawer = isset($_POST["cashdrawer"]) ? trim($_POST["cashdrawer"]) : "";
     $saldo_awal = isset($_POST["saldo_awal"]) ? trim($_POST["saldo_awal"]) : "";
@@ -505,7 +530,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
             ];
             $_SESSION["show_confirmation"] = true;
         } else {
-            // PERBAIKAN: Hitung saldo_akhir dengan benar
             $saldo_akhir = $saldo_value + $saldo_warisan;
             
             $shift = [

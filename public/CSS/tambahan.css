@@ -1,4 +1,3 @@
-/* ===== MODAL KONFIRMASI ===== */
 .selimut-modal {
     display: none;
     position: fixed;
@@ -137,7 +136,6 @@
     box-shadow: none;
 }
 
-/* Animasi untuk modal */
 @keyframes scaleIn {
     from {
         opacity: 0;
@@ -149,7 +147,6 @@
     }
 }
 
-/* Responsif */
 @media (max-width: 768px) {
     .konten-modal-konfirmasi {
         width: 95%;
@@ -196,5 +193,111 @@
     
     .nilai-detail {
         align-self: flex-end;
+    }
+}
+
+.bukti-preview {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-align: center;
+    background: #f9f9f9;
+}
+
+.bukti-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 5px;
+}
+
+.bukti-preview .preview-label {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+}
+
+.file-input-wrapper input[type=file] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-input-label {
+    display: block;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-input-label:hover {
+    border-color: #667eea;
+    background: #e7f3ff;
+}
+
+.file-input-label.has-file {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.file-name {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group strong {
+    display: block;
+    padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.form-group strong:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(139, 115, 85, 0.1);
+}
+
+@media (max-width: 768px) {
+    .form-group {
+        margin-bottom: 16px;
+    }
+            
+    .form-group strong {
+        padding: 10px 12px;
+        font-size: 14px;
     }
 }

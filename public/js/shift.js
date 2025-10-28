@@ -487,9 +487,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function inisialisasiFormSetoran() {
         const jenisSetoran = document.getElementById('jenis_setoran');
+        const metodeSetoran = document.getElementById('metode_setoran');
         const grupDetailLainnya = document.getElementById('detail_lainnya_group');
+        const grupBuktiTransfer = document.getElementById('bukti_transfer_group');
         const jumlahSetoran = document.getElementById('jumlah_setoran');
         const formSetoran = document.querySelector('.setoran-form');
+        const fileInputLabel = document.getElementById('fileInputLabel');
+        const fileName = document.getElementById('fileName');
 
         if (jenisSetoran && grupDetailLainnya) {
             jenisSetoran.addEventListener('change', function() {
@@ -508,6 +512,102 @@ document.addEventListener("DOMContentLoaded", function () {
             if (jenisSetoran.value === 'lainnya') {
                 grupDetailLainnya.style.display = 'block';
             }
+        }
+
+        if (metodeSetoran && grupBuktiTransfer) {
+            metodeSetoran.addEventListener('change', function() {
+                if (this.value === 'transfer') {
+                    grupBuktiTransfer.style.display = 'block';
+                    setTimeout(() => {
+                        const inputBukti = document.getElementById('bukti_transfer');
+                        if (inputBukti) inputBukti.focus();
+                    }, 100);
+                } else {
+                    grupBuktiTransfer.style.display = 'none';
+                    const buktiTransfer = document.getElementById('bukti_transfer');
+                    if (buktiTransfer) {
+                        buktiTransfer.value = '';
+                        const existingPreview = document.getElementById('bukti_preview');
+                        if (existingPreview) {
+                            existingPreview.remove();
+                        }
+                        if (fileInputLabel) {
+                            fileInputLabel.classList.remove('has-file');
+                            fileInputLabel.innerHTML = '📎 Klik untuk upload bukti transfer<div class="file-name" id="fileName"></div>';
+                        }
+                    }
+                }
+            });
+
+            if (metodeSetoran.value === 'transfer') {
+                grupBuktiTransfer.style.display = 'block';
+            }
+        }
+
+        const buktiTransferInput = document.getElementById('bukti_transfer');
+        if (buktiTransferInput && fileInputLabel) {
+            buktiTransferInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    fileInputLabel.classList.add('has-file');
+                    if (fileName) {
+                        fileName.textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+                    }
+
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                    const maxSize = 5 * 1024 * 1024;
+                    
+                    if (!allowedTypes.includes(file.type)) {
+                        tampilkanError('Format file tidak didukung. Gunakan JPG, PNG, PDF, atau DOC.');
+                        this.value = '';
+                        fileInputLabel.classList.remove('has-file');
+                        if (fileName) fileName.textContent = '';
+                        return;
+                    }
+                    
+                    if (file.size > maxSize) {
+                        tampilkanError('Ukuran file terlalu besar. Maksimal 5MB.');
+                        this.value = '';
+                        fileInputLabel.classList.remove('has-file');
+                        if (fileName) fileName.textContent = '';
+                        return;
+                    }
+                    
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const existingPreview = document.getElementById('bukti_preview');
+                            if (existingPreview) {
+                                existingPreview.remove();
+                            }
+                            
+                            const preview = document.createElement('div');
+                            preview.id = 'bukti_preview';
+                            preview.className = 'bukti-preview';
+                            preview.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview Bukti Transfer">
+                                <div class="preview-label">Preview Bukti Transfer</div>
+                            `;
+                            
+                            buktiTransferInput.parentNode.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        const existingPreview = document.getElementById('bukti_preview');
+                        if (existingPreview) {
+                            existingPreview.remove();
+                        }
+                    }
+                } else {
+                    fileInputLabel.classList.remove('has-file');
+                    if (fileName) fileName.textContent = '';
+                    
+                    const existingPreview = document.getElementById('bukti_preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
+                }
+            });
         }
 
         updateSaldoTersedia();
@@ -543,6 +643,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const jenis = document.getElementById('jenis_setoran');
                 const metode = document.getElementById('metode_setoran');
                 const keterangan = document.getElementById('keterangan_setoran');
+                const buktiTransfer = document.getElementById('bukti_transfer');
 
                 if (!jumlah || !jenis || !metode || !keterangan) {
                     e.preventDefault();
@@ -559,6 +660,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     e.preventDefault();
                     tampilkanError('Semua field bertanda * harus diisi.');
                     return;
+                }
+
+                if (nilaiMetode === 'transfer') {
+                    if (!buktiTransfer || !buktiTransfer.files || !buktiTransfer.files[0]) {
+                        e.preventDefault();
+                        tampilkanError('Bukti transfer wajib diupload untuk metode transfer.');
+                        if (buktiTransfer) buktiTransfer.focus();
+                        return;
+                    }
                 }
 
                 const jumlahNumerik = parseRupiah(nilaiJumlah);
@@ -595,6 +705,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
     function inisialisasiNavigasiKeyboard() {
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key >= '1' && e.key <= '3') {
@@ -618,7 +736,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const draf = JSON.parse(drafTersimpan);
                 Object.keys(draf).forEach(key => {
                     const element = document.querySelector(`[name="${key}"]`);
-                    if (element && element.type !== 'password') {
+                    if (element && element.type !== 'password' && element.type !== 'file') {
                         element.value = draf[key];
                     }
                 });
@@ -635,11 +753,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         elemenForm.forEach(element => {
-            if (element.name && element.type !== 'password') {
+            if (element.name && element.type !== 'password' && element.type !== 'file') {
                 element.addEventListener('input', debounce(function() {
                     const dataForm = {};
                     elemenForm.forEach(el => {
-                        if (el.name && el.type !== 'password') {
+                        if (el.name && el.type !== 'password' && el.type !== 'file') {
                             dataForm[el.name] = el.value;
                         }
                     });
@@ -676,7 +794,7 @@ document.addEventListener("DOMContentLoaded", function () {
             inisialisasiPengirimanForm();
             inisialisasiRefreshCashdrawer();
             inisialisasiPenanganModal();
-            inisialisasiFormSetoran();
+            inisialisasiFormSetoran(); 
             inisialisasiNavigasiKeyboard();
             inisialisasiSimpanOtomatis();
             

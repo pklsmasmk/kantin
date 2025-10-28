@@ -12,48 +12,6 @@
     <link rel="stylesheet" href="../CSS/modal.css" />
     <link rel="stylesheet" href="../CSS/tambahan.css" />
     <link rel="stylesheet" href="../CSS/tambahan_histori.css" />
-    <style>
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group strong {
-            display: block;
-            padding: 12px 14px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 15px;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .form-group strong:hover {
-            border-color: var(--primary-color);
-            box-shadow: 0 4px 12px rgba(139, 115, 85, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .form-group {
-                margin-bottom: 16px;
-            }
-            
-            .form-group strong {
-                padding: 10px 12px;
-                font-size: 14px;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="container" role="main" aria-label="Halaman Shift Kasir">
@@ -271,7 +229,7 @@
                 </div>
 
                 <div class="setoran-form-section">
-                    <form method="POST" class="setoran-form" novalidate>
+                    <form method="POST" class="setoran-form" novalidate enctype="multipart/form-data">
                         <input type="hidden" name="setoran_action" value="add">
                         
                         <div class="form-grid">
@@ -315,13 +273,26 @@
                         <div class="form-group">
                             <label for="keterangan_setoran">Keterangan Setoran *</label>
                             <textarea id="keterangan_setoran" name="keterangan_setoran" rows="3" 
-                                      placeholder="Contoh: Setoran penjualan harian tanggal..." required <?= !$can_setor ? 'disabled' : '' ?>></textarea>
+                                    placeholder="Contoh: Setoran penjualan harian tanggal..." required <?= !$can_setor ? 'disabled' : '' ?>></textarea>
                         </div>
 
                         <div class="form-group" id="detail_lainnya_group" style="display: none;">
                             <label for="detail_lainnya">Detail Tambahan</label>
                             <input type="text" id="detail_lainnya" name="detail_lainnya" 
-                                   placeholder="Masukkan detail tambahan..." <?= !$can_setor ? 'disabled' : '' ?>>
+                                placeholder="Masukkan detail tambahan..." <?= !$can_setor ? 'disabled' : '' ?>>
+                        </div>
+
+                        <div class="form-group" id="bukti_transfer_group" style="display: none;">
+                            <label for="bukti_transfer">Upload Bukti Transfer *</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="bukti_transfer" name="bukti_transfer" 
+                                    accept="image/*,.pdf,.doc,.docx" <?= !$can_setor ? 'disabled' : '' ?>>
+                                <label for="bukti_transfer" class="file-input-label" id="fileInputLabel">
+                                    📎 Klik untuk upload bukti transfer
+                                    <div class="file-name" id="fileName"></div>
+                                </label>
+                            </div>
+                            <small>Format: JPG, PNG, PDF, DOC (Maks. 5MB)</small>
                         </div>
 
                         <button type="submit" class="submit-btn setoran-submit" <?= !$can_setor ? 'disabled' : '' ?>>
@@ -335,7 +306,7 @@
                         <?php if (!$can_setor && $saldo_akhir_riwayat > 0): ?>
                             <div class="isi-ulang-info">
                                 <small><strong>Tidak ada saldo tersisa untuk disetor. </strong> Silakan mulai shift baru untuk menambah saldo.</small>
-                        </div>
+                            </div>
                         <?php elseif (!$can_setor): ?>
                             <div class="warning-message">
                                 <small>Tidak ada saldo, silahkan mulai shift terlebih dahulu</small>

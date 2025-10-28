@@ -16,20 +16,17 @@ class RekapDetailManager {
     }
 
     setupEventListeners() {
-        // Handle klik pada transaction items
         document.addEventListener('click', (e) => {
             this.handleTransactionClick(e);
             this.handleActionButtonClick(e);
         });
 
-        // Handle klik di luar modal untuk menutup
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 this.closeAllModals();
             }
         });
 
-        // Handle ESC key untuk menutup modal
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeAllModals();
@@ -76,7 +73,6 @@ class RekapDetailManager {
         const transactionItem = event.target.closest('.transaction-item');
         if (!transactionItem) return;
 
-        // Jangan toggle actions jika klik pada action button
         if (event.target.closest('.btn-action')) return;
 
         const index = transactionItem.getAttribute('data-index');
@@ -84,7 +80,6 @@ class RekapDetailManager {
     }
 
     handleActionButtonClick(event) {
-        // Hanya handle edit button (hapus sudah dihapus)
         if (event.target.closest('.btn-edit')) {
             event.stopPropagation();
             const button = event.target.closest('.btn-edit');
@@ -97,12 +92,10 @@ class RekapDetailManager {
         const actionsElement = document.getElementById(`actions-${index}`);
         if (!actionsElement) return;
 
-        // Tutup actions yang sebelumnya terbuka
         if (this.currentOpenActions && this.currentOpenActions !== actionsElement) {
             this.currentOpenActions.style.display = 'none';
         }
 
-        // Toggle actions saat ini
         if (actionsElement.style.display === 'flex') {
             actionsElement.style.display = 'none';
             this.currentOpenActions = null;
@@ -120,12 +113,10 @@ class RekapDetailManager {
 
         const transaksi = window.transaksiData[index];
         
-        // Isi form edit dengan data transaksi
         document.getElementById('edit_id').value = transaksi.id;
         document.getElementById('edit_jumlah').value = Math.abs(transaksi.nominal).toLocaleString('id-ID');
         document.getElementById('edit_catatan').value = transaksi.keterangan;
         
-        // Tentukan jenis transaksi untuk select option
         let aksiValue;
         if (transaksi.tipe === 'Penjualan Tunai') {
             aksiValue = 'penjualan';
@@ -141,17 +132,14 @@ class RekapDetailManager {
         
         document.getElementById('edit_aksi').value = aksiValue;
 
-        // Tampilkan modal edit
         this.showModal('editModal');
 
-        // Tutup actions jika terbuka
         if (this.currentOpenActions) {
             this.currentOpenActions.style.display = 'none';
             this.currentOpenActions = null;
         }
     }
 
-    // HAPUS METHOD deleteTransaction - TIDAK DIPERLUKAN LAGI
 
     setupFormValidation() {
         const addForm = document.getElementById('addForm');
@@ -176,7 +164,6 @@ class RekapDetailManager {
         const jumlahInput = form.querySelector('input[name="jumlah"]');
         const catatanInput = form.querySelector('textarea[name="catatan"]');
 
-        // Validasi jumlah
         if (jumlahInput) {
             const jumlahValue = jumlahInput.value.trim();
             const jumlahClean = jumlahValue.replace(/[^\d]/g, '');
@@ -188,11 +175,9 @@ class RekapDetailManager {
                 return false;
             }
 
-            // Set nilai clean ke hidden field atau langsung ke input
             jumlahInput.value = jumlahClean;
         }
 
-        // Validasi keterangan
         if (catatanInput && !catatanInput.value.trim()) {
             event.preventDefault();
             alert('Keterangan harus diisi');
@@ -211,7 +196,6 @@ class RekapDetailManager {
             modal.style.justifyContent = 'center';
             document.body.style.overflow = 'hidden';
             
-            // Focus ke input pertama
             const firstInput = modal.querySelector('input, textarea, select');
             if (firstInput) {
                 setTimeout(() => firstInput.focus(), 100);
@@ -225,7 +209,6 @@ class RekapDetailManager {
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
             
-            // Reset form
             const form = modal.querySelector('form');
             if (form) form.reset();
         }
@@ -236,7 +219,6 @@ class RekapDetailManager {
         this.hideModal('editModal');
         this.hideModal('mainTransactionModal');
         
-        // Tutup transaction actions
         if (this.currentOpenActions) {
             this.currentOpenActions.style.display = 'none';
             this.currentOpenActions = null;
@@ -259,7 +241,6 @@ class RekapDetailManager {
     }
 }
 
-// Fungsi global untuk dipanggil dari HTML
 function openAddModal() {
     if (window.rekapManager) {
         window.rekapManager.showModal('addModal');
@@ -290,25 +271,21 @@ function closeEditModal() {
     }
 }
 
-// Fungsi untuk membuka modal edit dari inline onclick
 function openEditModal(index) {
     if (window.rekapManager) {
         window.rekapManager.openEditModal(index);
     }
 }
 
-// Inisialisasi ketika DOM siap
 document.addEventListener('DOMContentLoaded', function() {
     window.rekapManager = new RekapDetailManager();
     
-    // Handle klik di luar modal untuk menutup
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
             window.rekapManager.closeAllModals();
         }
     });
 
-    // Handle ESC key untuk menutup modal
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             window.rekapManager.closeAllModals();
@@ -316,7 +293,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Fallback untuk browser lama
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = RekapDetailManager;
 }
