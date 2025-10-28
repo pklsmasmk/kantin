@@ -256,7 +256,7 @@ session_start();
       once: true
     });
   </script>
-  <!-- <script src="js/bayar_index.js"></script> -->
+  <script src="js/bayar_index.js"></script>
       <?php
     include("config/pilihanappjs.php");
     ?>

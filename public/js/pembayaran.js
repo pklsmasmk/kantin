@@ -1,10 +1,4 @@
-  console.log("aaaa");
-  console.log(localStorage);
 $(document).ready(function () {
-
-  console.log("bbbb");
-  console.log(localStorage);
-
   const subtotal = parseInt(localStorage.getItem("currentSubtotal")) || 0;
   const disc = parseInt(localStorage.getItem("currentDiscount")) || 0;
   const tax = parseInt(localStorage.getItem("currentTax")) || 0;
@@ -12,6 +6,12 @@ $(document).ready(function () {
 
   let bayar = "";
   let sedangInput = false;
+
+  console.log("📊 Data dari localStorage:");
+  console.log("Subtotal:", subtotal);
+  console.log("Discount:", disc);
+  console.log("Tax:", tax);
+  console.log("Grand Total:", grandTotal);
 
   $("#subtotal").text(subtotal.toLocaleString("id-ID"));
   $("#disc").text(disc.toLocaleString("id-ID"));
@@ -98,7 +98,10 @@ $(document).ready(function () {
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-    console.log("🔍 Data items yang akan dikirim:", makananList);
+    console.log("🔍 Data untuk konfirmasi:");
+    console.log("Grand Total dari localStorage:", grandTotal);
+    console.log("Bayar Final:", bayarFinal);
+    console.log("Items:", makananList);
 
     if (metode === "Piutang") {
       if (!pelanggan) {
@@ -106,14 +109,16 @@ $(document).ready(function () {
         return;
       }
 
+      const totalPiutang = grandTotal;
+
       localStorage.setItem("pendingPiutangNama", pelanggan);
-      localStorage.setItem("pendingPiutangTotal", grandTotal);
+      localStorage.setItem("pendingPiutangTotal", totalPiutang);
       localStorage.setItem("pendingPiutangKet", keterangan || "-");
 
       const piutangList = JSON.parse(localStorage.getItem("piutangList")) || [];
       piutangList.push({
         nama: pelanggan,
-        total: grandTotal,
+        total: totalPiutang,
         tanggal: new Date().toLocaleString("id-ID"),
         keterangan: keterangan || "-",
         makanan: makananList,
@@ -124,7 +129,7 @@ $(document).ready(function () {
       const dataKirim = {
         nama: pelanggan,
         metode,
-        total: grandTotal,
+        total: totalPiutang,
         keterangan: keterangan || "-",
         status: "Piutang",
         items: makananList,
@@ -168,7 +173,11 @@ $(document).ready(function () {
     }
 
     if (bayarFinal < grandTotal) {
-      alert("Uang tidak cukup!");
+      alert(
+        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString(
+          "id-ID"
+        )}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
+      );
       return;
     }
 
@@ -202,19 +211,21 @@ $(document).ready(function () {
         console.log("✅ Respon server:", res);
         if (res && res.status === "success") {
           alert(
-            `✅ Pembayaran Berhasil!\nMetode: ${metode}\nKembalian: Rp ${kembalian.toLocaleString(
+            `✅ Pembayaran Berhasil!\nTotal: Rp ${grandTotal.toLocaleString(
               "id-ID"
-            )}`
+            )}\nDibayar: Rp ${bayarFinal.toLocaleString(
+              "id-ID"
+            )}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
           );
           localStorage.clear();
-          window.location.href = "../index.php";
+          window.location.href = "/?q=penjualan";
         } else {
           alert("⚠️ Data gagal disimpan di server!");
         }
       },
       error: function (xhr) {
         alert("❌ Gagal menyimpan data penjualan!");
-
+        console.error(xhr.responseText);
       },
       complete: function () {
         $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");
