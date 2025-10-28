@@ -500,12 +500,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
             ];
             $_SESSION["show_confirmation"] = true;
         } else {
-            $saldo_akhir = $saldo_warisan + $saldo_value;
-            
-            $_SESSION = [
+            $shift = [
                 "id"         => uniqid("shift_", true),
-                "nama"       => "namalengkap", 
-                "role"       => "nama",
+                "nama"       => $_SESSION['namalengkap'] ?? "namalengkap", 
+                "role"       => $_SESSION['nama'] ?? "nama",
                 "cashdrawer" => $cashdrawer,
                 "saldo_awal" => $saldo_value, 
                 "saldo_akhir" => $saldo_akhir,
@@ -515,6 +513,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
 
             $_SESSION["shift_current"] = $shift;
             $_SESSION["transaksi"] = [];
+            
+            if (!isset($_SESSION["shift_history"]) || !is_array($_SESSION["shift_history"])) {
+                $_SESSION["shift_history"] = [];
+            }
             array_unshift($_SESSION["shift_history"], $shift);
             
             save_shift_data($pdo, $shift);
@@ -524,7 +526,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !isset($_POST['setoran_action'])) {
             unset($_SESSION["show_confirmation"]);
 
             $_SESSION["success"] = "Shift berhasil dimulai! Saldo awal: " . format_rupiah($saldo_value) . 
-                                 ($saldo_warisan > 0 ? " + Warisan: " . format_rupiah($saldo_warisan) : "");
+                                ($saldo_warisan > 0 ? " + Warisan: " . format_rupiah($saldo_warisan) : "");
         }
     }
 
