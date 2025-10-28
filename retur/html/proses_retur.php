@@ -1,56 +1,55 @@
 <?php
+header('Content-Type: application/json');
 include '../Database/config.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo "Method not allowed";
-    exit;
+try {
+
+    $barang_id = intval($_POST['barang_id'] ?? 0);
+    $jumlah = intval($_POST['jumlah'] ?? 0);
+    $alasan = $_POST['alasan'] ?? '';
+    $alasan_lainnya = $_POST['alasan_lainnya'] ?? '';
+    $keterangan = $_POST['keterangan'] ?? '';
+
+    if ($barang_id <= 0 || $jumlah <= 0) {
+        throw new Exception('Data tidak valid');
+    }
+
+    // Cek stok tersedia
+    $check_sql = "SELECT nama, stok FROM stok_barang WHERE id = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->execute([$barang_id]);
+    $barang = $check_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$barang) {
+        throw new Exception('Barang tidak ditemukan');
+    }
+
+    if ($jumlah > $barang['stok']) {
+        throw new Exception('Jumlah retur melebihi stok tersedia');
+    }
+
+    // Kurangi stok
+    $update_sql = "UPDATE stok_barang SET stok = stok - ? WHERE id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->execute([$jumlah, $barang_id]);
+
+    // Simpan data retur
+    $retur_sql = "INSERT INTO retur_barang (barang_id, jumlah, alasan, alasan_lainnya, keterangan) 
+                  VALUES (?, ?, ?, ?, ?)";
+    $retur_stmt = $conn->prepare($retur_sql);
+    $retur_stmt->execute([$barang_id, $jumlah, $alasan, $alasan_lainnya, $keterangan]);
+
+    // Catat di riwayat
+    $riwayat_sql = "INSERT INTO riwayat_transaksi (jenis_transaksi, barang_id, nama_barang, keterangan, perubahan_stok) 
+                   VALUES ('Retur', ?, ?, ?, ?)";
+    $riwayat_stmt = $conn->prepare($riwayat_sql);
+    $keterangan_riwayat = "Retur {$jumlah} pcs - {$alasan}" . ($alasan_lainnya ? " - {$alasan_lainnya}" : "");
+    $perubahan_stok = -$jumlah;
+    $riwayat_stmt->execute([$barang_id, $barang['nama'], $keterangan_riwayat, $perubahan_stok]);
+
+    echo json_encode(['status' => 'success', 'message' => 'Retur berhasil diproses']);
+
+} catch (Exception $e) {
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
-
-$barang_id = isset($_POST['barang_id']) ? (int)$_POST['barang_id'] : 0;
-$jumlah = isset($_POST['jumlah']) ? (int)$_POST['jumlah'] : 0;
-$alasan = isset($_POST['alasan']) ? trim($_POST['alasan']) : '';
-
-if ($barang_id <= 0 || $jumlah <= 0) {
-    echo "error: input tidak valid";
-    exit;
-}
-
-// Ambil stok sekarang
-$stmt = $conn->prepare("SELECT stok, tipe FROM db_stok WHERE id = ?");
-$stmt->bind_param("i", $barang_id);
-$stmt->execute();
-$res = $stmt->get_result();
-
-if ($res->num_rows === 0) {
-    echo "error: barang tidak ditemukan";
-    exit;
-}
-
-$row = $res->fetch_assoc();
-$current_stok = (int)$row['stok'];
-$tipe = $row['tipe'];
-$stmt->close();
-
-if ($jumlah > $current_stok) {
-    echo "error: jumlah retur melebihi stok";
-    exit;
-}
-
-// Kurangi stok
-$new_stok = $current_stok - $jumlah;
-$stmt = $conn->prepare("UPDATE db_stok SET stok=? WHERE id=?");
-$stmt->bind_param("ii", $new_stok, $barang_id);
-$stmt->execute();
-$stmt->close();
-
-// (opsional) catat ke riwayat retur
-$stmt = $conn->prepare("INSERT INTO riwayat_transaksi (tanggal, nama_barang, jenis_transaksi, keterangan)
-                        VALUES (NOW(), ?, 'Retur', ?)");
-$stmt->bind_param("ss", $tipe, $alasan);
-$stmt->execute();
-$stmt->close();
-
-echo "success";
-$conn->close();
 ?>

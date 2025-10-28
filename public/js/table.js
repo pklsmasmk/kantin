@@ -2,212 +2,469 @@
 let items = [];
 let currentEditId = null;
 
+// ======== DEBUGGING =========
+function debugElements() {
+    const criticalElements = [
+        'itemForm', 'inputNama', 'inputTipe', 'inputPemasok', 
+        'inputStok', 'inputHargaDasar', 'inputHargaJual',
+        'dataListContainer', 'filterTipe', 'returBarang'
+    ];
+    
+    console.group('🔍 Debug Elements');
+    criticalElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`${element ? '✅' : '❌'} ${id}:`, element);
+    });
+    console.groupEnd();
+}
+
+// ======== TAB MANAGEMENT =========
+function showTab(tabId) {
+    console.log(`🔄 Pindah ke tab: ${tabId}`);
+    
+    // Cara yang paling pasti - langsung klik element tabnya
+    const tabElement = document.querySelector(`[data-bs-target="${tabId}"]`);
+    if (tabElement) {
+        tabElement.click();
+        console.log(`✅ Berhasil klik tab ${tabId}`);
+    } else {
+        console.error(`❌ Tab element tidak ditemukan: ${tabId}`);
+    }
+}
+
+function updateModeIndicator(isEdit = false, itemName = '') {
+    const modeContainer = getElement('modeAksiContainer');
+    if (!modeContainer) return;
+    
+    if (isEdit) {
+        modeContainer.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-edit"></i> <strong>Mode Edit:</strong> Anda sedang mengedit data barang "<strong>${itemName}</strong>"
+            </div>
+        `;
+    } else {
+        modeContainer.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-plus"></i> <strong>Mode Tambah:</strong> Anda sedang menambah barang baru
+            </div>
+        `;
+    }
+}
+
 // ======== ELEMENTS =========
 function getElement(id) {
     const element = document.getElementById(id);
     if (!element) {
-        console.warn(`⚠️ Element dengan id '${id}' tidak ditemukan`);
+        console.error(`❌ Element dengan id '${id}' tidak ditemukan!`);
     }
     return element;
 }
 
 // ======== HELPERS =========
 function showModal(message) {
-    // Gunakan modal yang sudah ada di HTML
-    document.getElementById('modalMessage').textContent = message;
-    $('#messageModal').modal('show');
+    const modalMessage = getElement('modalMessage');
+    if (modalMessage) {
+        modalMessage.textContent = message;
+        $('#messageModal').modal('show');
+    } else {
+        alert(message);
+    }
 }
 
 function formatCurrency(num) {
-    if (!num) return 'Rp 0';
-    return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const number = parseInt(num) || 0;
+    return 'Rp ' + number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 // ======== DATA FUNCTIONS =========
 function loadItems() {
     console.log("🔄 Memuat data dari server...");
     
-    fetch('/?q=retur__tampilstok')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('HTTP error! status: ' + response.status);
-            }
-            return response.json();
-        })
+    fetch('tampil_stok.php')
+        .then(response => response.json())
         .then(data => {
-            console.log("✅ Data diterima:", data);
-            items = data;
-            renderItems();
+            console.log("✅ Data JSON:", data);
+            if (Array.isArray(data)) {
+                items = data;
+                renderItems();
+            } else {
+                throw new Error('Format data tidak valid - bukan array');
+            }
         })
         .catch(error => {
             console.error("❌ Gagal memuat data:", error);
-            showModal('Gagal memuat data dari server: ' + error.message);
+            showModal('Gagal memuat data: ' + error.message);
+            items = [];
+            renderItems();
+        });
+}
+
+// ======== FUNGSI UNTUK TAB RETUR =========
+function loadDaftarBarang() {
+    console.log("🔄 Memuat daftar barang untuk retur...");
+    
+    fetch('ambil_daftar_barang.php')
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Data daftar barang:", data);
+            const select = getElement('returBarang');
+            if (!select) return;
+            
+            if (data.success && Array.isArray(data.data)) {
+                select.innerHTML = '<option value="">-- Pilih Barang --</option>';
+                data.data.forEach(barang => {
+                    if (!barang.id || !barang.nama) return;
+                    
+                    const stok = parseInt(barang.stok) || 0;
+                    if (stok > 0) {
+                        const option = document.createElement('option');
+                        option.value = barang.id;
+                        option.textContent = `${barang.nama} (Stok: ${stok})`;
+                        option.setAttribute('data-stok', stok);
+                        select.appendChild(option);
+                    }
+                });
+                
+                if (select.options.length === 1) {
+                    select.innerHTML = '<option value="">-- Tidak ada barang dengan stok --</option>';
+                }
+            } else {
+                select.innerHTML = '<option value="">-- Error memuat data --</option>';
+            }
+        })
+        .catch(error => {
+            console.error('❌ Gagal memuat daftar barang:', error);
+            const select = getElement('returBarang');
+            if (select) {
+                select.innerHTML = '<option value="">-- Error memuat data --</option>';
+            }
+        });
+}
+
+function validateJumlahRetur() {
+    const selectedOption = document.querySelector('#returBarang option:selected');
+    if (!selectedOption || !selectedOption.value) return true;
+    
+    const maxStok = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+    const jumlahRetur = parseInt(getElement('returJumlah').value) || 0;
+    
+    if (jumlahRetur > maxStok) {
+        showModal(`Jumlah retur tidak boleh melebihi stok yang tersedia (${maxStok})`);
+        getElement('returJumlah').value = maxStok;
+        return false;
+    }
+    return true;
+}
+
+function handleAlasanReturChange() {
+    const alasan = getElement('returAlasan').value;
+    const container = getElement('alasanLainnyaContainer');
+    const inputAlasanLainnya = getElement('returAlasanLainnya');
+    
+    if (container && inputAlasanLainnya) {
+        if (alasan === 'Lainnya') {
+            container.style.display = 'block';
+            inputAlasanLainnya.required = true;
+        } else {
+            container.style.display = 'none';
+            inputAlasanLainnya.required = false;
+            inputAlasanLainnya.value = '';
+        }
+    }
+}
+
+function handleReturSubmit() {
+    const barangSelect = getElement('returBarang');
+    const selectedOption = barangSelect.options[barangSelect.selectedIndex];
+    
+    if (!selectedOption || !selectedOption.value) {
+        return showModal('Pilih barang terlebih dahulu!');
+    }
+    
+    const maxStok = parseInt(selectedOption.getAttribute('data-stok')) || 0;
+    
+    const formData = {
+        barang_id: parseInt(barangSelect.value),
+        jumlah: parseInt(getElement('returJumlah').value) || 0,
+        alasan: getElement('returAlasan').value,
+        alasan_lainnya: getElement('returAlasanLainnya').value,
+        keterangan: getElement('returKeterangan').value
+    };
+
+    // Validasi
+    if (!formData.barang_id) return showModal('Pilih barang terlebih dahulu!');
+    if (formData.jumlah <= 0) return showModal('Jumlah retur harus lebih dari 0!');
+    if (formData.jumlah > maxStok) return showModal(`Jumlah retur melebihi stok tersedia (${maxStok})!`);
+    if (!formData.alasan) return showModal('Pilih alasan retur!');
+    if (formData.alasan === 'Lainnya' && !formData.alasan_lainnya) {
+        return showModal('Harap isi alasan retur lainnya!');
+    }
+
+    if (!confirm('Apakah Anda yakin ingin memproses retur barang ini?')) {
+        return;
+    }
+
+    fetch('proses_retur.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showModal('Retur berhasil diproses!');
+            // Reset form retur
+            getElement('returBarang').value = '';
+            getElement('returJumlah').value = '';
+            getElement('returAlasan').value = '';
+            getElement('returAlasanLainnya').value = '';
+            getElement('returKeterangan').value = '';
+            getElement('alasanLainnyaContainer').style.display = 'none';
+            
+            // Refresh data
+            loadDaftarBarang();
+            loadItems();
+            loadRiwayatRetur();
+        } else {
+            showModal('Error: ' + (data.message || 'Gagal memproses retur!'));
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        showModal('Gagal memproses retur: ' + error.message);
+    });
+}
+
+function loadRiwayatRetur() {
+    fetch('riwayat_retur.php')
+        .then(response => response.json())
+        .then(data => {
+            const container = getElement('riwayatReturContainer');
+            if (!container) return;
+
+            if (!Array.isArray(data) || data.length === 0 || data.message) {
+                container.innerHTML = '<div class="col-12 text-center text-muted"><p>Belum ada riwayat retur</p></div>';
+                return;
+            }
+
+            container.innerHTML = data.map(retur => `
+                <div class="col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <strong>${retur.nama_barang}</strong>
+                            <span class="float-end badge bg-danger">${retur.jumlah} pcs</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Alasan:</strong> ${retur.alasan}</p>
+                            <p><strong>Keterangan:</strong> ${retur.keterangan || '-'}</p>
+                            <p><strong>Tanggal:</strong> ${new Date(retur.tanggal).toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Gagal memuat riwayat retur:', error);
+        });
+}
+
+// ======== FUNGSI UNTUK TAB RIWAYAT =========
+function loadRiwayatTransaksi() {
+    fetch('tampil_riwayat.php')
+        .then(response => response.json())
+        .then(data => {
+            const container = getElement('historyListContainer');
+            if (!container) return;
+
+            if (!Array.isArray(data) || data.length === 0 || data.message) {
+                container.innerHTML = '<div class="col-12 text-center text-muted"><p>Belum ada riwayat transaksi</p></div>';
+                return;
+            }
+
+            container.innerHTML = data.map(transaksi => `
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>${transaksi.jenis_transaksi}</strong>
+                            <span class="float-end text-muted small">${new Date(transaksi.tanggal).toLocaleString()}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Barang:</strong> ${transaksi.nama_barang}</p>
+                            <p><strong>Keterangan:</strong> ${transaksi.keterangan || '-'}</p>
+                            ${transaksi.perubahan_stok !== 0 ? 
+                                `<p><strong>Perubahan Stok:</strong> 
+                                 <span class="${transaksi.perubahan_stok > 0 ? 'text-success' : 'text-danger'}">
+                                 ${transaksi.perubahan_stok > 0 ? '+' : ''}${transaksi.perubahan_stok}
+                                 </span></p>` : ''
+                            }
+                            <p><strong>User:</strong> ${transaksi.user || 'Admin'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Gagal memuat riwayat:', error);
+            showModal('Gagal memuat riwayat transaksi');
         });
 }
 
 // ======== FORM SUBMISSION =========
 function handleSubmit(event) {
-    console.log("🎯 Submit dipanggil");
-    
-    if (event) {
-        event.preventDefault();
-    }
+    event.preventDefault();
+    console.log("🎯 Form submitted");
 
-    // AMBIL NILAI DENGAN ID YANG BENAR
-    const nama = getElement('inputNama')?.value.trim();
-    const tipe = getElement('inputTipe')?.value;
-    const pemasok = getElement('inputPemasok')?.value.trim();
-    const stok = parseInt(getElement('inputStok')?.value) || 0;
-    const hargaDasar = parseInt(getElement('inputHargaDasar')?.value) || 0;
-    const hargaJual = parseInt(getElement('inputHargaJual')?.value) || 0;
-
-    console.log("📝 Data form:", { nama, tipe, pemasok, stok, hargaDasar, hargaJual });
+    const formData = {
+        nama: getElement('inputNama')?.value.trim(),
+        tipe: getElement('inputTipe')?.value,
+        pemasok: getElement('inputPemasok')?.value.trim(),
+        stok: parseInt(getElement('inputStok')?.value) || 0,
+        hargaDasar: parseInt(getElement('inputHargaDasar')?.value) || 0,
+        hargaJual: parseInt(getElement('inputHargaJual')?.value) || 0
+    };
 
     // Validasi
-    if (!nama || !tipe || !pemasok || stok < 0 || hargaDasar < 0 || hargaJual < 0) {
-        showModal('Mohon isi semua field dengan benar!');
-        return;
-    }
+    if (!formData.nama) return showModal('Nama barang harus diisi!');
+    if (!formData.tipe) return showModal('Tipe barang harus dipilih!');
+    if (!formData.pemasok) return showModal('Pemasok harus diisi!');
 
-    // Siapkan data untuk dikirim ke PHP
-    const formData = new FormData();
-    formData.append('nama', nama);
-    formData.append('tipe', tipe);
-    formData.append('pemasok', pemasok);
-    formData.append('stok', stok);
-    formData.append('harga_dasar', hargaDasar);
-    formData.append('harga_jual', hargaJual);
+    sendToServer(formData);
+}
+
+function sendToServer(formData) {
+    const phpData = new FormData();
+    phpData.append('nama', formData.nama);
+    phpData.append('tipe', formData.tipe);
+    phpData.append('pemasok', formData.pemasok);
+    phpData.append('stok', formData.stok);
+    phpData.append('harga_dasar', formData.hargaDasar);
+    phpData.append('harga_jual', formData.hargaJual);
 
     const url = currentEditId ? 'update_stok.php' : 'insert_stok.php';
-    
-    if (currentEditId) {
-        formData.append('id', currentEditId);
-        console.log("✏️ Mode EDIT, ID:", currentEditId);
-    } else {
-        console.log("➕ Mode TAMBAH BARU");
-    }
+    if (currentEditId) phpData.append('id', currentEditId);
 
-    console.log("📤 Mengirim ke:", url);
-
-    // Kirim data ke PHP
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        console.log("📨 Response status:", response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log("📊 Response data:", data);
-        if (data.status === 'success') {
-            showModal(currentEditId ? 'Data berhasil diperbarui!' : 'Barang baru berhasil disimpan!');
-            loadItems(); // Reload data
-            resetForm();
-            
-            // Switch ke tab stok setelah simpan
-            $('a[href="#tabStok"]').tab('show');
-        } else {
-            showModal('Error: ' + (data.message || 'Terjadi kesalahan'));
-        }
-    })
-    .catch(error => {
-        console.error('❌ Fetch error:', error);
-        showModal('Gagal mengirim data ke server');
-    });
+    fetch(url, { method: 'POST', body: phpData })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showModal(currentEditId ? 'Data berhasil diperbarui!' : 'Barang berhasil disimpan!');
+                loadItems();
+                resetForm();
+                // Kembali ke tab Stok setelah berhasil
+                setTimeout(() => showTab('#tabStok'), 1000);
+            } else {
+                showModal('Error: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('❌ Fetch error:', error);
+            showModal('Gagal mengirim data: ' + error.message);
+        });
 }
 
 function resetForm() {
     console.log("🔄 Reset form");
     currentEditId = null;
-    const itemForm = getElement('itemForm');
-    if (itemForm) {
-        itemForm.reset();
-    }
+    const form = getElement('itemForm');
+    if (form) form.reset();
+    updateModeIndicator(false);
 }
 
 // ======== RENDERING =========
 function renderItems() {
-    const dataListContainer = getElement('dataListContainer');
-    
-    if (!dataListContainer) {
-        console.error("❌ dataListContainer tidak ditemukan!");
+    const container = getElement('dataListContainer');
+    if (!container) {
+        console.error("❌ Container tidak ditemukan!");
         return;
     }
 
-    console.log("🎨 Render items:", items);
+    const filterTipe = getElement('filterTipe')?.value;
+    let filteredItems = items;
+    
+    if (filterTipe && filterTipe !== 'Semua') {
+        filteredItems = items.filter(item => item.tipe === filterTipe);
+    }
 
-    if (!items || items.length === 0) {
-        dataListContainer.innerHTML = `
-            <div class="col-xs-12 text-center text-muted">
-                <p>Belum ada data barang.</p>
-                <p>Silakan tambah barang baru di tab "Restock/Tambah Barang".</p>
+    if (filteredItems.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center text-muted">
+                <p>${items.length === 0 ? 'Belum ada data barang.' : 'Tidak ada data yang sesuai filter.'}</p>
             </div>`;
         return;
     }
 
-    dataListContainer.innerHTML = '';
-    items.forEach(item => {
-        const col = document.createElement('div');
-        col.className = 'col-md-4 mb-3';
-        col.innerHTML = `
-            <div class="panel panel-default">
-                <div class="panel-heading">
+    container.innerHTML = filteredItems.map(item => `
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <strong>${item.nama || 'No Name'}</strong>
-                    <span class="pull-right badge">${item.tipe || 'No Type'}</span>
+                    <span class="badge ${getBadgeClass(item.tipe)}">${item.tipe || 'No Type'}</span>
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     <p><strong>Pemasok:</strong> ${item.pemasok || '-'}</p>
-                    <p><strong>Stok:</strong> ${item.stok || 0}</p>
+                    <p><strong>Stok:</strong> <span class="${item.stok <= 5 ? 'text-danger fw-bold' : ''}">${item.stok || 0}</span></p>
                     <p><strong>Harga Dasar:</strong> ${formatCurrency(item.harga_dasar)}</p>
                     <p><strong>Harga Jual:</strong> ${formatCurrency(item.harga_jual)}</p>
-                    <div class="btn-group btn-group-justified">
-                        <div class="btn-group">
-                            <button class="btn btn-warning btn-xs edit-btn" data-id="${item.id}">
-                                <i class="fa fa-edit"></i> Edit
-                            </button>
-                        </div>
-                        <div class="btn-group">
-                            <button class="btn btn-danger btn-xs delete-btn" data-id="${item.id}">
-                                <i class="fa fa-trash"></i> Hapus
-                            </button>
-                        </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-warning btn-sm edit-btn" data-id="${item.id}">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="${item.id}">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
                     </div>
                 </div>
             </div>
-        `;
-        dataListContainer.appendChild(col);
-    });
+        </div>
+    `).join('');
 
-    // Tambah event listeners untuk edit/delete buttons
-    setTimeout(() => {
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                editItem(id);
-            });
-        });
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                deleteItem(id);
-            });
-        });
-    }, 100);
+    attachItemEventListeners();
 }
 
+function getBadgeClass(tipe) {
+    const classes = {
+        'Makanan': 'bg-warning',
+        'Minuman': 'bg-info', 
+        'Alat Tulis': 'bg-primary',
+        'Lainnya': 'bg-secondary'
+    };
+    return classes[tipe] || 'bg-secondary';
+}
+
+function attachItemEventListeners() {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            console.log(`✏️ Tombol edit diklik untuk ID: ${id}`);
+            editItem(parseInt(id));
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            confirmDelete(parseInt(id));
+        });
+    });
+}
+
+// ======== FUNGSI EDIT ITEM YANG DIPERBAIKI =========
 function editItem(id) {
-    console.log("✏️ Edit item:", id);
-    const item = items.find(item => item.id == id);
+    console.log(`✏️ Memulai edit item dengan ID: ${id}`);
+    
+    const item = items.find(item => item.id === id);
     if (!item) {
-        showModal('Data tidak ditemukan!');
-        return;
+        console.error('❌ Item tidak ditemukan untuk ID:', id);
+        return showModal('Data tidak ditemukan!');
     }
 
+    console.log('✅ Item ditemukan:', item);
+    
     currentEditId = id;
     
-    // Isi form dengan data yang dipilih - GUNAKAN ID YANG BENAR
+    // Isi form dengan data yang akan diedit
     getElement('inputNama').value = item.nama || '';
     getElement('inputTipe').value = item.tipe || '';
     getElement('inputPemasok').value = item.pemasok || '';
@@ -215,94 +472,125 @@ function editItem(id) {
     getElement('inputHargaDasar').value = item.harga_dasar || 0;
     getElement('inputHargaJual').value = item.harga_jual || 0;
 
-    // Switch ke tab input
-    $('a[href="#tabInput"]').tab('show');
+    // Update mode indicator
+    updateModeIndicator(true, item.nama);
+    
+    // CARA YANG PASTI BEKERJA - langsung klik tab Input
+    console.log('🔄 Mengklik tab Input...');
+    const tabInput = document.getElementById('tabInput-tab');
+    if (tabInput) {
+        tabInput.click();
+        console.log('✅ Tab Input berhasil diklik');
+    } else {
+        console.error('❌ Tab Input tidak ditemukan');
+    }
 }
 
-function deleteItem(id) {
-    const item = items.find(item => item.id == id);
-    const itemName = item ? item.nama : 'item ini';
+function confirmDelete(id) {
+    const item = items.find(item => item.id === id);
+    const itemName = item?.nama || 'item ini';
     
-    document.getElementById('confirmMessage').textContent = `Apakah Anda yakin ingin menghapus "${itemName}"?`;
+    getElement('confirmMessage').textContent = `Hapus "${itemName}"?`;
+    getElement('confirmDeleteBtn').onclick = () => performDelete(id);
     $('#confirmModal').modal('show');
-    
-    // Set event listener untuk confirm delete
-    const confirmBtn = getElement('confirmDeleteBtn');
-    confirmBtn.onclick = function() {
-        performDelete(id);
-    };
 }
 
 function performDelete(id) {
-    console.log("🗑️ Delete item:", id);
-    
     const formData = new FormData();
     formData.append('id', id);
     
-    fetch('delete_stok.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Delete response:", data);
-        if (data.status === 'success') {
-            showModal('Data berhasil dihapus!');
-            loadItems();
-        } else {
-            showModal('Gagal menghapus: ' + data.message);
-        }
-        $('#confirmModal').modal('hide');
-    })
-    .catch(error => {
-        console.error('Delete error:', error);
-        showModal('Gagal menghapus data');
-        $('#confirmModal').modal('hide');
-    });
-}
-
-// ======== EVENT LISTENERS =========
-function initializeEventListeners() {
-    console.log("🔌 Initializing event listeners...");
-    
-    const itemForm = getElement('itemForm');
-    const resetBtn = getElement('resetBtn');
-
-    // Form submission - tangani submit button yang tidak punya ID
-    if (itemForm) {
-        itemForm.addEventListener('submit', handleSubmit);
-        console.log("✅ Form event listener added");
-    }
-    
-    // Reset button
-    if (resetBtn) {
-        resetBtn.addEventListener('click', resetForm);
-        console.log("✅ Reset button event listener added");
-    }
-    
-    // Filter
-    const filterTipe = getElement('filterTipe');
-    if (filterTipe) {
-        filterTipe.addEventListener('change', renderItems);
-        console.log("✅ Filter event listener added");
-    }
-    
-    console.log("🎉 All event listeners initialized");
+    fetch('delete_stok.php', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showModal('Data berhasil dihapus!');
+                loadItems();
+            } else {
+                showModal('Gagal menghapus: ' + data.message);
+            }
+            $('#confirmModal').modal('hide');
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            showModal('Gagal menghapus data');
+            $('#confirmModal').modal('hide');
+        });
 }
 
 // ======== INITIALIZATION =========
-function init() {
-    console.log("🚀 Aplikasi dimulai...");
+function initializeEventListeners() {
+    console.log("🔌 Initializing event listeners...");
     
-    // Tunggu sebentar untuk memastikan DOM siap
-    setTimeout(() => {
-        initializeEventListeners();
-        loadItems();
-        console.log("✅ Aplikasi siap!");
-    }, 100);
+    const form = getElement('itemForm');
+    const resetBtn = getElement('resetBtn');
+    const filterTipe = getElement('filterTipe');
+    const returBtn = getElement('submitReturBtn');
+    const resetReturBtn = getElement('resetReturBtn');
+    const returAlasan = getElement('returAlasan');
+    const returJumlah = getElement('returJumlah');
+    const returBarang = getElement('returBarang');
+
+    if (form) form.addEventListener('submit', handleSubmit);
+    if (resetBtn) resetBtn.addEventListener('click', resetForm);
+    if (filterTipe) filterTipe.addEventListener('change', renderItems);
+    
+    // Event listeners untuk retur
+    if (returBtn) returBtn.addEventListener('click', handleReturSubmit);
+    if (resetReturBtn) {
+        resetReturBtn.addEventListener('click', function() {
+            getElement('returBarang').value = '';
+            getElement('returJumlah').value = '';
+            getElement('returAlasan').value = '';
+            getElement('returAlasanLainnya').value = '';
+            getElement('returKeterangan').value = '';
+            getElement('alasanLainnyaContainer').style.display = 'none';
+        });
+    }
+    
+    if (returAlasan) returAlasan.addEventListener('change', handleAlasanReturChange);
+    if (returJumlah) returJumlah.addEventListener('input', validateJumlahRetur);
+    
+    if (returBarang) {
+        returBarang.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const maxStok = parseInt(selectedOption?.getAttribute('data-stok')) || 0;
+            
+            if (maxStok === 0 && selectedOption?.value) {
+                showModal('Stok barang ini habis, tidak dapat melakukan retur');
+                getElement('returJumlah').value = '';
+            }
+        });
+    }
+
+    // PERBAIKAN: Event listener untuk tab change yang benar
+    const tabElements = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabElements.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const target = e.target.getAttribute('data-bs-target');
+            console.log(`🔀 Switch to tab: ${target}`);
+            
+            if (target === '#tabStok') {
+                loadItems();
+            } else if (target === '#tabRetur') {
+                loadDaftarBarang();
+                loadRiwayatRetur();
+            } else if (target === '#tabRiwayat') {
+                loadRiwayatTransaksi();
+            }
+        });
+    });
 }
 
-// Start aplikasi ketika DOM siap
+function init() {
+    console.log("🚀 Starting application...");
+    debugElements();
+    initializeEventListeners();
+    loadItems();
+    updateModeIndicator(false);
+    console.log("✅ Application ready!");
+}
+
+// Start when ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {

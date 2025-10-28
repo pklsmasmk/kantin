@@ -9,6 +9,27 @@
       case 'retur__tampilstok':
         include("../retur/html/tampil_stok.php");
         break;
+      case 'retur__ambil_barang':
+        include("../retur/html/ambil_barang.php");
+        break;  
+      case 'retur__deletestok':
+        include("../retur/html/delete_stok.php");
+        break;
+      case 'retur__insertstok':
+        include("../retur/html/insert_stok.php");
+        break;
+      case 'retur__prosesretur':
+        include("../retur/html/proses_retur.php");
+        break;
+      case 'retur__riwayatretur':
+        include("../retur/html/riwayat_retur.php");
+        break;
+      case 'retur__tampilriwayat':
+        include("../retur/html/tampil_riwayat.php");
+        break;
+      case 'retur__updatestok':
+        include("../retur/html/update_stok.php");
+        break;  
       case 'shift':
         include("../shift/index.php");
         break;

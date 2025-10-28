@@ -1,18 +1,28 @@
 <?php
+header('Content-Type: application/json');
 include '../Database/config.php';
 
-$sql = "SELECT id, tipe FROM db_stok ORDER BY tipe";
-$result = $conn->query($sql);
+try {
+    $sql = "SELECT id, nama, stok, tipe, pemasok, harga_dasar, harga_jual 
+            FROM stok_barang 
+            WHERE stok >= 0 
+            ORDER BY nama";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $id = htmlspecialchars($row['id']);
-        $tipe = htmlspecialchars($row['tipe']);
-        echo "<option value='{$id}'>{$tipe}</option>";
-    }
-} else {
-    echo "<option value=''>-- Tidak ada data --</option>";
+    echo json_encode([
+        'success' => true,
+        'data' => $data
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'data' => []
+    ]);
 }
-
-$conn->close();
 ?>
