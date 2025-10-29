@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
 include "../Database/config.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -7,21 +10,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $passwordPlain = $_POST['password'];
     $passwordHash = password_hash($passwordPlain, PASSWORD_DEFAULT);
     $nama = 'karyawan';
+    $namalengkap = trim($_POST['namalengkap']);
 
-    // Cek apakah username atau email sudah digunakan
-    $cek = $pdo->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
-    $cek->execute([$username, $email]);
+    $cek = $pdo->prepare("SELECT * FROM users WHERE username = :username OR email = :email");
+    $cek->execute(['username' => $username, 'email' => $email]);
 
     if ($cek->rowCount() > 0) {
-        $pesan = "Username atau Email sudah digunakan!";
+        echo "<script>alert('Username atau Email sudah digunakan!'); window.location='/?q=daftar';</script>";
     } else {
-        $stmt = $pdo->prepare("INSERT INTO users (username, password, nama, email) VALUES (?, ?, ?, ?)");
-        if ($stmt->execute([$username, $passwordHash, $nama, $email])) {
-            echo "<script>window.location='/?q=login';</script>";
-            exit;
-        } else {
-            $pesan = "Gagal mendaftar.";
-        }
+        $insert = $pdo->prepare("INSERT INTO users (username, email, password, nama, namalengkap, id_role) VALUES (:username, :email, :password, :nama, :namalengkap, 2)");
+        $insert->execute([
+            'username' => $username,
+            'email' => $email,
+            'password' => $passwordHash,
+            'nama' => $nama,
+            'namalengkap' => $namalengkap
+        ]);
+
+        echo "<script>alert('Pendaftaran berhasil! Silakan login.'); window.location='/?q=login';</script>";
     }
 }
 ?>
@@ -29,77 +35,156 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Daftar Akun</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar Kantin UAM</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #a8edea, #fed6e3);
-      min-height: 100vh;
-      margin: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
       display: flex;
-      justify-content: center;
-      align-items: center;
     }
 
-    .center-wrapper {
+    .signup-container {
       display: flex;
-      justify-content: center;
-      align-items: center;
       width: 100%;
-      min-height: 100vh;
-      padding: 20px;
+      height: 100vh;
     }
 
-    .card {
-      border: none;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 420px;
+    .signup-left {
+      flex: 1;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .signup-left h3 {
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    .signup-left p {
+      font-size: 1rem;
+      margin-bottom: 25px;
+      max-width: 300px;
+    }
+
+    .btn-login {
       background-color: #fff;
+      color: #16a085;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 40px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s;
     }
 
-    .btn-success {
+    .btn-login:hover {
+      background-color: #f1f1f1;
+      transform: scale(1.05);
+    }
+
+    .signup-right {
+      flex: 1;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 50px;
+    }
+
+    .signup-right h2 {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #222;
+    }
+
+    .signup-right p {
+      color: #777;
+      margin-bottom: 20px;
+    }
+
+    form {
+      width: 100%;
+      max-width: 350px;
+    }
+
+    form input {
+      border-radius: 25px;
+      padding: 12px 20px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      width: 100%;
+      outline: none;
+    }
+
+    form input:focus {
+      border-color: #20c997;
+      box-shadow: 0 0 5px rgba(32,201,151,0.3);
+    }
+
+    .btn-signup {
+      border-radius: 25px;
       background: linear-gradient(45deg, #28a745, #20c997);
       border: none;
+      color: #fff;
       font-weight: 500;
+      padding: 12px;
+      width: 100%;
     }
-    .btn-success:hover {
-      background: linear-gradient(45deg, #20c997, #28a745);
+
+    .btn-signup:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-width: 900px) {
+      .signup-container {
+        flex-direction: column;
+      }
+      .signup-left {
+        height: 40%;
+      }
+      .signup-right {
+        height: 60%;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="center-wrapper">
-  <div class="card p-4">
-    <h3 class="text-center mb-4">Daftar Akun</h3>
+<div class="signup-container">
+  <div class="signup-left">
+    <h3>Sudah punya akun?</h3>
+    <p>Klik tombol dibawah ini untuk login ke akun anda</p>
+    <a href="/?q=login" class="btn-login">Sign In</a>
+  </div>
 
-    <?php if (!empty($pesan)): ?>
-      <div class="alert alert-info"><?= $pesan ?></div>
-    <?php endif; ?>
+  <div class="signup-right">
+    <h2>Buat akun</h2>
 
-    <form method="post">
-      <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-control" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required>
-      </div>
-
-      <button type="submit" class="btn btn-success w-100">Daftar</button>
+    <form method="POST" action="">
+      <input type="text" name="namalengkap" placeholder="Nama Lengkap" required>
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit" name="daftar" class="btn-signup">Sign Up</button>
     </form>
-
-    <p class="mt-3 text-center">Sudah punya akun? <a href="/?q=login">Login</a></p>
   </div>
 </div>
 
