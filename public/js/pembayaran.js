@@ -7,12 +7,6 @@ $(document).ready(function () {
   let bayar = "";
   let sedangInput = false;
 
-  console.log("📊 Data dari localStorage:");
-  console.log("Subtotal:", subtotal);
-  console.log("Discount:", disc);
-  console.log("Tax:", tax);
-  console.log("Grand Total:", grandTotal);
-
   $("#subtotal").text(subtotal.toLocaleString("id-ID"));
   $("#disc").text(disc.toLocaleString("id-ID"));
   $("#tax").text(tax.toLocaleString("id-ID"));
@@ -22,14 +16,40 @@ $(document).ready(function () {
   $("#totalNav").text("Rp " + grandTotal.toLocaleString("id-ID"));
 
   function updateInputDisplay() {
-    $("#inputBayar").text(
-      bayar === "" ? "0" : parseInt(bayar).toLocaleString("id-ID")
-    );
+    const displayValue = bayar === "" ? "0" : parseInt(bayar).toLocaleString("id-ID");
+    $("#inputBayar").text(displayValue);
+    updatePaymentStatus();
+  }
+
+  function updatePaymentStatus() {
+    const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
+    const changeDisplay = $("#changeDisplay");
+    
+    if (bayarFinal === 0) {
+      changeDisplay.hide();
+    } else if (bayarFinal < grandTotal) {
+      changeDisplay.text("Kurang: Rp " + (grandTotal - bayarFinal).toLocaleString("id-ID"));
+      changeDisplay.addClass("negative");
+      changeDisplay.show();
+    } else if (bayarFinal === grandTotal) {
+      changeDisplay.text("Pembayaran Tepat");
+      changeDisplay.removeClass("negative");
+      changeDisplay.show();
+    } else {
+      changeDisplay.text("Kembalian: Rp " + (bayarFinal - grandTotal).toLocaleString("id-ID"));
+      changeDisplay.removeClass("negative");
+      changeDisplay.show();
+    }
+  }
+
+  if ($("#changeDisplay").length === 0) {
+    $('<div class="change-display" id="changeDisplay"></div>').insertAfter("#inputBayar");
   }
 
   $("#inputBayar").on("click", function () {
     sedangInput = true;
     bayar = "";
+    $(this).addClass("active");
     updateInputDisplay();
   });
 
@@ -37,21 +57,27 @@ $(document).ready(function () {
     sedangInput = true;
     const val = $(this).text().replace(/\D/g, "");
     bayar += val;
+    $("#inputBayar").addClass("active");
     updateInputDisplay();
   });
 
   $("#clearInput").on("click", function () {
     bayar = "";
+    $("#inputBayar").removeClass("active");
     updateInputDisplay();
   });
 
   $("#backspaceBtn").on("click", function () {
     bayar = bayar.slice(0, -1);
+    if (bayar === "") {
+      $("#inputBayar").removeClass("active");
+    }
     updateInputDisplay();
   });
 
   $("#btnPas").on("click", function () {
     bayar = grandTotal.toString();
+    $("#inputBayar").addClass("active");
     updateInputDisplay();
   });
 
@@ -59,23 +85,35 @@ $(document).ready(function () {
     sedangInput = true;
     const value = parseInt($(this).data("value"));
     bayar = (parseInt(bayar || "0") + value).toString();
+    $("#inputBayar").addClass("active");
     updateInputDisplay();
   });
 
   $(document).on("keydown", function (e) {
+    const isInputFocused = $("#namaPelanggan").is(":focus") || $("#keterangan").is(":focus");
+    
+    if (isInputFocused) {
+      return;
+    }
+
     if (!sedangInput) return;
 
     if (e.key >= "0" && e.key <= "9") {
       bayar += e.key;
+      $("#inputBayar").addClass("active");
       updateInputDisplay();
     } else if (["Backspace", "Delete"].includes(e.key)) {
       bayar = bayar.slice(0, -1);
+      if (bayar === "") {
+        $("#inputBayar").removeClass("active");
+      }
       updateInputDisplay();
     } else if (e.key === "Enter") {
       $("#confirmBtn").trigger("click");
     } else if (e.key === "Escape") {
       bayar = "";
       sedangInput = false;
+      $("#inputBayar").removeClass("active");
       updateInputDisplay();
     }
   });
@@ -83,9 +121,11 @@ $(document).ready(function () {
   $("#metodePembayaran").on("change", function () {
     const metode = $(this).val();
     if (metode === "Piutang") {
-      $("#namaPelanggan").prop("required", true).parent().show();
+      $("#namaPelanggan").prop("required", true);
+      $("#uangSection").hide();
     } else {
-      $("#namaPelanggan").prop("required", false).parent().show();
+      $("#namaPelanggan").prop("required", false);
+      $("#uangSection").show();
     }
   });
 
@@ -97,11 +137,6 @@ $(document).ready(function () {
     const keterangan = $("#keterangan").val().trim();
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-    console.log("🔍 Data untuk konfirmasi:");
-    console.log("Grand Total dari localStorage:", grandTotal);
-    console.log("Bayar Final:", bayarFinal);
-    console.log("Items:", makananList);
 
     if (metode === "Piutang") {
       if (!pelanggan) {
@@ -139,8 +174,6 @@ $(document).ready(function () {
         kembalian: 0,
       };
 
-      console.log("📤 Data piutang dikirim:", dataKirim);
-
       $.ajax({
         url: "/?q=simpan_penjualan",
         type: "POST",
@@ -151,22 +184,19 @@ $(document).ready(function () {
           $("#confirmBtn").prop("disabled", true).text("Menyimpan Piutang...");
         },
         success: function (res) {
-          console.log("✅ Respon server:", res);
           if (res && res.status === "success") {
-            alert("✅ Transaksi piutang disimpan untuk: " + pelanggan);
+            alert("Transaksi piutang disimpan untuk: " + pelanggan);
             window.location.href = "../piutangkantin/tambah.php";
           } else {
-            alert("⚠️ Data gagal disimpan di server!");
+            alert("Data gagal disimpan di server!");
           }
         },
         error: function (xhr) {
-          alert("❌ Gagal menyimpan data piutang!");
+          alert("Gagal menyimpan data piutang!");
           console.error(xhr.responseText);
         },
         complete: function () {
-          $("#confirmBtn")
-            .prop("disabled", false)
-            .text("Konfirmasi Pembayaran");
+          $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");
         },
       });
       return;
@@ -174,9 +204,7 @@ $(document).ready(function () {
 
     if (bayarFinal < grandTotal) {
       alert(
-        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString(
-          "id-ID"
-        )}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
+        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString("id-ID")}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
       );
       return;
     }
@@ -196,8 +224,6 @@ $(document).ready(function () {
       kembalian,
     };
 
-    console.log("📤 Data penjualan dikirim:", dataKirim);
-
     $.ajax({
       url: "/?q=simpan_penjualan",
       type: "POST",
@@ -208,23 +234,18 @@ $(document).ready(function () {
         $("#confirmBtn").prop("disabled", true).text("Menyimpan...");
       },
       success: function (res) {
-        console.log("✅ Respon server:", res);
         if (res && res.status === "success") {
           alert(
-            `✅ Pembayaran Berhasil!\nTotal: Rp ${grandTotal.toLocaleString(
-              "id-ID"
-            )}\nDibayar: Rp ${bayarFinal.toLocaleString(
-              "id-ID"
-            )}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
+            `Pembayaran Berhasil!\nTotal: Rp ${grandTotal.toLocaleString("id-ID")}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
           );
           localStorage.clear();
           window.location.href = "/?q=penjualan";
         } else {
-          alert("⚠️ Data gagal disimpan di server!");
+          alert("Data gagal disimpan di server!");
         }
       },
       error: function (xhr) {
-        alert("❌ Gagal menyimpan data penjualan!");
+        alert("Gagal menyimpan data penjualan!");
         console.error(xhr.responseText);
       },
       complete: function () {
@@ -234,4 +255,5 @@ $(document).ready(function () {
   });
 
   $("#metodePembayaran").trigger("change");
+  updatePaymentStatus();
 });
