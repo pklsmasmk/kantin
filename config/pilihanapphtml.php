@@ -23,7 +23,7 @@
         break;  
       case 'shift__Akhiri__akhiri_sukses':
         include("../shift/Akhiri/akhiri_sukses.php");
-        break;    
+        break;
         
       default:
         include("../konten/ori.php");

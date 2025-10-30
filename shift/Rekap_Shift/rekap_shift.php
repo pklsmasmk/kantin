@@ -270,7 +270,5 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
             </div>
         </div>
     </div>
-    
-    <script src="../JS/rekap.js"></script>
 </body>
 </html>

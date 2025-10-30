@@ -9,7 +9,6 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
 <head>
     <meta charset="UTF-8">
     <title>Shift Berhasil Diakhiri - UAM</title>
-    <link rel="stylesheet" href="../CSS/akhiri_sukses.css">
 </head>
 <body>
     <div class="container">
@@ -35,12 +34,10 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
 
             <div class="action-buttons">
                 <a href="/?q=shift&tab=history" class="btn btn-primary">
-                    <span>📊</span>
                     Lihat Riwayat Shift
                 </a>
                 <a href="../index.php" class="btn btn-secondary">
-                    <span>🏠</span>
-                    Kembali ke Beranda
+                    Kembali ke menu utama
                 </a>
             </div>
         </div>
