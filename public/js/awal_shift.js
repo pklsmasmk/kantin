@@ -7,30 +7,78 @@ class LoginRequired {
             features: '.features'
         };
         
+        this.initialized = false;
         this.init();
     }
 
     init() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeComponents();
+            });
+        } else {
+            setTimeout(() => {
+                this.initializeComponents();
+            }, 100);
+        }
+    }
+
+    initializeComponents() {
+        if (this.initialized) return;
+        
         this.setupLoginButton();
         this.animateElements();
         this.setupPageTransition();
         this.setupAccessibility();
+        
+        this.initialized = true;
     }
 
     setupLoginButton() {
-        const $loginBtn = $(this.selectors.loginBtn);
+        let $loginBtn = $(this.selectors.loginBtn);
         
         if (!$loginBtn.length) {
-            console.error('Login button not found');
+            $loginBtn = $('a[href*="login"], .btn-login, [class*="login"]');
+        }
+        
+        if (!$loginBtn.length) {
+            $('a, button').each(function() {
+                const $el = $(this);
+                const text = $el.text().toLowerCase().trim();
+                if (text.includes('login') || text.includes('masuk')) {
+                    $loginBtn = $el;
+                    return false;
+                }
+            });
+        }
+        
+        if (!$loginBtn.length) {
+            this.setupEventDelegation();
             return;
         }
         
-        $loginBtn.on('click', (e) => {
+        $loginBtn.off('click.required keydown.required');
+        
+        $loginBtn.on('click.required', (e) => {
             this.handleLoginClick(e, $loginBtn);
         });
 
-        $loginBtn.on('keydown', (e) => {
+        $loginBtn.on('keydown.required', (e) => {
             this.handleKeyboardNavigation(e, $loginBtn);
+        });
+        
+        $loginBtn.attr('data-login-handler', 'attached');
+    }
+
+    setupEventDelegation() {
+        $(document).off('click.required').on('click.required', this.selectors.loginBtn, (e) => {
+            e.preventDefault();
+            this.handleLoginClick(e, $(e.target));
+        });
+        
+        $(document).off('click.requiredAlt').on('click.requiredAlt', 'a[href*="login"]', (e) => {
+            e.preventDefault();
+            this.handleLoginClick(e, $(e.target));
         });
     }
 
@@ -56,11 +104,13 @@ class LoginRequired {
         if (isLoading) {
             $button.addClass('loading');
             $button.attr('aria-label', 'Sedang memproses...');
-            $button.attr('disabled', 'true');
+            $button.prop('disabled', true);
+            $button.html('<span class="loading-spinner"></span> Memproses...');
         } else {
             $button.removeClass('loading');
             $button.attr('aria-label', 'Login ke sistem');
-            $button.removeAttr('disabled');
+            $button.prop('disabled', false);
+            $button.text('Login Sekarang');
         }
     }
 
@@ -128,12 +178,8 @@ class LoginRequired {
     }
 
     setupPageTransition() {
-        $(window).on('beforeunload', () => {
+        $(window).on('beforeunload.required', () => {
             this.fadeOutPage();
-        });
-
-        $(window).on('load', () => {
-            this.fadeInPage();
         });
 
         this.fadeInPage();
@@ -159,70 +205,83 @@ class LoginRequired {
             $warningIcon.attr('aria-label', 'Ikon akses ditolak');
         }
 
-        $(window).on('load', () => {
+        setTimeout(() => {
             const $loginBtn = $(this.selectors.loginBtn);
             if ($loginBtn.length) {
                 $loginBtn.trigger('focus');
             }
-        });
+        }, 1000);
     }
 
     destroy() {
-        const $loginBtn = $(this.selectors.loginBtn);
-        if ($loginBtn.length) {
-            $loginBtn.off('click keydown');
-        }
+        $(this.selectors.loginBtn).off('click.required keydown.required');
+        $(document).off('click.required click.requiredAlt');
+        $(window).off('beforeunload.required');
+        
+        this.initialized = false;
     }
 }
 
 function handlePageErrors() {
-    $(window).on('error', (e) => {
-        console.error('Error in login required page:', e.error);
-        
-        const $loginBtn = $('.login-btn');
-        if ($loginBtn.length) {
-            const fallbackHandler = (e) => {
-                e.preventDefault();
-                window.location.href = '?q=login';
-            };
-            
-            $loginBtn.off('click').on('click', fallbackHandler);
-        }
+    $(window).on('error.required', (e) => {
+        $('.login-btn').off('click').on('click', function(e) {
+            e.preventDefault();
+            window.location.href = '?q=login';
+        });
     });
 }
 
 function checkBrowserCompatibility() {
-    if (!window.IntersectionObserver) {
-        console.warn('IntersectionObserver not supported, using fallback animations');
+    if (typeof jQuery === 'undefined') {
+        return false;
     }
+    return true;
 }
 
 function initLoginRequiredPage() {
+    if (typeof jQuery === 'undefined') {
+        setupFallbackBehavior();
+        return;
+    }
+    
     try {
-        checkBrowserCompatibility();
+        if (!checkBrowserCompatibility()) {
+            setupFallbackBehavior();
+            return;
+        }
         
         handlePageErrors();
         
         const loginPage = new LoginRequired();
-        
         window.loginPage = loginPage;
         
     } catch (error) {
-        console.error('Failed to initialize login required page:', error);
+        setupFallbackBehavior();
+    }
+}
+
+function setupFallbackBehavior() {
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginButtons = document.querySelectorAll('.login-btn, a[href*="login"]');
         
-        const $loginBtn = $('.login-btn');
-        if ($loginBtn.length) {
-            $loginBtn.on('click', (e) => {
+        loginButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.location.href = '?q=login';
             });
-        }
-    }
+        });
+    });
 }
 
 $(function() {
     initLoginRequiredPage();
 });
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLoginRequiredPage);
+} else {
+    setTimeout(initLoginRequiredPage, 100);
+}
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { LoginRequired, initLoginRequiredPage };

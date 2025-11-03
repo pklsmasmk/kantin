@@ -22,6 +22,11 @@ function read_shift_data($pdo) {
     }
 }
 
+function refresh_shift_history($pdo) {
+    $_SESSION["shift_history"] = read_shift_data($pdo);
+    return $_SESSION["shift_history"];
+}
+
 function save_shift_data($pdo, $data) {
     try {
         $stmt = $pdo->prepare("
@@ -46,6 +51,8 @@ function save_shift_data($pdo, $data) {
             $data['waktu_mulai'],
             $data['waktu_selesai']
         ]);
+        
+        refresh_shift_history($pdo);
         return true;
     } catch (PDOException $e) {
         error_log("Error save_shift_data: " . $e->getMessage());
@@ -172,6 +179,7 @@ function akhiri_shift($pdo, $shift_id, $saldo_akhir) {
         
         save_saldo_warisan($pdo, $saldo_akhir);
         
+        refresh_shift_history($pdo);
         return true;
     } catch (PDOException $e) {
         error_log("Error akhiri_shift: " . $e->getMessage());
@@ -201,6 +209,7 @@ function sync_from_rekap($pdo, $shift_id) {
                 $shift_id
             ]);
             
+            refresh_shift_history($pdo);
             return $rekap;
         }
         return null;
@@ -386,7 +395,7 @@ function format_time($datetime) {
 
 function process_shift_requests($pdo) {
     if (!isset($_SESSION["shift_history"])) {
-        $_SESSION["shift_history"] = read_shift_data($pdo);
+        refresh_shift_history($pdo);
     }
 
     if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
@@ -410,14 +419,18 @@ function process_shift_requests($pdo) {
 
     if (isset($_GET['action']) && $_GET['action'] === 'akhiri_shift' && isset($_SESSION["shift_current"])) {
         $currentShift = $_SESSION["shift_current"];
+        
+        $stmt = $pdo->prepare("UPDATE shifts SET waktu_selesai = NOW(), saldo_akhir = ? WHERE id = ?");
+        $stmt->execute([$currentShift['saldo_akhir'], $currentShift['id']]);
+        
         save_saldo_warisan($pdo, $currentShift['saldo_akhir']);
         
-        $stmt = $pdo->prepare("UPDATE shifts SET waktu_selesai = NOW() WHERE id = ?");
-        $stmt->execute([$currentShift['id']]);
+        sync_to_rekap($pdo, $currentShift);
         
         $_SESSION["shift_current"]['waktu_selesai'] = date("Y-m-d H:i:s");
         $_SESSION["success"] = "Shift berhasil diakhiri. Saldo akhir: " . format_rupiah($currentShift['saldo_akhir']) . " telah disimpan sebagai warisan.";
         
+        refresh_shift_history($pdo);
         unset($_SESSION["shift_current"]);
         
         header("Location: " . $_SERVER["PHP_SELF"] . "?tab=current");
@@ -461,11 +474,6 @@ function process_shift_requests($pdo) {
 
                 $_SESSION["shift_current"] = $shift;
                 $_SESSION["transaksi"] = [];
-                
-                if (!isset($_SESSION["shift_history"]) || !is_array($_SESSION["shift_history"])) {
-                    $_SESSION["shift_history"] = [];
-                }
-                array_unshift($_SESSION["shift_history"], $shift);
                 
                 save_shift_data($pdo, $shift);
                 sync_to_rekap($pdo, $shift);
@@ -574,9 +582,9 @@ function process_setoran_request($pdo) {
                         $stmt->execute([$new_saldo_akhir, $currentShift['id']]);
                         
                         $_SESSION["shift_current"]['saldo_akhir'] = $new_saldo_akhir;
-                        $_SESSION["shift_history"][0]['saldo_akhir'] = $new_saldo_akhir;
                         
                         sync_to_rekap($pdo, $_SESSION["shift_current"]);
+                        refresh_shift_history($pdo);
                     } else {
                         $new_saldo_warisan = $saldo_warisan - $jumlah_value;
                         save_saldo_warisan($pdo, $new_saldo_warisan);
@@ -593,6 +601,8 @@ function process_setoran_request($pdo) {
 }
 
 function get_shift_display_data($pdo) {
+    $history = refresh_shift_history($pdo);
+    
     $saldo_warisan = get_saldo_warisan($pdo);
     $today = date('Y-m-d');
     $total_setoran_hari_ini = calculate_total_setoran_hari_ini($pdo);
@@ -649,7 +659,7 @@ function get_shift_display_data($pdo) {
         'can_setor' => $can_setor,
         'saldo_akhir_display' => $saldo_akhir_display,
         'cashdrawers' => $cashdrawers,
-        'history' => $_SESSION["shift_history"] ?? [],
+        'history' => $history,
         'total_setoran_bulan_ini' => calculate_total_setoran_bulan_ini($pdo),
         'rata_rata_setoran' => calculate_rata_rata_setoran($pdo)
     ];
