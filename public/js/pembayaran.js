@@ -175,7 +175,7 @@ $(document).ready(function () {
       };
 
       $.ajax({
-        url: "/?q=simpan_penjualan",
+        url: "/?q=full&app=simpan_penjualan",
         type: "POST",
         data: JSON.stringify(dataKirim),
         contentType: "application/json; charset=utf-8",
@@ -225,7 +225,7 @@ $(document).ready(function () {
     };
 
     $.ajax({
-      url: "/?q=simpan_penjualan",
+      url: "/?q=full&app=simpan_penjualan",
       type: "POST",
       data: JSON.stringify(dataKirim),
       contentType: "application/json; charset=utf-8",
@@ -239,7 +239,7 @@ $(document).ready(function () {
             `Pembayaran Berhasil!\nTotal: Rp ${grandTotal.toLocaleString("id-ID")}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
           );
           localStorage.clear();
-          window.location.href = "/?q=penjualan";
+          window.location.href = "/?q=menu";
         } else {
           alert("Data gagal disimpan di server!");
         }

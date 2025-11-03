@@ -15,6 +15,9 @@
       case 'piutang':
         include("../piutangkantin/index.php");
         break;
+      case 'menu':
+        include("../penjualan/menu.php");
+        break;
       case 'penjualan':
         include("../penjualan/pembayaran.php");
         break;

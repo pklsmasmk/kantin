@@ -45,7 +45,7 @@ $totalPiutang = array_reduce(array_filter($records, function ($r) {
 <body>
     <div class="container my-5">
         <div class="mb-4">
-            <a href="../index.php" class="btn btn-secondary">
+            <a href="/?q=menu" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali ke Penjualan
             </a>
         </div>

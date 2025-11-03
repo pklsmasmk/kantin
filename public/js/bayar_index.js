@@ -21,11 +21,10 @@ $(document).on("click", ".addCart", function () {
 
 function renderCart() {
   const tbody = $("#cartList");
-  const cartSection = $(".col-md-4");  
-  const cartCard = $(".col-md-4 .card");
+  const cartSection = $(".col-md-4.clkeranjang");
   tbody.empty();
   let subtotal = 0;
-
+  
   if (cart.length === 0) {
 
     cartSection.hide();

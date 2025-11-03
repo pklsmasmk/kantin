@@ -7,7 +7,7 @@
     <div class="offcanvas-body p-0">
       <nav class="nav flex-column">
         <a class="nav-link px-3" href="#"><i class="bi bi-house me-2"></i>Beranda</a>
-        <a class="nav-link px-3" href="index.php"><i class="bi bi-receipt me-2"></i>Transaksi Penjualan</a>
+        <a class="nav-link px-3" href="/?q=menu"><i class="bi bi-receipt me-2"></i>Transaksi Penjualan</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-people me-2"></i>Manajemen</a>
         <a class="nav-link px-3" href="/?q=shift"><i class="bi bi-clock-history me-2"></i>Shift</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-basket me-2"></i>Barang / Jasa</a>

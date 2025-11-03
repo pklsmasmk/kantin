@@ -3,6 +3,9 @@
       case 'retur':
         include("../retur/css/index_css.php");
         break;
+     case 'menu':
+        include("../penjualan/css/menu_css.php");
+        break;
       case 'penjualan':
         include("../penjualan/css/index_css.php");
         break;

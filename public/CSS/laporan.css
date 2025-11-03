@@ -3,18 +3,6 @@ body {
   font-family: "Poppins", sans-serif;
 }
 
-.navbar {
-  background: linear-gradient(90deg, #198754, #115c39);
-}
-
-.navbar .navbar-brand i {
-  transition: 0.3s;
-}
-
-.navbar .navbar-brand:hover i {
-  transform: translateX(-4px);
-}
-
 .page-header {
   margin-top: 90px;
   text-align: center;

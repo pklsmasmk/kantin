@@ -1,6 +1,6 @@
 <nav class="navbar px-4 py-3">
     <div class="d-flex w-100 justify-content-between align-items-center">
-      <a href="index.php" class="back-link">&larr; Kembali</a>
+      <a href="/?q=menu" class="back-link">&larr; Kembali</a>
       <h5 class="mb-0">Pembayaran</h5>
       <div class="total-section">TOTAL: <span id="totalNav">Rp 0</span></div>
     </div>
@@ -82,5 +82,5 @@
     </div>
   </div>
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
 
