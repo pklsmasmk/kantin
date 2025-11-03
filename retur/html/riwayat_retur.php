@@ -1,8 +1,10 @@
 <?php
+require_once '..Database/config.php';
+
 header('Content-Type: application/json');
-include '../Database/config.php';
 
 try {
+    $conn = getDBConnection();
     
     $sql = "SELECT r.*, sb.nama as nama_barang 
             FROM retur_barang r 

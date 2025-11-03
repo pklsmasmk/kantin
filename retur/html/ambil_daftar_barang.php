@@ -1,8 +1,10 @@
 <?php
 header('Content-Type: application/json');
-include '../Database/config.php';
+require_once '..Database/config.php';
+error_reporting(0);
 
 try {
+    $conn = getDBConnection();
     $sql = "SELECT id, nama, stok, tipe, pemasok, harga_dasar, harga_jual 
             FROM stok_barang 
             WHERE stok >= 0 
@@ -17,6 +19,7 @@ try {
         'success' => true,
         'data' => $data
     ]);
+    exit;
 
 } catch (Exception $e) {
     echo json_encode([
@@ -24,5 +27,6 @@ try {
         'error' => $e->getMessage(),
         'data' => []
     ]);
+    exit;
 }
 ?>

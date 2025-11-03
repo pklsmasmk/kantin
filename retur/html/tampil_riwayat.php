@@ -1,8 +1,10 @@
 <?php
+require_once '..Database/config.php';
+
 header('Content-Type: application/json');
-include '../Database/config.php';
 
 try {
+    $conn = getDBConnection();
     
     $sql = "SELECT * FROM riwayat_transaksi ORDER BY tanggal DESC LIMIT 50";
     $stmt = $conn->prepare($sql);

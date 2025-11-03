@@ -1,8 +1,11 @@
 <?php
-require_once '../Database/config.php';
+require_once '..Database/config.php';
+
 header('Content-Type: application/json');
 
 try {
+    $conn = getDBConnection();
+    $table = 'stok_barang';
 
     $id = intval($_POST['id'] ?? 0);
 

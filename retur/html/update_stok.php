@@ -1,11 +1,14 @@
 <?php
-require_once 'config.php';
 header('Content-Type: application/json');
+require_once '..Database/config.php';
 
 try {
+    $conn = getDBConnection();
+    $table = 'stok_barang';
 
-    $id = intval($_POST['id'] ?? 0);
-    $nama = $_POST['nama'] ?? '';
+    // PERBAIKI SYNTAX DI BAWAH INI:
+    $id = intval($_POST['id'] ?? 0);  // HAPUS: (value: ...)
+    $nama = $_POST['nama'] ?? '';     // HAPUS: (value: ...)
     $tipe = $_POST['tipe'] ?? '';
     $pemasok = $_POST['pemasok'] ?? '';
     $stok = intval($_POST['stok'] ?? 0);
@@ -13,7 +16,7 @@ try {
     $harga_jual = intval($_POST['harga_jual'] ?? 0);
 
     if ($id <= 0) {
-        throw new Exception('ID barang tidak valid');
+        throw new Exception('ID barang tidak valid');  // HAPUS: (message: ...)
     }
     
     // Cek apakah barang exists
@@ -22,7 +25,7 @@ try {
     $check_stmt->execute([$id]);
     
     if ($check_stmt->rowCount() === 0) {
-        throw new Exception('Data tidak ditemukan!');
+        throw new Exception('Data tidak ditemukan!');  // HAPUS: (message: ...)
     }
 
     // Update data

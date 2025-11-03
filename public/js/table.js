@@ -7,7 +7,8 @@ function debugElements() {
     const criticalElements = [
         'itemForm', 'inputNama', 'inputTipe', 'inputPemasok', 
         'inputStok', 'inputHargaDasar', 'inputHargaJual',
-        'dataListContainer', 'filterTipe', 'returBarang'
+        'dataListContainer', 'filterTipe', 'returBarang',
+        'hutangBarang', 'tambahHutangBtn'
     ];
     
     console.group('🔍 Debug Elements');
@@ -22,7 +23,6 @@ function debugElements() {
 function showTab(tabId) {
     console.log(`🔄 Pindah ke tab: ${tabId}`);
     
-    // Cara yang paling pasti - langsung klik element tabnya
     const tabElement = document.querySelector(`[data-bs-target="${tabId}"]`);
     if (tabElement) {
         tabElement.click();
@@ -517,6 +517,295 @@ function performDelete(id) {
         });
 }
 
+// ======== SISTEM HUTANG =========
+function loadDaftarBarangForHutang() {
+    console.log("🔄 Memuat daftar barang untuk hutang...");
+    
+    fetch('ambil_daftar_barang.php')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => {
+            try {
+                const data = JSON.parse(text);
+                console.log("✅ Data barang untuk hutang:", data);
+                const select = getElement('hutangBarang');
+                
+                if (!select) {
+                    console.error("❌ Element hutangBarang tidak ditemukan!");
+                    return;
+                }
+                
+                if (data.success && Array.isArray(data.data)) {
+                    select.innerHTML = '<option value="">-- Pilih Barang --</option>';
+                    data.data.forEach(barang => {
+                        const option = document.createElement('option');
+                        option.value = barang.id;
+                        option.textContent = `${barang.nama} (${barang.tipe}) - Stok: ${barang.stok}`;
+                        option.setAttribute('data-stok', barang.stok); // Tambahkan ini
+                        select.appendChild(option);
+                    });
+                    console.log(`✅ Berhasil memuat ${data.data.length} barang`);
+                } else {
+                    console.error("❌ Format data tidak valid:", data);
+                    select.innerHTML = '<option value="">-- Error memuat data --</option>';
+                }
+            } catch (e) {
+                console.error('❌ Gagal parse JSON:', e);
+                const select = getElement('hutangBarang');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Error memuat data --</option>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('❌ Gagal memuat daftar barang untuk hutang:', error);
+        });
+}
+
+function loadDaftarHutang() {
+    console.log("🔄 Memuat data hutang...");
+    
+    fetch('tampil_hutang.php')
+        .then(response => {
+            console.log("📥 Response status:", response.status);
+            if (!response.ok) {
+                // Jika response tidak ok, return array kosong
+                return '[]';
+            }
+            return response.text();
+        })
+        .then(text => {
+            console.log("📥 Raw response:", text);
+            
+            try {
+                const data = JSON.parse(text);
+                console.log("✅ Data hutang berhasil di-load:", data);
+                renderDaftarHutang(data);
+                updateHutangSummary(data);
+            } catch (e) {
+                console.error("❌ JSON parse error, menggunakan data kosong");
+                // Jika parse error, gunakan array kosong
+                renderDaftarHutang([]);
+                updateHutangSummary([]);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Fetch error, menggunakan data kosong:", error);
+            // Jika fetch error, gunakan array kosong
+            renderDaftarHutang([]);
+            updateHutangSummary([]);
+        });
+}
+
+function renderDaftarHutang(dataHutang) {
+    const container = getElement('daftarHutangContainer');
+    if (!container) return;
+
+    if (!Array.isArray(dataHutang) || dataHutang.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted"><p>Belum ada data hutang pembelian.</p></div>';
+        return;
+    }
+
+    container.innerHTML = dataHutang.map(hutang => {
+        const totalBayar = parseFloat(hutang.total_bayar) || 0;
+        const hargaTotal = parseFloat(hutang.harga_total) || 0;
+        const sisaHutang = parseFloat(hutang.sisa_hutang) || 0;
+        const persentaseBayar = hargaTotal > 0 ? (totalBayar / hargaTotal) * 100 : 0;
+        const isLunas = hutang.status === 'LUNAS';
+
+        return `
+            <div class="col-md-6 mb-3">
+                <div class="hutang-card ${isLunas ? 'lunas' : ''}">
+                    <h5>${hutang.nama_barang}</h5>
+                    <div class="hutang-info">
+                        <p><strong>Jumlah:</strong> <span>${hutang.jumlah} pcs</span></p>
+                        <p><strong>Total Hutang:</strong> <span>${formatCurrency(hutang.harga_total)}</span></p>
+                        <p><strong>Total Bayar:</strong> <span>${formatCurrency(totalBayar)}</span></p>
+                        <p><strong>Sisa Hutang:</strong> <span class="${sisaHutang > 0 ? 'text-danger fw-bold' : ''}">${formatCurrency(sisaHutang)}</span></p>
+                        <p><strong>Status:</strong> <span class="hutang-badge ${isLunas ? 'badge-lunas' : 'badge-belum-lunas'}">${hutang.status}</span></p>
+                    </div>
+                    
+                    ${!isLunas ? `
+                        <div class="progress-hutang">
+                            <div class="progress-bar-hutang ${isLunas ? 'progress-lunas' : 'progress-belum-lunas'}" style="width: ${persentaseBayar}%"></div>
+                        </div>
+                        <div class="text-center">
+                            <button class="btn btn-success btn-sm bayar-hutang-btn" data-id="${hutang.id}" data-sisa="${sisaHutang}">
+                                <i class="fas fa-money-bill-wave"></i> Bayar Hutang
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Attach event listeners untuk tombol bayar
+    document.querySelectorAll('.bayar-hutang-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const hutangId = this.getAttribute('data-id');
+            const sisaHutang = parseFloat(this.getAttribute('data-sisa'));
+            showFormBayarHutang(hutangId, sisaHutang);
+        });
+    });
+}
+
+function updateHutangSummary(dataHutang) {
+    const totalHutang = dataHutang.reduce((sum, hutang) => sum + parseFloat(hutang.harga_total || 0), 0);
+    const totalBayar = dataHutang.reduce((sum, hutang) => sum + parseFloat(hutang.total_bayar || 0), 0);
+    const sisaHutang = totalHutang - totalBayar;
+    const hutangBelumLunas = dataHutang.filter(h => h.status !== 'LUNAS').length;
+
+    const summaryContainer = getElement('hutangSummary');
+    if (summaryContainer) {
+        summaryContainer.innerHTML = `
+            <div class="hutang-summary">
+                <h4><i class="fas fa-chart-pie"></i> Ringkasan Hutang</h4>
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">${formatCurrency(totalHutang)}</span>
+                        <span class="stat-label">Total Hutang</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${formatCurrency(totalBayar)}</span>
+                        <span class="stat-label">Total Dibayar</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${formatCurrency(sisaHutang)}</span>
+                        <span class="stat-label">Sisa Hutang</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function showFormBayarHutang(hutangId, sisaHutang) {
+    const formHTML = `
+        <form id="formBayarHutang">
+            <input type="hidden" id="hutangId" value="${hutangId}">
+            <div class="total-hutang-info">
+                <h4>Sisa Hutang: ${formatCurrency(sisaHutang)}</h4>
+            </div>
+            <div class="mb-3">
+                <label for="jumlahBayar" class="form-label">Jumlah Bayar</label>
+                <input type="number" class="form-control" id="jumlahBayar" min="1" max="${sisaHutang}" required>
+            </div>
+            <div class="mb-3">
+                <label for="metodeBayar" class="form-label">Metode Pembayaran</label>
+                <select class="form-select" id="metodeBayar" required>
+                    <option value="Tunai">Tunai</option>
+                    <option value="Transfer">Transfer Bank</option>
+                </select>
+            </div>
+        </form>
+    `;
+
+    getElement('modalMessage').innerHTML = formHTML;
+    getElement('messageModalLabel').textContent = 'Bayar Hutang';
+    
+    $('#messageModal').modal('show');
+    
+    const modalFooter = document.querySelector('#messageModal .modal-footer');
+    modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" id="confirmBayarBtn">Bayar</button>
+    `;
+    
+    document.getElementById('confirmBayarBtn').addEventListener('click', handleBayarHutang);
+}
+
+function handleBayarHutang() {
+    const hutangId = getElement('hutangId').value;
+    const jumlahBayar = parseFloat(getElement('jumlahBayar').value) || 0;
+    const metodeBayar = getElement('metodeBayar').value;
+
+    if (jumlahBayar <= 0) {
+        return showModal('Jumlah bayar harus lebih dari 0!');
+    }
+
+    const formData = new FormData();
+    formData.append('hutang_id', hutangId);
+    formData.append('jumlah_bayar', jumlahBayar);
+    formData.append('metode_bayar', metodeBayar);
+
+    fetch('bayar_hutang.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showModal('Pembayaran berhasil dicatat!');
+            $('#messageModal').modal('hide');
+            loadDaftarHutang();
+        } else {
+            showModal('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        showModal('Gagal memproses pembayaran');
+    });
+}
+
+function handleTambahHutang() {
+    const barangSelect = getElement('hutangBarang');
+    const selectedOption = barangSelect.options[barangSelect.selectedIndex];
+    
+    if (!selectedOption || !selectedOption.value) {
+        return showModal('Pilih barang terlebih dahulu!');
+    }
+
+    const formData = {
+        barang_id: parseInt(barangSelect.value),
+        jumlah: parseInt(getElement('hutangJumlah').value) || 0,
+        harga_total: parseInt(getElement('hutangHargaTotal').value) || 0,
+        keterangan: getElement('hutangKeterangan').value,
+        tanggal_jatuh_tempo: getElement('hutangJatuhTempo').value
+    };
+
+    if (!formData.barang_id) return showModal('Pilih barang terlebih dahulu!');
+    if (formData.jumlah <= 0) return showModal('Jumlah harus lebih dari 0!');
+    if (formData.harga_total <= 0) return showModal('Harga total harus lebih dari 0!');
+
+    if (!confirm('Apakah Anda yakin ingin mencatat hutang pembelian ini?')) {
+        return;
+    }
+
+    fetch('tambah_hutang.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showModal('Hutang berhasil dicatat!');
+            // Reset form
+            getElement('hutangBarang').value = '';
+            getElement('hutangJumlah').value = '';
+            getElement('hutangHargaTotal').value = '';
+            getElement('hutangKeterangan').value = '';
+            getElement('hutangJatuhTempo').value = '';
+            
+            // Refresh data
+            loadDaftarHutang();
+            loadItems();
+        } else {
+            showModal('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        showModal('Gagal mencatat hutang');
+    });
+}
+
 // ======== INITIALIZATION =========
 function initializeEventListeners() {
     console.log("🔌 Initializing event listeners...");
@@ -562,6 +851,12 @@ function initializeEventListeners() {
         });
     }
 
+    // Event listeners untuk hutang
+    const tambahHutangBtn = getElement('tambahHutangBtn');
+    if (tambahHutangBtn) {
+        tambahHutangBtn.addEventListener('click', handleTambahHutang);
+    }
+
     // PERBAIKAN: Event listener untuk tab change yang benar
     const tabElements = document.querySelectorAll('[data-bs-toggle="tab"]');
     tabElements.forEach(tab => {
@@ -576,6 +871,10 @@ function initializeEventListeners() {
                 loadRiwayatRetur();
             } else if (target === '#tabRiwayat') {
                 loadRiwayatTransaksi();
+            } else if (target === '#tabHutang') {
+                console.log("🔄 Loading tab Hutang...");
+                loadDaftarHutang();
+                loadDaftarBarangForHutang();
             }
         });
     });
@@ -587,6 +886,10 @@ function init() {
     initializeEventListeners();
     loadItems();
     updateModeIndicator(false);
+    
+    // Pre-load data untuk hutang
+    loadDaftarBarangForHutang();
+    
     console.log("✅ Application ready!");
 }
 

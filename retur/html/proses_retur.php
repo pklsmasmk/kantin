@@ -1,8 +1,10 @@
 <?php
+require_once '..Database/config.php';
+
 header('Content-Type: application/json');
-include '../Database/config.php';
 
 try {
+    $conn = getDBConnection();
 
     $barang_id = intval($_POST['barang_id'] ?? 0);
     $jumlah = intval($_POST['jumlah'] ?? 0);
