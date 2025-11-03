@@ -18,55 +18,57 @@ class LoginRequired {
     }
 
     setupLoginButton() {
-        const loginBtn = document.querySelector(this.selectors.loginBtn);
+        const $loginBtn = $(this.selectors.loginBtn);
         
-        if (!loginBtn) {
+        if (!$loginBtn.length) {
             console.error('Login button not found');
             return;
         }
         
-        loginBtn.addEventListener('click', (e) => {
-            this.handleLoginClick(e, loginBtn);
+        $loginBtn.on('click', (e) => {
+            this.handleLoginClick(e, $loginBtn);
         });
 
-        loginBtn.addEventListener('keydown', (e) => {
-            this.handleKeyboardNavigation(e, loginBtn);
+        $loginBtn.on('keydown', (e) => {
+            this.handleKeyboardNavigation(e, $loginBtn);
         });
     }
 
-    handleLoginClick(e, loginBtn) {
+    handleLoginClick(e, $loginBtn) {
         e.preventDefault();
         
-        this.setLoadingState(loginBtn, true);
+        this.setLoadingState($loginBtn, true);
         
         setTimeout(() => {
-            this.setLoadingState(loginBtn, false);
+            this.setLoadingState($loginBtn, false);
             this.redirectToLogin();
         }, 1500);
     }
 
-    handleKeyboardNavigation(e, loginBtn) {
+    handleKeyboardNavigation(e, $loginBtn) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            loginBtn.click();
+            $loginBtn.trigger('click');
         }
     }
 
-    setLoadingState(button, isLoading) {
+    setLoadingState($button, isLoading) {
         if (isLoading) {
-            button.classList.add('loading');
-            button.setAttribute('aria-label', 'Sedang memproses...');
-            button.setAttribute('disabled', 'true');
+            $button.addClass('loading');
+            $button.attr('aria-label', 'Sedang memproses...');
+            $button.attr('disabled', 'true');
         } else {
-            button.classList.remove('loading');
-            button.setAttribute('aria-label', 'Login ke sistem');
-            button.removeAttribute('disabled');
+            $button.removeClass('loading');
+            $button.attr('aria-label', 'Login ke sistem');
+            $button.removeAttr('disabled');
         }
     }
 
     redirectToLogin() {
-        document.body.style.opacity = '0';
-        document.body.style.transition = 'opacity 0.3s ease';
+        $('body').css({
+            'opacity': '0',
+            'transition': 'opacity 0.3s ease'
+        });
         
         setTimeout(() => {
             window.location.href = '?q=login';
@@ -80,31 +82,31 @@ class LoginRequired {
     }
 
     animateContainer() {
-        const container = document.querySelector(this.selectors.container);
-        if (container) {
-            container.style.animation = 'fadeInUp 0.8s ease-out';
+        const $container = $(this.selectors.container);
+        if ($container.length) {
+            $container.css('animation', 'fadeInUp 0.8s ease-out');
         }
     }
 
     animateWarningIcon() {
-        const warningIcon = document.querySelector(this.selectors.warningIcon);
-        if (warningIcon) {
+        const $warningIcon = $(this.selectors.warningIcon);
+        if ($warningIcon.length) {
             setTimeout(() => {
-                warningIcon.style.animation = 'pulse 2s infinite';
+                $warningIcon.css('animation', 'pulse 2s infinite');
             }, 500);
         }
     }
 
     animateFeatures() {
-        const features = document.querySelector(this.selectors.features);
+        const $features = $(this.selectors.features);
         
-        if (!features) return;
+        if (!$features.length) return;
 
         if (window.IntersectionObserver) {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.style.animation = 'slideInUp 0.6s ease-out forwards';
+                        $(entry.target).css('animation', 'slideInUp 0.6s ease-out forwards');
                         observer.unobserve(entry.target);
                     }
                 });
@@ -113,24 +115,24 @@ class LoginRequired {
                 rootMargin: '0px 0px -50px 0px'
             });
 
-            observer.observe(features);
+            observer.observe($features[0]);
         } else {
-            this.animateFeaturesFallback(features);
+            this.animateFeaturesFallback($features);
         }
     }
 
-    animateFeaturesFallback(features) {
+    animateFeaturesFallback($features) {
         setTimeout(() => {
-            features.style.animation = 'slideInUp 0.6s ease-out forwards';
+            $features.css('animation', 'slideInUp 0.6s ease-out forwards');
         }, 500);
     }
 
     setupPageTransition() {
-        window.addEventListener('beforeunload', () => {
+        $(window).on('beforeunload', () => {
             this.fadeOutPage();
         });
 
-        window.addEventListener('load', () => {
+        $(window).on('load', () => {
             this.fadeInPage();
         });
 
@@ -138,49 +140,53 @@ class LoginRequired {
     }
 
     fadeOutPage() {
-        document.body.style.opacity = '0';
-        document.body.style.transition = 'opacity 0.2s ease';
+        $('body').css({
+            'opacity': '0',
+            'transition': 'opacity 0.2s ease'
+        });
     }
 
     fadeInPage() {
-        document.body.style.opacity = '1';
-        document.body.style.transition = 'opacity 0.4s ease';
+        $('body').css({
+            'opacity': '1',
+            'transition': 'opacity 0.4s ease'
+        });
     }
 
     setupAccessibility() {
-        const warningIcon = document.querySelector(this.selectors.warningIcon);
-        if (warningIcon) {
-            warningIcon.setAttribute('aria-label', 'Ikon akses ditolak');
+        const $warningIcon = $(this.selectors.warningIcon);
+        if ($warningIcon.length) {
+            $warningIcon.attr('aria-label', 'Ikon akses ditolak');
         }
 
-        window.addEventListener('load', () => {
-            const loginBtn = document.querySelector(this.selectors.loginBtn);
-            if (loginBtn) {
-                loginBtn.focus();
+        $(window).on('load', () => {
+            const $loginBtn = $(this.selectors.loginBtn);
+            if ($loginBtn.length) {
+                $loginBtn.trigger('focus');
             }
         });
     }
 
     destroy() {
-        const loginBtn = document.querySelector(this.selectors.loginBtn);
-        if (loginBtn) {
-            loginBtn.replaceWith(loginBtn.cloneNode(true));
+        const $loginBtn = $(this.selectors.loginBtn);
+        if ($loginBtn.length) {
+            $loginBtn.off('click keydown');
         }
     }
 }
 
 function handlePageErrors() {
-    window.addEventListener('error', (e) => {
+    $(window).on('error', (e) => {
         console.error('Error in login required page:', e.error);
         
-        const loginBtn = document.querySelector('.login-btn');
-        if (loginBtn) {
+        const $loginBtn = $('.login-btn');
+        if ($loginBtn.length) {
             const fallbackHandler = (e) => {
                 e.preventDefault();
                 window.location.href = '?q=login';
             };
             
-            loginBtn.addEventListener('click', fallbackHandler);
+            $loginBtn.off('click').on('click', fallbackHandler);
         }
     });
 }
@@ -204,9 +210,9 @@ function initLoginRequiredPage() {
     } catch (error) {
         console.error('Failed to initialize login required page:', error);
         
-        const loginBtn = document.querySelector('.login-btn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', (e) => {
+        const $loginBtn = $('.login-btn');
+        if ($loginBtn.length) {
+            $loginBtn.on('click', (e) => {
                 e.preventDefault();
                 window.location.href = '?q=login';
             });
@@ -214,11 +220,9 @@ function initLoginRequiredPage() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLoginRequiredPage);
-} else {
+$(function() {
     initLoginRequiredPage();
-}
+});
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { LoginRequired, initLoginRequiredPage };

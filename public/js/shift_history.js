@@ -1,7 +1,7 @@
 class ShiftHistory {
     constructor() {
-        this.modal = document.getElementById('shiftDetailModal');
-        this.content = document.getElementById('shiftDetailContent');
+        this.modal = $('#shiftDetailModal');
+        this.content = $('#shiftDetailContent');
         this.init();
     }
 
@@ -11,16 +11,16 @@ class ShiftHistory {
     }
 
     bindEvents() {
-        if (this.modal) {
-            this.modal.addEventListener('click', (e) => {
-                if (e.target === this.modal) {
+        if (this.modal.length) {
+            this.modal.on('click', (e) => {
+                if (e.target === this.modal[0]) {
                     this.close();
                 }
             });
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modal.style.display === 'block') {
+        $(document).on('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.css('display') === 'block') {
                 this.close();
             }
         });
@@ -36,13 +36,13 @@ class ShiftHistory {
         }
 
         this.renderDetail(shift, rekap);
-        this.modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
+        this.modal.css('display', 'block');
+        $('body').css('overflow', 'hidden');
     }
 
     close() {
-        this.modal.style.display = 'none';
-        document.body.style.overflow = '';
+        this.modal.hide();
+        $('body').css('overflow', '');
     }
 
     renderDetail(shift, rekap) {
@@ -54,7 +54,7 @@ class ShiftHistory {
         const total_pengeluaran_lain = rekap?.total_pengeluaran_lain ?? 0;
         const selisih = rekap?.selisih ?? (saldo_akhir - saldo_awal);
 
-        this.content.innerHTML = `
+        this.content.html(`
             <div class="shift-detail">
                 <div class="detail-header">
                     <div class="cashdrawer-info">
@@ -134,7 +134,7 @@ class ShiftHistory {
                     </button>
                 </div>
             </div>
-        `;
+        `);
     }
 
     escapeHtml(unsafe) {
@@ -164,7 +164,7 @@ class ShiftHistory {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+$(function() {
     window.shiftHistory = new ShiftHistory();
     
     window.showShiftDetail = function(shiftId) {
