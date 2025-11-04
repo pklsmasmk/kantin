@@ -97,7 +97,8 @@ function sync_to_rekap($pdo, $shift_data) {
                 $shift_data['id'],
                 $shift_data['cashdrawer'],
                 $shift_data['saldo_awal'],
-                $shift_data['saldo_akhir'],0, 0, 0, 0, 
+                $shift_data['saldo_akhir'],
+                0, 0, 0, 0, 
                 $selisih,
                 $shift_data['waktu_mulai'],
                 $shift_data['waktu_selesai'] ?? null,
@@ -322,15 +323,58 @@ function get_setoran_hari_ini($pdo) {
 
 function calculate_saldo_tersedia($pdo, $currentShift = null) {
     if ($currentShift) {
-        $total_setoran_hari_ini = calculate_total_setoran_hari_ini($pdo);
-        $saldo_tersedia = $currentShift['saldo_akhir'] - $total_setoran_hari_ini;
-        return max(0, $saldo_tersedia);
+        return max(0, $currentShift['saldo_akhir']);
     } else {
         $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
-        $total_setoran_hari_ini = calculate_total_setoran_hari_ini($pdo);
-        $saldo_tersedia = $saldo_akhir_riwayat - $total_setoran_hari_ini;
-        return max(0, $saldo_tersedia);
+        return max(0, $saldo_akhir_riwayat);
     }
+}
+
+function update_saldo_setelah_setoran($pdo, $jumlah_setoran, $currentShift = null) {
+    if ($currentShift) {
+        $new_saldo_akhir = $currentShift['saldo_akhir'] - $jumlah_setoran;
+        
+        $stmt = $pdo->prepare("UPDATE shifts SET saldo_akhir = ? WHERE id = ?");
+        $stmt->execute([$new_saldo_akhir, $currentShift['id']]);
+        
+        $_SESSION["shift_current"]['saldo_akhir'] = $new_saldo_akhir;
+        
+        sync_to_rekap($pdo, $_SESSION["shift_current"]);
+        refresh_shift_history($pdo);
+        
+        return $new_saldo_akhir;
+    } else {
+        $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
+        $new_saldo_akhir = $saldo_akhir_riwayat - $jumlah_setoran;
+        
+        $shift = [
+            "id"         => uniqid("shift_auto_", true),
+            "nama"       => $_SESSION['namalengkap'] ?? "System Auto",
+            "role"       => $_SESSION['nama'] ?? "System",
+            "cashdrawer" => "Auto-Cashdrawer",
+            "saldo_awal" => $saldo_akhir_riwayat,
+            "saldo_akhir" => $new_saldo_akhir,
+            "waktu_mulai" => date("Y-m-d H:i:s"),
+            "waktu_selesai" => date("Y-m-d H:i:s") 
+        ];
+        
+        save_shift_data($pdo, $shift);
+        sync_to_rekap($pdo, $shift);
+        
+        return $new_saldo_akhir;
+    }
+}
+
+function validate_setoran($jumlah_setoran, $saldo_tersedia) {
+    if ($jumlah_setoran <= 0) {
+        return "Jumlah setoran harus lebih besar dari 0.";
+    }
+    
+    if ($jumlah_setoran > $saldo_tersedia) {
+        return "Saldo tidak mencukupi. Saldo tersedia: " . format_rupiah($saldo_tersedia);
+    }
+    
+    return null;
 }
 
 function format_rupiah($value) {
@@ -453,7 +497,6 @@ function process_setoran_request($pdo) {
         
         $currentShift = $_SESSION["shift_current"] ?? null;
         $saldo_tersedia = calculate_saldo_tersedia($pdo, $currentShift);
-        $can_setor = $saldo_tersedia > 0;
         
         $bukti_transfer_name = null;
         $bukti_transfer_path = null;
@@ -495,46 +538,32 @@ function process_setoran_request($pdo) {
             $jumlah_clean = preg_replace("/[^\d]/", "", $jumlah_input);
             $jumlah_value = $jumlah_clean !== "" ? (float) $jumlah_clean : 0;
 
-            if ($jumlah_value <= 0) {
-                $_SESSION["error"] = "Jumlah setoran harus lebih besar dari 0.";
+            $validation_error = validate_setoran($jumlah_value, $saldo_tersedia);
+            
+            if ($validation_error) {
+                $_SESSION["error"] = $validation_error;
             } else {
-                if (!$can_setor) {
-                    $_SESSION["error"] = "Tidak dapat melakukan setoran. Saldo tidak mencukupi.";
-                } elseif ($jumlah_value > $saldo_tersedia) {
-                    $_SESSION["error"] = "Saldo tidak mencukupi. Saldo tersedia: " . format_rupiah($saldo_tersedia);
-                } else {
-                    $setoran_id = uniqid('setoran_', true);
-                    $stmt = $pdo->prepare("
-                        INSERT INTO setoran 
-                        (id, penyetor, jumlah, jenis, metode, keterangan, detail_lainnya, waktu, shift_id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ");
-                    $stmt->execute([
-                        $setoran_id,
-                        $penyetor,
-                        $jumlah_value,
-                        $jenis_setoran,
-                        $metode_setoran,
-                        $keterangan,
-                        $detail_lainnya,
-                        date('Y-m-d H:i:s'),
-                        $_SESSION['shift_current']['id'] ?? null
-                    ]);
+                $setoran_id = uniqid('setoran_', true);
+                $stmt = $pdo->prepare("
+                    INSERT INTO setoran 
+                    (id, penyetor, jumlah, jenis, metode, keterangan, detail_lainnya, waktu, shift_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([
+                    $setoran_id,
+                    $penyetor,
+                    $jumlah_value,
+                    $jenis_setoran,
+                    $metode_setoran,
+                    $keterangan,
+                    $detail_lainnya,
+                    date('Y-m-d H:i:s'),
+                    $currentShift['id'] ?? null
+                ]);
 
-                    if ($currentShift) {
-                        $new_saldo_akhir = $currentShift['saldo_akhir'] - $jumlah_value;
-                        
-                        $stmt = $pdo->prepare("UPDATE shifts SET saldo_akhir = ? WHERE id = ?");
-                        $stmt->execute([$new_saldo_akhir, $currentShift['id']]);
-                        
-                        $_SESSION["shift_current"]['saldo_akhir'] = $new_saldo_akhir;
-                        
-                        sync_to_rekap($pdo, $_SESSION["shift_current"]);
-                        refresh_shift_history($pdo);
-                    }
-                    
-                    $_SESSION["success"] = "Setoran berhasil disimpan. Saldo tersisa: " . format_rupiah($saldo_tersedia - $jumlah_value);
-                }
+                $new_saldo_akhir = update_saldo_setelah_setoran($pdo, $jumlah_value, $currentShift);
+                
+                $_SESSION["success"] = "Setoran berhasil disimpan. Saldo tersisa: " . format_rupiah($new_saldo_akhir);
             }
         }
         

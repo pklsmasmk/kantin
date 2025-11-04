@@ -24,8 +24,14 @@ if (!isUserLoggedIn()) {
     <div class="login-required-container">
         <div class="uam-logo">
             <svg class="logo-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="8" ry="8" fill="#5d4e37" />
+                <rect width="40" height="40" rx="8" ry="8" fill="url(#greenGradient)" />
                 <text x="20" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="16" font-weight="bold">UAM</text>
+                <defs>
+                    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#2E8B57" />
+                        <stop offset="100%" stop-color="#1F6B45" />
+                    </linearGradient>
+                </defs>
             </svg>
             <span class="logo-text">Shift Kasir</span>
         </div>
