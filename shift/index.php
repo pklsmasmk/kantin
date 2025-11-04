@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 include("PHP/Back.php");
-include("PHP/back_shift.php");
+include("PHP/Back_shift.php");
 
 if (!isUserLoggedIn()) {
     ob_end_clean();
@@ -85,7 +85,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
         <header>
             <div class="logo" aria-label="UAM Logo">
                 <svg width="28" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect width="28" height="28" rx="8" ry="8" fill="#5d4e37" />
+                    <rect width="28" height="28" rx="8" ry="8" fill="var(--primary-color)" />
                 </svg>
                 <h1>Shift Kasir Kantin</h1>
             </div>
@@ -107,12 +107,18 @@ unset($_SESSION["error"], $_SESSION["success"]);
             </nav>
 
             <section class="user-info">
-                <summary class="avatar">
-                    <img src="https://gravatar.com/avatar/00000000000000000000000000000000?d=mp">
-                </summary>
+                <div class="avatar">
+                    <span>
+                        <?php 
+                        $nama = $_SESSION['namalengkap'];
+                        $inisial = substr($nama, 0, 2);
+                        echo $inisial;
+                        ?>
+                    </span>
+                </div>
                 <div class="user-name-role">
                     <strong><?=$_SESSION['namalengkap']?></strong>
-                    <strong><?=$_SESSION['nama']?></strong>
+                    <span><?=$_SESSION['nama']?></span>
                 </div>
             </section>
 
@@ -126,29 +132,19 @@ unset($_SESSION["error"], $_SESSION["success"]);
                 <section class="info">
                     <p>
                         <strong>Sistem Shift Kasir Kantin UAM</strong><br>
-                        Aplikasi kasir dengan sistem warisan saldo otomatis dan manajemen setoran terintegrasi.
+                        Aplikasi kasir dengan sistem manajemen setoran terintegrasi.
                     </p>
-                    <div style="margin-top: 12px; padding-left: 16px; border-left: 3px solid #8B7355;">
-                        <strong>Alur Kerja Sistem:</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; color: #555;">
-                            <li><strong>Mulai Shift</strong> - Input saldo awal, sistem otomatis tambah saldo warisan</li>
+                    <div style="margin-top: 12px; padding-left: 16px; border-left: 3px solid var(--primary-color);">
+                        <strong style="color: var(--text-primary);">Alur Kerja Sistem:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px; color: var(--text-secondary);">
+                            <li><strong>Mulai Shift</strong> - Input saldo awal cashdrawer</li>
                             <li><strong>Operasional</strong> - Transaksi penjualan, pengeluaran, pemasukan/pengeluaran lain</li>
                             <li><strong>Setoran Fleksibel</strong> - Setor kapan saja dari saldo akhir yang tersedia</li>
                             <li><strong>Rekap Detail</strong> - Monitoring lengkap transaksi dan saldo</li>
-                            <li><strong>Akhiri Shift</strong> - Sistem hitung otomatis, saldo akhir jadi warisan berikutnya</li>
+                            <li><strong>Akhiri Shift</strong> - Sistem hitung otomatis, saldo akhir disimpan</li>
                         </ul>
-                        
-                        <div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 6px;">
-                            <small><strong>Saldo Warisan:</strong> Saldo akhir shift sebelumnya otomatis menjadi bagian saldo awal shift baru</small>
-                        </div>
                     </div>
                 </section>
-                
-                <?php if ($saldo_warisan > 0): ?>
-                <div class="saldo-warisan-info">
-                    <small>Saldo warisan dari shift sebelumnya: <strong><?= format_rupiah($saldo_warisan) ?></strong> akan ditambahkan ke saldo awal</small>
-                </div>
-                <?php endif; ?>
                 
                 <form method="POST" class="shift-form" novalidate>
                     <label for="cashdrawer">Pilih Cashdrawer</label>
@@ -189,18 +185,8 @@ unset($_SESSION["error"], $_SESSION["success"]);
                         <?php endif; ?>
                     </small>
                     
-                    <?php if ($saldo_warisan > 0): ?>
-                    <div class="warisan-notice">
-                        <small><strong>SALDO WARISAN:</strong> <?= format_rupiah($saldo_warisan) ?> akan ditambahkan ke saldo awal Anda</small>
-                    </div>
-                    <?php endif; ?>
-                    
                     <button type="submit" class="submit-btn" id="submitShiftBtn">
-                        <?php if ($saldo_warisan > 0): ?>
-                            Mulai Shift Anda - Total: <?= format_rupiah($saldo_warisan) ?> + Saldo Awal
-                        <?php else: ?>
-                            Mulai Shift Anda
-                        <?php endif; ?>
+                        Mulai Shift Anda
                     </button>
 
                     <div class="action-buttons">
@@ -231,16 +217,6 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 <span class="label-detail">Saldo Awal:</span>
                                 <span class="nilai-detail" id="modalSaldoAwal"></span>
                             </div>
-                            <?php if ($saldo_warisan > 0): ?>
-                            <div class="item-detail">
-                                <span class="label-detail">Saldo Warisan:</span>
-                                <span class="nilai-detail" id="modalSaldoWarisan"></span>
-                            </div>
-                            <div class="item-detail">
-                                <span class="label-detail">Total Saldo:</span>
-                                <span class="nilai-detail" id="modalTotalSaldo"></span>
-                            </div>
-                            <?php endif; ?>
                         </div>
                         
                         <div class="catatan-warisan">

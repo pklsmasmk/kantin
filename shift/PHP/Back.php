@@ -25,7 +25,6 @@ function requireLogin() {
     }
 }
 
-// Handle logout action
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     logout();
 }

@@ -1,9 +1,9 @@
 function showConfirmModal() {
-    $('#confirmModal').css('display', 'block');
+    $('#confirmModal').addClass('show');
 }
 
 function hideConfirmModal() {
-    $('#confirmModal').css('display', 'none');
+    $('#confirmModal').removeClass('show');
 }
 
 function submitForm() {

@@ -329,32 +329,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
             </div>
         </div>
     </div>
-
-    <script>
-        function showConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'block';
-        }
-
-        function hideConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-        }
-
-        function submitForm() {
-            document.getElementById('akhiriForm').submit();
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('confirmModal');
-            if (event.target === modal) {
-                hideConfirmModal();
-            }
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                hideConfirmModal();
-            }
-        });
-    </script>
 </body>
 </html>

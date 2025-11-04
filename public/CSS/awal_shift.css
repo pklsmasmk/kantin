@@ -16,8 +16,8 @@
     --border-color: #E8E2D5;
     --text-primary: #2c2c2c;
     --text-secondary: #666;
-    --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    --radius: 12px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --radius: 8px;
 }
 
 html, body {
@@ -26,121 +26,78 @@ html, body {
 }
 
 body {
-    font-family: "Inter", "Segoe UI", sans-serif;
-    background: linear-gradient(135deg, #faf8f3 0%, #f5f1e8 100%);
+    font-family: 'Poppins', sans-serif;
+    background: #fafafa;
     color: var(--text-primary);
     line-height: 1.6;
-    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
-    margin: 0;
 }
 
 .login-required-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    width: 100%;
-    padding: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
 }
 
 .login-required-container {
     background: var(--card-bg);
-    padding: 3rem;
+    padding: 2.5rem;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     text-align: center;
-    max-width: 480px;
-    width: 100%;
+    max-width: 440px;
+    width: 90%;
     border: 1px solid var(--border-color);
-    animation: fadeInUp 0.6s ease;
     margin: 0 auto;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-}
-
-@keyframes spin {
-    0% { 
-        transform: translate(-50%, -50%) rotate(0deg); 
-    }
-    100% { 
-        transform: translate(-50%, -50%) rotate(360deg); 
-    }
-}
-
-@keyframes slideInRight {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes shimmer {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
-}
-
-.uam-icon {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 1.5rem auto;
-    border-radius: 50%;
-    padding: 8px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    box-shadow: 0 8px 25px rgba(139, 115, 85, 0.3);
-    animation: pulse 3s infinite;
+.uam-logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    overflow: hidden;
+    margin-bottom: 1.5rem;
+    gap: 10px;
 }
 
-.uam-icon::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: shimmer 3s infinite;
+.logo-svg {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.logo-text {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.uam-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem auto;
+    border-radius: 50%;
+    padding: 6px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .uam-icon img {
@@ -149,364 +106,152 @@ body {
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.uam-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 2rem;
-    gap: 12px;
-}
-
-.logo-svg {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
-}
-
-.logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
 }
 
 .login-required-container h1 {
     color: var(--danger-color);
     margin-bottom: 1rem;
-    font-size: 1.8rem;
-    font-weight: 700;
-    line-height: 1.3;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .login-required-container p {
     color: var(--text-secondary);
-    margin-bottom: 2rem;
-    line-height: 1.6;
-    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
 }
 
 .features {
     background: var(--light-bg);
-    padding: 1.5rem;
+    padding: 1.25rem;
     border-radius: var(--radius);
-    margin: 2rem 0;
+    margin: 1.5rem 0;
     text-align: left;
     border: 1px solid var(--border-color);
-    opacity: 0;
 }
 
 .features h3 {
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
 .features ul {
     list-style: none;
-    padding: 0;
 }
 
 .features li {
-    padding: 8px 0;
+    padding: 6px 0;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.95rem;
-    transition: color 0.3s ease;
-    opacity: 0;
-    transform: translateX(-20px);
-    animation: slideInRight 0.6s ease forwards;
-}
-
-.features li:hover {
-    color: var(--primary-color);
+    gap: 8px;
+    font-size: 0.9rem;
 }
 
 .features li:before {
     content: "✓";
     color: var(--success-color);
     font-weight: bold;
-    font-size: 1.1rem;
-    min-width: 20px;
+    min-width: 16px;
 }
-
-.features li:nth-child(1) { animation-delay: 0.1s; }
-.features li:nth-child(2) { animation-delay: 0.2s; }
-.features li:nth-child(3) { animation-delay: 0.3s; }
-.features li:nth-child(4) { animation-delay: 0.4s; }
-.features li:nth-child(5) { animation-delay: 0.5s; }
 
 .login-btn {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
     border: none;
-    padding: 15px 32px;
-    border-radius: 10px;
-    font-size: 1.1rem;
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    font-size: 1rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(139, 115, 85, 0.3);
-    margin-bottom: 1.5rem;
-    min-width: 200px;
-    position: relative;
+    margin-bottom: 1rem;
+    min-width: 180px;
 }
 
-.login-btn:hover:not(.loading) {
+.login-btn:hover {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(139, 115, 85, 0.4);
-}
-
-.login-btn:active {
-    transform: translateY(0);
-}
-
-.login-btn:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.3);
-}
-
-.login-btn.loading {
-    position: relative;
-    color: transparent;
-    pointer-events: none;
-}
-
-.login-btn.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 20px;
-    height: 20px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    transform: translateY(-1px);
 }
 
 .help-text {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    text-align: center;
 }
 
 .help-text p {
     margin-bottom: 0.5rem;
 }
 
-.contact-info {
-    background: var(--light-bg);
-    padding: 12px;
-    border-radius: 8px;
-    border-left: 4px solid var(--primary-color);
-    margin-top: 1rem;
-}
-
-.contact-info strong {
-    color: var(--primary-color);
-}
-
-.login-required-container {
-    position: relative;
-    overflow: hidden;
-}
-
-.login-required-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
-    animation: shimmer 3s infinite;
-}
-
 @media (max-width: 768px) {
-    .login-required-wrapper {
-        padding: 15px;
-        align-items: flex-start;
-        min-height: 100vh;
-        height: auto;
-    }
-    
     .login-required-container {
         padding: 2rem 1.5rem;
-        margin: 1rem auto;
         max-width: 400px;
     }
     
     .login-required-container h1 {
-        font-size: 1.5rem;
-    }
-    
-    .uam-icon {
-        width: 100px;
-        height: 100px;
-        margin-bottom: 1rem;
-    }
-    
-    .logo-svg {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    
-    .logo-text {
         font-size: 1.3rem;
-    }
-    
-    .features {
-        padding: 1.25rem;
-    }
-    
-    .login-btn {
-        padding: 14px 28px;
-        font-size: 1rem;
-        min-width: 180px;
-    }
-}
-
-@media (max-width: 480px) {
-    html, body {
-        height: 100%;
-    }
-    
-    .login-required-wrapper {
-        padding: 10px;
-        align-items: center;
-        min-height: 100vh;
-    }
-    
-    .login-required-container {
-        padding: 1.5rem 1rem;
-        margin: 0 auto;
-        max-width: 100%;
     }
     
     .uam-icon {
         width: 80px;
         height: 80px;
+        margin-bottom: 1rem;
     }
     
-    .uam-logo {
-        flex-direction: column;
-        gap: 8px;
+    .logo-svg {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
     }
     
     .logo-text {
         font-size: 1.2rem;
     }
     
+    .features {
+        padding: 1rem;
+    }
+    
+    .login-btn {
+        padding: 12px 24px;
+        font-size: 0.95rem;
+        min-width: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-required-container {
+        padding: 1.5rem 1rem;
+        width: 95%;
+    }
+    
+    .uam-icon {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .uam-logo {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .logo-text {
+        font-size: 1.1rem;
+    }
+    
     .features li {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
     
     .login-btn {
         width: 100%;
         min-width: auto;
-    }
-}
-
-@media (max-height: 600px) {
-    .login-required-wrapper {
-        align-items: flex-start;
-        padding-top: 20px;
-    }
-    
-    .login-required-container {
-        margin-top: 20px;
-    }
-    
-    .uam-icon {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 1rem;
-    }
-}
-
-@media (min-height: 1000px) {
-    .login-required-wrapper {
-        align-items: center;
-    }
-    
-    .uam-icon {
-        width: 140px;
-        height: 140px;
-    }
-}
-
-@media print {
-    .login-required-container {
-        box-shadow: none;
-        border: 1px solid #ccc;
-    }
-    
-    .login-btn {
-        display: none;
-    }
-}
-
-@media (prefers-contrast: high) {
-    :root {
-        --border-color: #000;
-        --shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-    
-    .login-required-container {
-        border: 2px solid var(--border-color);
-    }
-    
-    .uam-icon {
-        border: 3px solid #000;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
-    .login-required-container {
-        animation: none;
-    }
-    
-    .features li {
-        animation: none;
-        opacity: 1;
-        transform: none;
-    }
-    
-    .uam-icon {
-        animation: none;
-    }
-    
-    .uam-icon::before {
-        animation: none;
-    }
-    
-    .login-required-container::before {
-        animation: none;
     }
 }
