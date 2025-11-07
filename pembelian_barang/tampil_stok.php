@@ -1,9 +1,8 @@
 <?php
 header('Content-Type: application/json');
-require_once '..Database/config.php';
+require_once '../Database/config.php';
 
-// TAMBAHKAN INI UNTUK DEBUG
-error_reporting(0); // Nonaktifkan error reporting untuk output bersih
+error_reporting(0);
 
 try {
     $conn = getDBConnection();
@@ -14,7 +13,6 @@ try {
     
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // PASTIKAN HANYA INI YANG DI OUTPUT
     echo json_encode($data);
     exit;
 

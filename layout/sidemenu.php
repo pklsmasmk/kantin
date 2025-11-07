@@ -15,7 +15,7 @@
         <a class="nav-link px-3" href="../penjualan/laporan.php"><i class="bi bi-graph-up me-2"></i>Laporan</a>
         <a class="nav-link px-3" href="piutangkantin/index.php"><i class="bi bi-journal-text me-2"></i>Daftar Piutang</a>
         <a class="nav-link px-3" href="#"><i class="bi bi-box-seam me-2"></i>Penitipan Barang</a>
-        <a class="nav-link px-3" href="#"><i class="bi bi-bag-check me-2"></i>Pembelian Barang</a>
+        <a class="nav-link px-3" href="/?q=pembelian_barang"><i class="bi bi-bag-check me-2"></i>Pembelian Barang</a>
         <a class="nav-link px-3" href="/?q=retur"><i class="bi bi-bag-check me-2"></i>Retur Barang</a>
       </nav>
     </div>

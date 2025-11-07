@@ -3,20 +3,20 @@
       case 'dungo':
         include("../konten/dungo.php");
         break;
-      case 'retur':
-        include("../retur/html/stok.php");
+      case 'pembelian_barang':
+        include("../pembelian_barang/stok.php");
         break;
-      case 'retur__tampilstok':
-        include("../retur/html/tampil_stok.php");
+      case 'pembelian_barang__tampilstok':
+        include("../pembelian_barang/tampil_stok.php");
         break;
       case 'retur__ambil_barang':
-        include("../retur/html/ambil_barang.php");
+        include("../pembelian_barang/ambil_daftar_barang.php");
         break;  
       case 'retur__deletestok':
-        include("../retur/html/delete_stok.php");
+        include("../pembelian_barang/delete_stok.php");
         break;
-      case 'retur__insertstok':
-        include("../retur/html/insert_stok.php");
+      case 'pembelian_barang__insertstok':
+        include("../pembelian_barang/insert_stok.php");
         break;
       case 'retur__prosesretur':
         include("../retur/html/proses_retur.php");
@@ -28,7 +28,7 @@
         include("../retur/html/tampil_riwayat.php");
         break;
       case 'retur__updatestok':
-        include("../retur/html/update_stok.php");
+        include("../pembelian_barang/update_stok.php");
         break;  
       case 'shift':
         include("../shift/index.php");
@@ -45,7 +45,7 @@
       case 'shift__Akhiri__akhiri_sukses':
         include("../shift/Akhiri/akhiri_sukses.php");
         break;    
-        
+
       default:
         include("../konten/ori.php");
         break;

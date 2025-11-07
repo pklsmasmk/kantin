@@ -1,0 +1,312 @@
+/* CSS STOK BARANG - MODERN & MINIMALIS */
+.stok-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 0;
+}
+
+.stok-container .container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* HEADER TITLE */
+.stok-container h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+    font-size: 2.5rem;
+    margin-bottom: 0;
+}
+
+/* TABS MODERN */
+.nav-tabs {
+    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    padding: 5px;
+    margin-bottom: 30px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin: 0 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-tabs .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: -1;
+}
+
+.nav-tabs .nav-link:hover {
+    color: white;
+    transform: translateY(-2px);
+}
+
+.nav-tabs .nav-link:hover::before {
+    left: 0;
+}
+
+.nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+/* CARD STOK - GLASS MORPHISM */
+.stok-card {
+    border: none;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    box-shadow: 
+        0 10px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    position: relative;
+}
+
+.stok-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stok-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* CARD HEADER */
+.stok-card .card-header {
+    background: transparent;
+    border: none;
+    padding: 20px 20px 10px 20px;
+}
+
+.stok-card .card-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.stok-card .card-subtitle {
+    color: #667eea;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* CARD BODY */
+.stok-card .card-body {
+    padding: 0 20px 20px 20px;
+}
+
+.stock-info {
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.stock-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.stock-low {
+    color: #e53e3e;
+    text-shadow: 0 2px 4px rgba(229, 62, 62, 0.2);
+}
+
+.stock-adequate {
+    color: #38a169;
+    text-shadow: 0 2px 4px rgba(56, 161, 105, 0.2);
+}
+
+.profit-positive {
+    color: #38a169;
+    font-weight: 800;
+}
+
+.profit-negative {
+    color: #e53e3e;
+    font-weight: 800;
+}
+
+/* CARD FOOTER & BUTTONS */
+.stok-card .card-footer {
+    background: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 15px 20px;
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
+}
+
+.btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(237, 137, 54, 0.4);
+    color: white;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4);
+    color: white;
+}
+
+/* FORM STYLING */
+.form-container {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 
+        0 10px 25px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.form-control, .form-select {
+    border: 2px solid rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+    background: white;
+}
+
+/* FILTER SECTION */
+.filter-container {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* MODAL STYLING */
+.modal-content {
+    border: none;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-title {
+    font-weight: 700;
+}
+
+/* LOADING ANIMATION */
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+}
+
+.loading-shimmer {
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .stok-container .container {
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .stok-card:hover {
+        transform: translateY(-5px);
+    }
+}
+
+/* DARK MODE SUPPORT */
+@media (prefers-color-scheme: dark) {
+    .stok-container {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+    
+    .stok-container .container {
+        background: rgba(45, 55, 72, 0.95);
+        color: white;
+    }
+    
+    .stok-card {
+        background: rgba(45, 55, 72, 0.9);
+        color: white;
+    }
+}
