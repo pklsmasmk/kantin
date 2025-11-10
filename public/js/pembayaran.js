@@ -186,7 +186,7 @@ $(document).ready(function () {
         success: function (res) {
           if (res && res.status === "success") {
             alert("Transaksi piutang disimpan untuk: " + pelanggan);
-            window.location.href = "../piutangkantin/tambah.php";
+            window.location.href = "/?q=piutang_tambah";
           } else {
             alert("Data gagal disimpan di server!");
           }

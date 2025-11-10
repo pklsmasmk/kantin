@@ -15,6 +15,9 @@
       case 'laporan_penjualan':
         include("../penjualan/css/laporanpen_css.php");
         break;
+      case 'piutang':
+        include("../piutangkantin/css/index_css.php");
+        break;
       default:
         break;
     }

@@ -1,5 +1,4 @@
 <?php
-session_start();
 
 // Function untuk load data piutang dari file terpisah
 function loadPiutangData()
@@ -134,7 +133,7 @@ foreach ($piutangRecords as $record) {
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="text-dark"><i class="fas fa-money-bill-wave me-2"></i> Kelola Piutang</h1>
-            <a href="index.php" class="btn btn-outline-secondary">
+            <a href="/?q=piutang" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali ke Dashboard
             </a>
         </div>
@@ -201,7 +200,7 @@ foreach ($piutangRecords as $record) {
                     <div class="text-center py-4 text-muted">
                         <i class="fas fa-inbox fa-3x mb-3"></i>
                         <p>Tidak ada data piutang yang ditemukan</p>
-                        <a href="tambah.php" class="btn btn-info">Tambah Piutang</a>
+                        <a href="/?q=piutang_tambah" class="btn btn-info">Tambah Piutang</a>
                     </div>
                 <?php else: ?>
                     <div class="row">

@@ -15,6 +15,12 @@
       case 'piutang':
         include("../piutangkantin/index.php");
         break;
+      case 'piutang_tambah':
+        include("../piutangkantin/tambah.php");
+        break;
+      case 'piutang_data':
+        include("../piutangkantin/piutang.php");
+        break;
       case 'menu':
         include("../penjualan/menu.php");
         break;
