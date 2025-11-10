@@ -1,21 +1,15 @@
 <?php
-require_once '../Database/config.php';  // PERBAIKI: tambah slash
+require_once '../Database/config.php';  // PASTIKAN path benar
 
 header('Content-Type: application/json');
 
 try {
     $conn = getDBConnection();
-    
-    $sql = "SELECT * FROM riwayat_transaksi ORDER BY tanggal DESC LIMIT 50";
+    $sql = "SELECT id, nama, stok FROM stok_barang WHERE stok > 0 ORDER BY nama";
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    if (count($data) === 0) {
-        $data = ["message" => "Belum ada riwayat transaksi"];
-    }
-
     echo json_encode($data);
 
 } catch (Exception $e) {

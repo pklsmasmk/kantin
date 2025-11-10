@@ -18,6 +18,9 @@
       case 'pembelian_barang__insertstok':
         include("../pembelian_barang/insert_stok.php");
         break;
+      case 'indexretur':
+        include("../retur/html/index_retur.php");
+        break;
       case 'retur__prosesretur':
         include("../retur/html/proses_retur.php");
         break;

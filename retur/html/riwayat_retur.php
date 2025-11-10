@@ -1,5 +1,5 @@
 <?php
-require_once '..Database/config.php';
+require_once '../Database/config.php';  // PASTIKAN path benar
 
 header('Content-Type: application/json');
 
@@ -14,13 +14,13 @@ try {
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     
-    $data = [];
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if (count($rows) > 0) {
-        foreach ($rows as $row) {
+    if (count($data) > 0) {
+        $result = [];
+        foreach ($data as $row) {
             $alasan = $row['alasan'] == 'Lainnya' ? $row['alasan_lainnya'] : $row['alasan'];
-            $data[] = [
+            $result[] = [
                 'nama_barang' => $row['nama_barang'],
                 'jumlah' => $row['jumlah'],
                 'alasan' => $alasan,
@@ -28,13 +28,13 @@ try {
                 'tanggal' => $row['tanggal']
             ];
         }
+        echo json_encode($result);
     } else {
-        $data = ["message" => "Belum ada riwayat retur"];
+        echo json_encode(["message" => "Belum ada riwayat retur"]);
     }
 
-    echo json_encode($data);
-
 } catch (Exception $e) {
+    http_response_code(500);  // Tambahkan status code error
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
