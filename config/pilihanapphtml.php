@@ -3,20 +3,20 @@
       case 'dungo':
         include("../konten/dungo.php");
         break;
-      case 'pembelian_barang':
-        include("../pembelian_barang/stok.php");
+      case 'stok_barang':
+        include("../stok_barang/stok_barang.php");
         break;
-      case 'pembelian_barang__tampilstok':
-        include("../pembelian_barang/tampil_stok.php");
+      case 'stok_barang__getstock':
+        include("../stok_barang/get_stock.php");
         break;
-      case 'retur__ambil_barang':
-        include("../pembelian_barang/ambil_daftar_barang.php");
+      case 'riwayat_transaksi':
+        include("../stok_barang/riwayat_transaksi.php");
         break;  
-      case 'retur__deletestok':
-        include("../pembelian_barang/delete_stok.php");
+      case 'stok_barang__simpanbarang':
+        include("../stok_barang/simpan_barang.php");
         break;
-      case 'pembelian_barang__insertstok':
-        include("../pembelian_barang/insert_stok.php");
+      case 'stok_barang__simpanrestock':
+        include("../stok_barang/simpan_restock.php");
         break;
       case 'retur__prosesretur':
         include("../retur/html/proses_retur.php");
@@ -30,6 +30,15 @@
       case 'retur__updatestok':
         include("../pembelian_barang/update_stok.php");
         break;  
+      case 'login':
+        include("../login/Login.php");
+        break;
+      case 'logout':
+        include("../login/Logout.php");
+        break;
+      case 'daftar':
+        include("../login/Daftar.php");
+        break;
       case 'shift':
         include("../shift/index.php");
         break;
