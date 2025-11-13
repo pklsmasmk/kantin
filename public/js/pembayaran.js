@@ -15,8 +15,44 @@ $(document).ready(function () {
   $("#displayTotal").text("Rp " + grandTotal.toLocaleString("id-ID"));
   $("#totalNav").text("Rp " + grandTotal.toLocaleString("id-ID"));
 
+  function showSuccessModal(total, dibayar, kembalian, metode) {
+    $("#modalTotal").text("Rp " + total.toLocaleString("id-ID"));
+    $("#modalDibayar").text("Rp " + dibayar.toLocaleString("id-ID"));
+    $("#modalKembalian").text("Rp " + kembalian.toLocaleString("id-ID"));
+    $("#modalMetode").text(metode);
+    $("#modalWaktu").text(
+      new Date().toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+
+    $("#successModal").modal("show");
+  }
+
+  function showPiutangModal(nama, total, keterangan) {
+    $("#modalPiutangNama").text(nama);
+    $("#modalPiutangTotal").text("Rp " + total.toLocaleString("id-ID"));
+    $("#modalPiutangKet").text(keterangan);
+    $("#modalPiutangWaktu").text(
+      new Date().toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    );
+
+    $("#piutangModal").modal("show");
+  }
+
   function updateInputDisplay() {
-    const displayValue = bayar === "" ? "0" : parseInt(bayar).toLocaleString("id-ID");
+    const displayValue =
+      bayar === "" ? "0" : parseInt(bayar).toLocaleString("id-ID");
     $("#inputBayar").text(displayValue);
     updatePaymentStatus();
   }
@@ -24,11 +60,13 @@ $(document).ready(function () {
   function updatePaymentStatus() {
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
     const changeDisplay = $("#changeDisplay");
-    
+
     if (bayarFinal === 0) {
       changeDisplay.hide();
     } else if (bayarFinal < grandTotal) {
-      changeDisplay.text("Kurang: Rp " + (grandTotal - bayarFinal).toLocaleString("id-ID"));
+      changeDisplay.text(
+        "Kurang: Rp " + (grandTotal - bayarFinal).toLocaleString("id-ID")
+      );
       changeDisplay.addClass("negative");
       changeDisplay.show();
     } else if (bayarFinal === grandTotal) {
@@ -36,14 +74,18 @@ $(document).ready(function () {
       changeDisplay.removeClass("negative");
       changeDisplay.show();
     } else {
-      changeDisplay.text("Kembalian: Rp " + (bayarFinal - grandTotal).toLocaleString("id-ID"));
+      changeDisplay.text(
+        "Kembalian: Rp " + (bayarFinal - grandTotal).toLocaleString("id-ID")
+      );
       changeDisplay.removeClass("negative");
       changeDisplay.show();
     }
   }
 
   if ($("#changeDisplay").length === 0) {
-    $('<div class="change-display" id="changeDisplay"></div>').insertAfter("#inputBayar");
+    $('<div class="change-display" id="changeDisplay"></div>').insertAfter(
+      "#inputBayar"
+    );
   }
 
   $("#inputBayar").on("click", function () {
@@ -90,8 +132,9 @@ $(document).ready(function () {
   });
 
   $(document).on("keydown", function (e) {
-    const isInputFocused = $("#namaPelanggan").is(":focus") || $("#keterangan").is(":focus");
-    
+    const isInputFocused =
+      $("#namaPelanggan").is(":focus") || $("#keterangan").is(":focus");
+
     if (isInputFocused) {
       return;
     }
@@ -129,6 +172,29 @@ $(document).ready(function () {
     }
   });
 
+  $("#modalCloseBtn").on("click", function () {
+    localStorage.clear();
+    window.location.href = "/?q=menu";
+  });
+
+  $("#modalPiutangCloseBtn").on("click", function () {
+    localStorage.removeItem("cartItems");
+    localStorage.removeItem("currentSubtotal");
+    localStorage.removeItem("currentDiscount");
+    localStorage.removeItem("currentTax");
+    localStorage.removeItem("currentTotal");
+    window.location.href = "/?q=menu";
+  });
+
+  $("#modalPiutangListBtn").on("click", function () {
+    localStorage.removeItem("cartItems");
+    localStorage.removeItem("currentSubtotal");
+    localStorage.removeItem("currentDiscount");
+    localStorage.removeItem("currentTax");
+    localStorage.removeItem("currentTotal");
+    window.location.href = "/?q=piutang_tambah";
+  });
+
   $("#confirmBtn").click(function (e) {
     e.preventDefault();
 
@@ -149,16 +215,23 @@ $(document).ready(function () {
       localStorage.setItem("pendingPiutangNama", pelanggan);
       localStorage.setItem("pendingPiutangTotal", totalPiutang);
       localStorage.setItem("pendingPiutangKet", keterangan || "-");
+      localStorage.setItem("pendingPiutangItems", JSON.stringify(makananList));
 
       const piutangList = JSON.parse(localStorage.getItem("piutangList")) || [];
-      piutangList.push({
+      const newPiutang = {
+        id: Date.now(),
         nama: pelanggan,
         total: totalPiutang,
         tanggal: new Date().toLocaleString("id-ID"),
         keterangan: keterangan || "-",
-        makanan: makananList,
-        paid: false,
-      });
+        items: makananList,
+        diskon: disc,
+        pajak: tax,
+        status: "Belum Lunas",
+        created: new Date().toISOString(),
+        metode: metode,
+      };
+      piutangList.push(newPiutang);
       localStorage.setItem("piutangList", JSON.stringify(piutangList));
 
       const dataKirim = {
@@ -185,8 +258,7 @@ $(document).ready(function () {
         },
         success: function (res) {
           if (res && res.status === "success") {
-            alert("Transaksi piutang disimpan untuk: " + pelanggan);
-            window.location.href = "/?q=piutang_tambah";
+            showPiutangModal(pelanggan, totalPiutang, keterangan || "-");
           } else {
             alert("Data gagal disimpan di server!");
           }
@@ -196,7 +268,9 @@ $(document).ready(function () {
           console.error(xhr.responseText);
         },
         complete: function () {
-          $("#confirmBtn").prop("disabled", false).text("Konfirmasi Pembayaran");
+          $("#confirmBtn")
+            .prop("disabled", false)
+            .text("Konfirmasi Pembayaran");
         },
       });
       return;
@@ -204,7 +278,9 @@ $(document).ready(function () {
 
     if (bayarFinal < grandTotal) {
       alert(
-        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString("id-ID")}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
+        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString(
+          "id-ID"
+        )}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
       );
       return;
     }
@@ -235,11 +311,7 @@ $(document).ready(function () {
       },
       success: function (res) {
         if (res && res.status === "success") {
-          alert(
-            `Pembayaran Berhasil!\nTotal: Rp ${grandTotal.toLocaleString("id-ID")}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}\nKembalian: Rp ${kembalian.toLocaleString("id-ID")}`
-          );
-          localStorage.clear();
-          window.location.href = "/?q=menu";
+          showSuccessModal(grandTotal, bayarFinal, kembalian, metode);
         } else {
           alert("Data gagal disimpan di server!");
         }

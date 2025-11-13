@@ -305,4 +305,61 @@ label {
     padding: 8px;
     font-size: 0.9rem;
   }
+
+.modal-content {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.success-icon, .warning-icon {
+  margin-top: -40px;
+  margin-bottom: 10px;
+}
+
+.payment-details {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.detail-item {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+}
+
+.modal.fade .modal-dialog {
+  transform: translateY(-50px);
+  transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+  transform: translateY(0);
+}
+
+@media (max-width: 576px) {
+  .modal-dialog {
+    margin: 20px;
+  }
+  
+  .modal-content {
+    border-radius: 12px;
+  }
+  
+  .success-icon, .warning-icon {
+    margin-top: -30px;
+  }
+  
+  .success-icon svg, .warning-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+}
 }
