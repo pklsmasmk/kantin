@@ -13,9 +13,9 @@ function addToCart(nama, harga) {
 $(document).on("click", ".addCart", function () {
   const card = $(this).closest(".menu-card");
   const nama = card.find(".card-title").text().trim();
-  const hargaText = card.find(".card-text").text().replace(/[^\d]/g, "").trim();
+  const hargaText = card.find(".card-text").text().replace(/^.* /g, '').replace(/\./g, "").replace(/,/g, ".").trim();
   const harga = parseInt(hargaText) || 0;
-
+  // alert(hargaText);
   addToCart(nama, harga);
 }); 
 

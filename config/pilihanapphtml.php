@@ -39,6 +39,9 @@
       case 'login':
         include("../login/Login.php");
         break;
+      case 'daftar':
+        include("../login/Daftar.php");
+        break;
       case 'logout':
         include("../login/Logout.php");
         break;

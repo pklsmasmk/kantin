@@ -1,5 +1,6 @@
 <?php
-if (defined('__DBCONFIG__')) {
+$pdo = null;
+if (!defined('__DBCONFIG__')) {
     define('__DBCONFIG__', true);
     $host = '192.168.109.195';
     $username = 'smk';

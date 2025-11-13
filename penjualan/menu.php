@@ -1,3 +1,7 @@
+<?php
+if(isset($_SESSION['username'])){
+  
+?>
 <div class="row g-4">
   <div class="col-md-8">
     <div class="card p-4 border-0 shadow-sm" data-aos="fade-up">
@@ -6,15 +10,22 @@
         placeholder=" Cari makanan, minuman, atau jajanan..." autocomplete="off">
       
       <div class="menu-horizontal-container" id="menuList">
+
+<?php
+  $strSql = "SELECT * FROM stok_barang";
+  $hsl = $pdo->query($strSql);
+  $iTung=0;
+  foreach ($hsl as $v) {
+?>
         <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="100">
-          <div class="item-number">1</div>
+          <div class="item-number"><?=++$iTung?></div>
           <div class="card h-100 border-0 shadow-sm menu-card">
             <div class="card-body d-flex align-items-center justify-content-between p-3">
               <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto1.avif" class="menu-img-small me-3" alt="Nasi Goreng">
+                <img src="/img/foto1.avif" class="menu-img-small me-3" alt="<?=$v["nama_barang"]?>">
                 <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Nasi Goreng</h6>
-                  <p class="card-text text-muted mb-0">Rp15.000</p>
+                  <h6 class="card-title fw-bold mb-1"><?=$v["nama_barang"]?></h6>
+                  <p class="card-text text-muted mb-0">Rp <?=number_format($v["harga_jual"],2,",",".") ?></p>
                 </div>
               </div>
               <div class="menu-action">
@@ -25,146 +36,12 @@
             </div>
           </div>
         </div>
+<?php
+}
+?>
 
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="150">
-          <div class="item-number">2</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto2.avif" class="menu-img-small me-3" alt="Mie Ayam">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Mie Ayam</h6>
-                  <p class="card-text text-muted mb-0">Rp12.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="200">
-          <div class="item-number">3</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto3.avif" class="menu-img-small me-3" alt="Es Teh Manis">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Es Teh Manis</h6>
-                  <p class="card-text text-muted mb-0">Rp5.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="250">
-          <div class="item-number">4</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto4.avif" class="menu-img-small me-3" alt="Ayam Geprek">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Ayam Geprek</h6>
-                  <p class="card-text text-muted mb-0">Rp15.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="300">
-          <div class="item-number">5</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto5.avif" class="menu-img-small me-3" alt="Bakso">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Bakso</h6>
-                  <p class="card-text text-muted mb-0">Rp10.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="350">
-          <div class="item-number">6</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto6.avif" class="menu-img-small me-3" alt="Sate Ayam">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Sate Ayam</h6>
-                  <p class="card-text text-muted mb-0">Rp10.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="400">
-          <div class="item-number">7</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto7.avif" class="menu-img-small me-3" alt="Es Jeruk">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Es Jeruk</h6>
-                  <p class="card-text text-muted mb-0">Rp6.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="menu-horizontal-item" data-aos="fade-up" data-aos-delay="450">
-          <div class="item-number">8</div>
-          <div class="card h-100 border-0 shadow-sm menu-card">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="/img/foto8.avif" class="menu-img-small me-3" alt="Roti Bakar">
-                <div class="menu-info">
-                  <h6 class="card-title fw-bold mb-1">Roti Bakar</h6>
-                  <p class="card-text text-muted mb-0">Rp14.000</p>
-                </div>
-              </div>
-              <div class="menu-action">
-                <button class="btn btn-success addCart btn-sm">
-                  <i class="bi bi-plus-circle me-1"></i>Tambah
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -224,3 +101,17 @@
     </div>
   </div>
 </div>
+
+<?php
+}
+else {
+
+?>
+<div class="jumbotron text-danger">
+  SILAHKAN LOGIN TERLEBIH DAHULU
+  <a class="btn btn-warning" href="/?q=login">LOGIN</a>
+</div>
+
+<?php
+}
+?>
