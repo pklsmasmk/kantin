@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "../Database/config.php";  
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -154,6 +155,7 @@ session_start();
   </style>
   <?php
     include("config/pilihanappcss.php");
+    // die(print_r($pdo));
   ?>
 </head>
 
