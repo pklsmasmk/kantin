@@ -1,5 +1,5 @@
 <?php
-require_once '../Database/config.php';  // PASTIKAN path benar
+require_once '../Database/config.php';
 
 header('Content-Type: application/json');
 
@@ -9,7 +9,8 @@ try {
     $sql = "SELECT r.*, sb.nama as nama_barang 
             FROM retur_barang r 
             JOIN stok_barang sb ON r.barang_id = sb.id 
-            ORDER BY r.tanggal DESC";
+            ORDER BY r.tanggal DESC 
+            LIMIT 10";
     
     $stmt = $conn->prepare($sql);
     $stmt->execute();
@@ -19,12 +20,15 @@ try {
     if (count($data) > 0) {
         $result = [];
         foreach ($data as $row) {
-            $alasan = $row['alasan'] == 'Lainnya' ? $row['alasan_lainnya'] : $row['alasan'];
+            // Gunakan alasan_lainnya jika alasan adalah 'Lainnya'
+            $alasan_final = ($row['alasan'] == 'Lainnya' && !empty($row['alasan_lainnya'])) 
+                ? $row['alasan_lainnya'] 
+                : $row['alasan'];
+                
             $result[] = [
                 'nama_barang' => $row['nama_barang'],
                 'jumlah' => $row['jumlah'],
-                'alasan' => $alasan,
-                'keterangan' => $row['keterangan'],
+                'alasan' => $alasan_final,
                 'tanggal' => $row['tanggal']
             ];
         }
@@ -34,7 +38,7 @@ try {
     }
 
 } catch (Exception $e) {
-    http_response_code(500);  // Tambahkan status code error
+    http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
