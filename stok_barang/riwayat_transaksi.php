@@ -1,12 +1,19 @@
 <?php
 require_once '../Database/config.php';
+require_once '../Database/functions.php';
+
+// Start session untuk mendapatkan user yang login
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 function getRiwayatTransaksi() {
     $pdo = getDBConnection();
-    $stmt = $pdo->query("SELECT rt.*, sb.nama_barang, sb.nama 
-                         FROM riwayat_transaksi rt 
-                         LEFT JOIN stok_barang sb ON rt.barang_id = sb.id 
-                         ORDER BY rt.created_at DESC");
+    
+    $stmt = $pdo->query("
+        SELECT * FROM riwayat_transaksi 
+        ORDER BY created_at DESC
+    ");
     return $stmt->fetchAll();
 }
 
@@ -31,11 +38,36 @@ $riwayatTransaksi = getRiwayatTransaksi();
         .table th { 
             background-color: #f8f9fa; 
         }
+        .btn-success { 
+            background-color: #28a745; 
+            border-color: #28a745; 
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        .btn-outline-success {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: white;
+        }
+        .bg-success { background-color: #28a745 !important; }
+        .text-success { color: #28a745 !important; }
+        .user-info {
+            background-color: #e8f5e8;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #155724;
+        }
     </style>
 </head>
 <body>
     <!-- NAVIGASI -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
         <div class="container">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-store me-2"></i>Manajemen Kantin
@@ -47,6 +79,11 @@ $riwayatTransaksi = getRiwayatTransaksi();
                 <a class="nav-link active" href="#">
                     <i class="fas fa-history me-1"></i> Riwayat Transaksi
                 </a>
+                <?php if (isset($_SESSION['username'])): ?>
+                    <span class="nav-link user-info">
+                        <i class="fas fa-user me-1"></i><?= htmlspecialchars($_SESSION['username']) ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -54,8 +91,10 @@ $riwayatTransaksi = getRiwayatTransaksi();
     <div class="container mt-4">
         <!-- HEADER HALAMAN -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">Riwayat Transaksi</h1>
-            <a href="/?q=stok_barang" class="btn btn-outline-primary">
+            <h1 class="h3 text-success">
+                <i class="fas fa-history me-2"></i>Riwayat Transaksi
+            </h1>
+            <a href="/?q=stok_barang" class="btn btn-outline-success">
                 <i class="fas fa-arrow-left me-1"></i> Kembali ke Stok Barang
             </a>
         </div>
@@ -63,26 +102,33 @@ $riwayatTransaksi = getRiwayatTransaksi();
         <!-- TABEL RIWAYAT TRANSAKSI -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Daftar Transaksi</h5>
-                <div class="badge bg-primary">
-                    Total: <?= count($riwayatTransaksi) ?> Transaksi
+                <h5 class="card-title mb-0 text-success">
+                    <i class="fas fa-list me-2"></i>Daftar Transaksi
+                </h5>
+                <div class="badge bg-success">
+                    <i class="fas fa-receipt me-1"></i> Total: <?= count($riwayatTransaksi) ?> Transaksi
                 </div>
             </div>
             <div class="card-body">
                 <?php if (empty($riwayatTransaksi)): ?>
                     <div class="text-center text-muted py-5">
-                        <i class="fas fa-receipt fa-3x mb-3"></i>
-                        <p>Tidak ada data transaksi</p>
+                        <i class="fas fa-receipt fa-4x mb-3"></i>
+                        <h5>Belum ada data transaksi</h5>
+                        <p class="mb-4">Transaksi akan muncul di sini setelah Anda menambah atau restock barang</p>
+                        <a href="/?q=stok_barang" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-1"></i> Tambah Barang
+                        </a>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-striped">
+                        <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th>#</th>
                                     <th>Tanggal</th>
                                     <th>Barang</th>
                                     <th>Jenis Transaksi</th>
+                                    <th>Pemasok</th>
                                     <th>Jumlah</th>
                                     <th>Harga</th>
                                     <th>Total</th>
@@ -100,17 +146,26 @@ $riwayatTransaksi = getRiwayatTransaksi();
                                         </small>
                                     </td>
                                     <td>
-                                        <?= htmlspecialchars($transaksi['nama_barang'] ?? $transaksi['nema'] ?? '-') ?>
+                                        <strong><?= htmlspecialchars($transaksi['nama_barang'] ?? '-') ?></strong>
                                     </td>
                                     <td>
                                         <span class="badge bg-<?= $transaksi['jenis_transaksi'] == 'tambah_barang' ? 'success' : 'info' ?>">
                                             <?= $transaksi['jenis_transaksi'] == 'tambah_barang' ? 'Tambah Barang' : 'Restock' ?>
                                         </span>
                                     </td>
-                                    <td><?= $transaksi['jumlah'] ?></td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-user me-1"></i><?= htmlspecialchars($transaksi['pemasok'] ?? '-') ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            <?= $transaksi['jumlah'] ?> pcs
+                                        </span>
+                                    </td>
                                     <td>Rp <?= number_format($transaksi['harga'], 0, ',', '.') ?></td>
                                     <td>
-                                        <strong>Rp <?= number_format($transaksi['total'], 0, ',', '.') ?></strong>
+                                        <strong class="text-success">Rp <?= number_format($transaksi['total'], 0, ',', '.') ?></strong>
                                     </td>
                                     <td>
                                         <small><?= htmlspecialchars($transaksi['keterangan']) ?></small>

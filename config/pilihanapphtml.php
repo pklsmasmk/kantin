@@ -30,13 +30,13 @@
       case 'retur__updatestok':
         include("../pembelian_barang/update_stok.php");
         break;  
-      case 'login':
+      case 'Login':
         include("../login/Login.php");
         break;
-      case 'logout':
+      case 'Logout':
         include("../login/Logout.php");
         break;
-      case 'daftar':
+      case 'Daftar':
         include("../login/Daftar.php");
         break;
       case 'shift':

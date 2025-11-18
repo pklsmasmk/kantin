@@ -1,46 +1,10 @@
 <?php
 require_once '../Database/config.php';
+require_once '../Database/functions.php';
 
-function getAllStokBarang() {
-    $pdo = getDBConnection();
-    $stmt = $pdo->query("SELECT * FROM stok_barang ORDER BY id DESC");
-    return $stmt->fetchAll();
-}
-
-function tambahBarang($data) {
-    $pdo = getDBConnection();
-    $sql = "INSERT INTO stok_barang (nama_barang, tipe, pemasok, stok, harga_dasar, harga_jual) 
-            VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([
-        $data['nama_barang'],
-        $data['tipe_barang'],
-        $data['pemasok'],
-        $data['stok'],
-        $data['harga_dasar'],
-        $data['harga_jual']
-    ]);
-}
-
-function updateStokBarang($id, $stok) {
-    $pdo = getDBConnection();
-    $sql = "UPDATE stok_barang SET stok = stok + ?, updated_at = NOW() WHERE id = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$stok, $id]);
-}
-function catatTransaksi($data) {
-    $pdo = getDBConnection();
-    $sql = "INSERT INTO riwayat_transaksi (barang_id, jenis_transaksi, jumlah, harga, total, keterangan) 
-            VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([
-        $data['barang_id'],
-        $data['jenis_transaksi'],
-        $data['jumlah'],
-        $data['harga'],
-        $data['total'],
-        $data['keterangan']
-    ]);
+// Start session untuk mendapatkan user yang login
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
 
 $success = '';
@@ -53,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data = [
                     'nama_barang' => $_POST['nama_barang'],
                     'tipe_barang' => $_POST['tipe_barang'],
-                    'pemasok' => $_POST['pemasok'],
                     'stok' => $_POST['stok'],
                     'harga_dasar' => $_POST['harga_dasar'],
                     'harga_jual' => $_POST['harga_jual']
@@ -63,9 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdo = getDBConnection();
                     $lastId = $pdo->lastInsertId();
                     
+                    // Ambil data barang yang baru ditambahkan
+                    $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
+                    $stmt->execute([$lastId]);
+                    $barang = $stmt->fetch();
+                    
                     $transaksiData = [
-                        'barang_id' => $lastId,
+                        'nama_barang' => $barang['nama_barang'],
                         'jenis_transaksi' => 'tambah_barang',
+                        'pemasok' => $_SESSION['username'] ?? 'admin',
                         'jumlah' => $data['stok'],
                         'harga' => $data['harga_dasar'],
                         'total' => $data['stok'] * $data['harga_dasar'],
@@ -80,25 +49,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'restock':
-                // Data dari form restock
                 $id = $_POST['id'];
                 $jumlah = $_POST['jumlah'];
+                $harga_dasar_restock = $_POST['harga_dasar_restock']; // Harga dasar untuk restock ini
                 
-                // Update stok di database
                 if (updateStokBarang($id, $jumlah)) {
-                    // Catat transaksi restock
                     $pdo = getDBConnection();
-                    $stmt = $pdo->prepare("SELECT nama_barang, harga_dasar FROM stok_barang WHERE id = ?");
+                    $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
                     $stmt->execute([$id]);
                     $barang = $stmt->fetch();
                     
                     $transaksiData = [
-                        'barang_id' => $id,
+                        'nama_barang' => $barang['nama_barang'],
                         'jenis_transaksi' => 'restock',
+                        'pemasok' => $_SESSION['username'] ?? 'admin',
                         'jumlah' => $jumlah,
-                        'harga' => $barang['harga_dasar'],
-                        'total' => $jumlah * $barang['harga_dasar'],
-                        'keterangan' => 'Restock barang: ' . $barang['nama_barang']
+                        'harga' => $harga_dasar_restock, // Harga dasar untuk restock ini
+                        'total' => $jumlah * $harga_dasar_restock,
+                        'keterangan' => 'Restock barang: ' . $barang['nama_barang'] . ' - Harga: Rp ' . number_format($harga_dasar_restock, 0, ',', '.')
                     ];
                     
                     catatTransaksi($transaksiData);
@@ -136,24 +104,54 @@ $stokBarang = getAllStokBarang();
             font-weight: 600; 
         }
         .mode-indicator { 
-            background-color: #e7f3ff; 
-            border-left: 4px solid #0d6efd; 
+            background-color: #e8f5e8; 
+            border-left: 4px solid #28a745; 
             padding: 10px 15px; 
             margin-bottom: 15px; 
             border-radius: 4px; 
         }
-        .btn-primary { 
-            background-color: #0d6efd; 
-            border-color: #0d6efd; 
+        .btn-success { 
+            background-color: #28a745; 
+            border-color: #28a745; 
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        .btn-outline-success {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: white;
         }
         .table th { 
             background-color: #f8f9fa; 
+        }
+        .badge-stok-tinggi { background-color: #28a745; }
+        .badge-stok-sedang { background-color: #ffc107; color: #000; }
+        .badge-stok-rendah { background-color: #dc3545; }
+        .user-info {
+            background-color: #e8f5e8;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #155724;
+        }
+        .bg-success { background-color: #28a745 !important; }
+        .text-success { color: #28a745 !important; }
+        .border-success { border-color: #28a745 !important; }
+        .alert-info {
+            background-color: #e8f5e8;
+            border-color: #28a745;
+            color: #155724;
         }
     </style>
 </head>
 <body>
     <!-- NAVIGASI -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
         <div class="container">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-store me-2"></i>Manajemen Kantin
@@ -162,6 +160,14 @@ $stokBarang = getAllStokBarang();
                 <a class="nav-link active" href="#">
                     <i class="fas fa-boxes me-1"></i> Stok Barang
                 </a>
+                <a class="nav-link" href="/?q=riwayat_transaksi">
+                    <i class="fas fa-history me-1"></i> Riwayat Transaksi
+                </a>
+                <?php if (isset($_SESSION['username'])): ?>
+                    <span class="nav-link user-info">
+                        <i class="fas fa-user me-1"></i><?= htmlspecialchars($_SESSION['username']) ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -170,78 +176,80 @@ $stokBarang = getAllStokBarang();
         <!-- NOTIFIKASI -->
         <?php if (!empty($success)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <?= $success ?>
+                <i class="fas fa-check-circle me-2"></i><?= $success ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
         
         <?php if (!empty($error)): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <?= $error ?>
+                <i class="fas fa-exclamation-circle me-2"></i><?= $error ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
         <!-- HEADER HALAMAN -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3">Stok Barang</h1>
+            <h1 class="h3">
+                <i class="fas fa-boxes text-success me-2"></i>Stok Barang
+            </h1>
             <div>
-                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#tambahBarangModal">
-                    <i class="fas fa-plus-circle me-1"></i> Restock/Tambah Barang
+                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#tambahBarangModal">
+                    <i class="fas fa-plus-circle me-1"></i> Tambah Barang
                 </button>
-                <a href="/?q=riwayat_transaksi" class="btn btn-outline-secondary">
+                <a href="/?q=riwayat_transaksi" class="btn btn-outline-success">
                     <i class="fas fa-history me-1"></i> Riwayat Transaksi
                 </a>
             </div>
         </div>
+
+        <!-- INFO USER -->
+        <?php if (isset($_SESSION['username'])): ?>
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-2"></i>
+                <div>
+                    <strong>Info:</strong> Anda login sebagai <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>. 
+                    Nama Anda akan tercatat sebagai pemasok di riwayat transaksi.
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- MODAL TAMBAH BARANG -->
         <div class="modal fade" id="tambahBarangModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Tambah / Restock Barang</h5>
+                        <h5 class="modal-title">
+                            <i class="fas fa-plus-circle me-2"></i>Tambah Barang Baru
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form method="POST">
                         <div class="modal-body">
                             <div class="mode-indicator">
                                 <i class="fas fa-info-circle me-2"></i>
-                                <strong>+ Mode Tambah:</strong> Anda sedang menambah barang baru
+                                <strong>Mode Tambah Barang:</strong> Anda sedang menambah barang baru ke sistem
+                                <?php if (isset($_SESSION['username'])): ?>
+                                    <br><small>Pemasok akan tercatat sebagai: <strong><?= htmlspecialchars($_SESSION['username']) ?></strong></small>
+                                <?php endif; ?>
                             </div>
                             <input type="hidden" name="action" value="tambah_barang">
                             
                             <!-- FORM INPUT -->
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="nama_barang" class="form-label">Nama Barang</label>
+                                    <label for="nama_barang" class="form-label">Nama Barang <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="nama_barang" name="nama_barang" 
                                            placeholder="Masukkan nama barang" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="pemasok" class="form-label">Pemasok</label>
-                                    <input type="text" class="form-control" id="pemasok" name="pemasok" 
-                                           placeholder="Masukkan nama pemasok" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="harga_dasar" class="form-label">Harga Dasar (Modal)</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">Rp</span>
-                                        <input type="number" class="form-control" id="harga_dasar" name="harga_dasar" 
-                                               placeholder="Harga modal" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="tipe_barang" class="form-label">Tipe Barang</label>
+                                    <label for="tipe_barang" class="form-label">Tipe Barang <span class="text-danger">*</span></label>
                                     <select class="form-select" id="tipe_barang" name="tipe_barang" required>
-                                        <option value="">-- Pilih Tipe --</option>
+                                        <option value="">-- Pilih Tipe Barang --</option>
                                         <option value="Makanan">Makanan</option>
                                         <option value="Minuman">Minuman</option>
                                         <option value="Snack">Snack</option>
-                                        <option value="ATK">ATK</option>
+                                        <option value="ATK">ATK (Alat Tulis Kantor)</option>
                                         <option value="Lainnya">Lainnya</option>
                                     </select>
                                 </div>
@@ -249,24 +257,39 @@ $stokBarang = getAllStokBarang();
                             
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="stok" class="form-label">Stok</label>
+                                    <label for="stok" class="form-label">Stok Awal <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="stok" name="stok" 
-                                           placeholder="Masukkan jumlah stok" required>
+                                           placeholder="Masukkan jumlah stok awal" min="0" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="harga_jual" class="form-label">Harga Jual</label>
+                                    <label for="harga_dasar" class="form-label">Harga Dasar (Modal) <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" class="form-control" id="harga_dasar" name="harga_dasar" 
+                                               placeholder="Harga modal dari pemasok" min="0" required>
+                                    </div>
+                                    <div class="form-text">Harga beli dari pemasok</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="harga_jual" class="form-label">Harga Jual <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text">Rp</span>
                                         <input type="number" class="form-control" id="harga_jual" name="harga_jual" 
-                                               placeholder="Harga jual" required>
+                                               placeholder="Harga jual ke customer" min="0" required>
                                     </div>
+                                    <div class="form-text">Harga jual ke customer</div>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i> Simpan Data
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i> Batal
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i> Simpan Barang
                             </button>
                         </div>
                     </form>
@@ -277,55 +300,70 @@ $stokBarang = getAllStokBarang();
         <!-- TABEL STOK BARANG -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Daftar Stok Barang</span>
-                <div class="badge bg-primary">
-                    Total: <?= count($stokBarang) ?> Barang
+                <span>
+                    <i class="fas fa-list me-2"></i>Daftar Stok Barang
+                </span>
+                <div class="badge bg-success">
+                    <i class="fas fa-box me-1"></i> Total: <?= count($stokBarang) ?> Barang
                 </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Nama Barang</th>
-                                <th>Tipe</th>
-                                <th>Pemasok</th>
-                                <th>Stok</th>
-                                <th>Harga Dasar</th>
-                                <th>Harga Jual</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (empty($stokBarang)): ?>
+                <?php if (empty($stokBarang)): ?>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-box-open fa-4x mb-3"></i>
+                        <h5>Belum ada data stok barang</h5>
+                        <p class="mb-4">Silakan tambah barang baru untuk memulai</p>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#tambahBarangModal">
+                            <i class="fas fa-plus-circle me-1"></i> Tambah Barang Pertama
+                        </button>
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
-                                        Tidak ada data stok barang
-                                    </td>
+                                    <th width="50">#</th>
+                                    <th>Nama Barang</th>
+                                    <th>Tipe</th>
+                                    <th>Stok</th>
+                                    <th>Harga Dasar</th>
+                                    <th>Harga Jual</th>
+                                    <th width="120">Aksi</th>
                                 </tr>
-                            <?php else: ?>
+                            </thead>
+                            <tbody>
                                 <?php foreach ($stokBarang as $index => $barang): ?>
+                                <?php 
+                                    $stok_class = 'badge-stok-tinggi';
+                                    if ($barang['stok'] <= 10) {
+                                        $stok_class = 'badge-stok-rendah';
+                                    } elseif ($barang['stok'] <= 15) {
+                                        $stok_class = 'badge-stok-sedang';
+                                    }
+                                ?>
                                 <tr>
-                                    <td><?= $index + 1 ?></td>
-                                    <td><?= htmlspecialchars($barang['nama_barang'] ?? $barang['nema'] ?? '') ?></td>
+                                    <td class="text-center"><?= $index + 1 ?></td>
                                     <td>
-                                        <span class="badge bg-info"><?= htmlspecialchars($barang['tipe']) ?></span>
+                                        <strong><?= htmlspecialchars($barang['nama_barang']) ?></strong>
                                     </td>
-                                    <td><?= htmlspecialchars($barang['pemasok']) ?></td>
                                     <td>
-                                        <span class="badge bg-<?= ($barang['stok'] > 10) ? 'success' : (($barang['stok'] > 0) ? 'warning' : 'danger') ?>">
-                                            <?= htmlspecialchars($barang['stok']) ?>
+                                        <span class="badge bg-success"><?= htmlspecialchars($barang['tipe']) ?></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <?= $stok_class ?>">
+                                            <?= htmlspecialchars($barang['stok']) ?> pcs
                                         </span>
                                     </td>
-                                    <td>Rp <?= number_format($barang['harga_dasar'] ?? $barang['harpa_dasar'] ?? 0, 0, ',', '.') ?></td>
-                                    <td>Rp <?= number_format($barang['harga_jual'] ?? $barang['harpa_juai'] ?? 0, 0, ',', '.') ?></td>
+                                    <td>Rp <?= number_format($barang['harga_dasar'], 0, ',', '.') ?></td>
+                                    <td>
+                                        <strong>Rp <?= number_format($barang['harga_jual'], 0, ',', '.') ?></strong>
+                                    </td>
                                     <td>
                                         <!-- TOMBOL RESTOCK -->
-                                        <button class="btn btn-sm btn-outline-primary me-1" 
+                                        <button class="btn btn-sm btn-outline-success" 
                                                 data-bs-toggle="modal" 
-                                                data-bs-target="#restockModal<?= $barang['id'] ?>">
+                                                data-bs-target="#restockModal<?= $barang['id'] ?>"
+                                                title="Restock Barang">
                                             <i class="fas fa-plus"></i> Restock
                                         </button>
                                     </td>
@@ -336,15 +374,23 @@ $stokBarang = getAllStokBarang();
                                     <div class="modal-dialog">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Restock <?= htmlspecialchars($barang['nama_barang'] ?? $barang['nema'] ?? '') ?></h5>
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-plus me-2"></i>Restock Barang
+                                                </h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <form method="POST">
                                                 <div class="modal-body">
                                                     <input type="hidden" name="action" value="restock">
                                                     <input type="hidden" name="id" value="<?= $barang['id'] ?>">
+                                                    
                                                     <div class="mb-3">
-                                                        <label for="jumlah<?= $barang['id'] ?>" class="form-label">Jumlah Restock</label>
+                                                        <label class="form-label">Nama Barang</label>
+                                                        <input type="text" class="form-control" value="<?= htmlspecialchars($barang['nama_barang']) ?>" readonly>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label for="jumlah<?= $barang['id'] ?>" class="form-label">Jumlah Restock <span class="text-danger">*</span></label>
                                                         <input type="number" class="form-control" 
                                                                id="jumlah<?= $barang['id'] ?>" 
                                                                name="jumlah" 
@@ -352,16 +398,42 @@ $stokBarang = getAllStokBarang();
                                                                required
                                                                placeholder="Masukkan jumlah restock">
                                                     </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="harga_dasar_restock<?= $barang['id'] ?>" class="form-label">Harga Dasar Restock <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text">Rp</span>
+                                                            <input type="number" class="form-control" 
+                                                                   id="harga_dasar_restock<?= $barang['id'] ?>" 
+                                                                   name="harga_dasar_restock" 
+                                                                   min="0"
+                                                                   required
+                                                                   placeholder="Harga beli untuk restock ini">
+                                                        </div>
+                                                        <div class="form-text">Harga beli untuk restock ini (hanya tercatat di riwayat)</div>
+                                                    </div>
+                                                    
                                                     <div class="alert alert-info">
-                                                        <small>
-                                                            <i class="fas fa-info-circle"></i>
-                                                            Stok saat ini: <strong><?= $barang['stok'] ?></strong>
-                                                        </small>
+                                                        <div class="d-flex">
+                                                            <i class="fas fa-info-circle me-2 mt-1"></i>
+                                                            <div>
+                                                                <small>
+                                                                    <strong>Informasi Stok:</strong><br>
+                                                                    Stok saat ini: <strong><?= $barang['stok'] ?> pcs</strong><br>
+                                                                    Harga dasar saat ini: <strong>Rp <?= number_format($barang['harga_dasar'], 0, ',', '.') ?></strong>
+                                                                    <?php if (isset($_SESSION['username'])): ?>
+                                                                        <br>Pemasok: <strong><?= htmlspecialchars($_SESSION['username']) ?></strong>
+                                                                    <?php endif; ?>
+                                                                </small>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                                    <button type="submit" class="btn btn-primary">
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times me-1"></i> Batal
+                                                    </button>
+                                                    <button type="submit" class="btn btn-success">
                                                         <i class="fas fa-save me-1"></i> Simpan Restock
                                                     </button>
                                                 </div>
@@ -370,14 +442,25 @@ $stokBarang = getAllStokBarang();
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
 </body>
 </html>

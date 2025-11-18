@@ -1,5 +1,6 @@
 <?php
-require_once '../Databse/config.php';
+require_once '../Database/config.php';
+require_once '../Database/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
@@ -7,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (updateStokBarang($id, $jumlah)) {
         $pdo = getDBConnection();
-        $stmt = $pdo->prepare("SELECT nema, harpa_dasar FROM stok_barang WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT nama_barang, harga_dasar FROM stok_barang WHERE id = ?"); // Perbaiki nama kolom
         $stmt->execute([$id]);
         $barang = $stmt->fetch();
         
@@ -15,9 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'barang_id' => $id,
             'jenis_transaksi' => 'restock',
             'jumlah' => $jumlah,
-            'harga' => $barang['harpa_dasar'],
-            'total' => $jumlah * $barang['harpa_dasar'],
-            'keterangan' => 'Restock barang: ' . $barang['nema']
+            'harga' => $barang['harga_dasar'],
+            'total' => $jumlah * $barang['harga_dasar'],
+            'keterangan' => 'Restock barang: ' . $barang['nama_barang'] 
         ];
         
         catatTransaksi($transaksiData);

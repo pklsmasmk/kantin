@@ -1,28 +1,24 @@
 <?php
 require_once '../Database/config.php';
+require_once '../Database/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = [
-        'nama_barang' => $_POST['nama_barang'],
-        'tipe_barang' => $_POST['tipe_barang'],
-        'pemasok' => $_POST['pemasok'],
-        'stok' => $_POST['stok'],
-        'harga_dasar' => $_POST['harga_dasar'],
-        'harga_jual' => $_POST['harga_jual']
-    ];
-
-    if (tambahBarang($data)) {
-        // Catat transaksi
+    $id = $_POST['id'];
+    $jumlah = $_POST['jumlah'];
+    
+    if (updateStokBarang($id, $jumlah)) {
         $pdo = getDBConnection();
-        $lastId = $pdo->lastInsertId();
+        $stmt = $pdo->prepare("SELECT nama_barang, harga_dasar FROM stok_barang WHERE id = ?");
+        $stmt->execute([$id]);
+        $barang = $stmt->fetch();
         
         $transaksiData = [
-            'barang_id' => $lastId,
-            'jenis_transaksi' => 'tambah_barang',
-            'jumlah' => $data['stok'],
-            'harga' => $data['harga_dasar'],
-            'total' => $data['stok'] * $data['harga_dasar'],
-            'keterangan' => 'Penambahan barang baru: ' . $data['nama_barang']
+            'barang_id' => $id,
+            'jenis_transaksi' => 'restock',
+            'jumlah' => $jumlah,
+            'harga' => $barang['harga_dasar'],
+            'total' => $jumlah * $barang['harga_dasar'],
+            'keterangan' => 'Restock barang: ' . $barang['nama_barang'] 
         ];
         
         catatTransaksi($transaksiData);
