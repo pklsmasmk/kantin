@@ -35,9 +35,20 @@ $(function() {
             }
         }
         
-        const saldoAkhirElement = $('.saldo-card:nth-child(3) .saldo-value');
-        if (saldoAkhirElement.length) {
-            return parseRupiah(saldoAkhirElement.text());
+        const saldoElements = [
+            $('.saldo-value'),
+            $('.saldo-akhir'),
+            $('[class*="saldo"]')
+        ];
+        
+        for (const element of saldoElements) {
+            if (element.length) {
+                const text = element.text();
+                const match = text.match(/Rp\s*([\d.,]+)/);
+                if (match) {
+                    return parseRupiah(match[0]);
+                }
+            }
         }
         
         return 0;
@@ -101,10 +112,11 @@ $(function() {
     }
 
     function validasiFormShift() {
-        const cashdrawerValue = cashdrawerSelect.length ? cashdrawerSelect.val() : '';
+        const isShiftPertama = $('.shift-info-box.pertama').length > 0;
+        const cashdrawerValue = isShiftPertama && cashdrawerSelect.length ? cashdrawerSelect.val() : 'Cashdrawer-Otomatis';
         const saldoAwalValue = saldoInput.length ? saldoInput.val() : '';
 
-        if (!cashdrawerValue) {
+        if (isShiftPertama && !cashdrawerValue) {
             tampilkanError("Pilih cashdrawer terlebih dahulu.");
             if (cashdrawerSelect.length) cashdrawerSelect.trigger('focus');
             return null;
@@ -120,34 +132,8 @@ $(function() {
         return {
             cashdrawer: cashdrawerValue,
             saldoAwal: validasiSaldo.numericValue,
-            saldoWarisan: getSaldoWarisan()
+            isShiftPertama: isShiftPertama
         };
-    }
-
-    function getSaldoWarisan() {
-        const elemenWarisan = [
-            $('.saldo-warisan-info'),
-            $('.warisan-notice'),
-            $('[class*="warisan"]')
-        ].filter(el => el.length > 0);
-
-        for (const element of elemenWarisan) {
-            const text = element.text();
-            const match = text.match(/Rp\s*([\d.,]+)/);
-            if (match) {
-                return parseRupiah(match[0]);
-            }
-        }
-
-        if (submitShiftBtn.length) {
-            const teksTombol = submitShiftBtn.text();
-            const match = teksTombol.match(/Rp\s*([\d.,]+)/);
-            if (match) {
-                return parseRupiah(match[0]);
-            }
-        }
-
-        return 0;
     }
 
     function tampilkanError(pesan) {
@@ -214,17 +200,21 @@ $(function() {
         
         const modalCashdrawer = $('#modalCashdrawer');
         const modalSaldoAwal = $('#modalSaldoAwal');
-        const modalSaldoWarisan = $('#modalSaldoWarisan');
-        const modalTotalSaldo = $('#modalTotalSaldo');
         
-        if (modalCashdrawer.length) modalCashdrawer.text(dataForm.cashdrawer);
-        if (modalSaldoAwal.length) modalSaldoAwal.text(formatRupiah(dataForm.saldoAwal));
+        if (modalCashdrawer.length) {
+            modalCashdrawer.text(dataForm.cashdrawer);
+        }
         
-        const saldoWarisan = dataForm.saldoWarisan || 0;
-        if (modalSaldoWarisan.length) modalSaldoWarisan.text(formatRupiah(saldoWarisan));
+        if (modalSaldoAwal.length) {
+            modalSaldoAwal.text(formatRupiah(dataForm.saldoAwal));
+        }
         
-        const totalSaldo = dataForm.saldoAwal + saldoWarisan;
-        if (modalTotalSaldo.length) modalTotalSaldo.text(formatRupiah(totalSaldo));
+        const modalBody = $('.body-modal-konfirmasi');
+        if (modalBody.length) {
+            if (dataForm.isShiftPertama) {
+                modalBody.find('.item-detail:contains("Sumber Saldo")').remove();
+            }
+        }
         
         const confirmedCashdrawer = $('#confirmedCashdrawer');
         const confirmedSaldoAwal = $('#confirmedSaldoAwal');
@@ -603,7 +593,6 @@ $(function() {
         }
 
         updateSaldoTersedia();
-        
         if (jumlahSetoran.length) {
             jumlahSetoran.on('blur', function() {
                 const value = $(this).val().replace(/[^\d]/g, '');
@@ -679,6 +668,14 @@ $(function() {
                     return;
                 }
 
+                const sisaSaldo = saldoTersedia - jumlahNumerik;
+                if (sisaSaldo < 100000) {
+                    e.preventDefault();
+                    tampilkanError(`Setoran tidak dapat dilakukan. Minimal sisa saldo harus Rp 100.000. Sisa akan menjadi: ${formatRupiah(sisaSaldo)}`);
+                    jumlah.trigger('focus');
+                    return;
+                }
+
                 isSubmitting = true;
                 if (tombolSubmit.length && !tombolSubmit.prop('disabled')) {
                     tombolSubmit.prop('disabled', true);
@@ -691,7 +688,7 @@ $(function() {
                             tombolSubmit.prop('disabled', false);
                             isSubmitting = false;
                         }
-                    }, 10000); 
+                    }, 10000);
                 }
             });
         }
@@ -777,8 +774,67 @@ $(function() {
         };
     }
 
+    function inisialisasiRiwayatShift() {
+        $(document).on('click', '.compact-card', function() {
+            const shiftId = $(this).data('shift-id');
+            showShiftDetail(shiftId);
+        });
+
+        $('.date-search-form').on('submit', function(e) {
+            const dateInput = $(this).find('input[type="date"]');
+            if (!dateInput.val()) {
+                e.preventDefault();
+                dateInput.focus();
+            }
+        });
+    }
+
+    function showShiftDetail(shiftId) {
+        console.log('Menampilkan detail shift:', shiftId);
+        
+        const shiftData = window.shiftHistoryData.find(shift => shift.id === shiftId);
+        const rekapData = window.rekapData[shiftId];
+        
+        if (shiftData) {
+            const modalContent = `
+                <div class="shift-detail">
+                    <h4>Detail Shift: ${shiftData.cashdrawer}</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Saldo Awal:</label>
+                            <span>${formatRupiah(rekapData?.saldo_awal || shiftData.saldo_awal)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Saldo Akhir:</label>
+                            <span>${formatRupiah(rekapData?.saldo_akhir || shiftData.saldo_akhir)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Selisih:</label>
+                            <span class="${(rekapData?.selisih || (shiftData.saldo_akhir - shiftData.saldo_awal)) >= 0 ? 'positif' : 'negatif'}">
+                                ${formatRupiah(Math.abs(rekapData?.selisih || (shiftData.saldo_akhir - shiftData.saldo_awal)))}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Waktu Mulai:</label>
+                            <span>${new Date(shiftData.waktu_mulai).toLocaleString('id-ID')}</span>
+                        </div>
+                        ${rekapData?.waktu_selesai ? `
+                        <div class="detail-item">
+                            <label>Waktu Selesai:</label>
+                            <span>${new Date(rekapData.waktu_selesai).toLocaleString('id-ID')}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            $('#shiftDetailContent').html(modalContent);
+            $('#shiftDetailModal').addClass('aktif');
+        }
+    }
+
     function inisialisasiAplikasi() {
-        console.log('Menginisialisasi aplikasi shift...');
+        console.log('Menginisialisasi aplikasi shift UAM...');
         
         try {
             inisialisasiTab();
@@ -786,7 +842,8 @@ $(function() {
             inisialisasiPengirimanForm();
             inisialisasiRefreshCashdrawer();
             inisialisasiPenanganModal();
-            inisialisasiFormSetoran(); 
+            inisialisasiFormSetoran();
+            inisialisasiRiwayatShift();
             inisialisasiNavigasiKeyboard();
             inisialisasiSimpanOtomatis();
             
@@ -794,7 +851,7 @@ $(function() {
                 window.history.replaceState(null, null, window.location.href);
             }
             
-            console.log('Aplikasi shift berhasil diinisialisasi');
+            console.log('Aplikasi shift UAM berhasil diinisialisasi');
         } catch (error) {
             console.error('Error menginisialisasi aplikasi:', error);
             tampilkanError('Terjadi error dalam memuat aplikasi. Silakan refresh halaman.');
@@ -802,7 +859,6 @@ $(function() {
     }
 
     inisialisasiAplikasi();
-
     $(window).on('error', function(e) {
         console.error('Terjadi error global:', e.originalEvent.error);
     });

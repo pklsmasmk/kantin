@@ -40,24 +40,9 @@ if (!isUserLoggedIn()) {
             <img src="https://maukuliah.ap-south-1.linodeobjects.com/logo/1714374136-CkCJsaBvSM.jpg" alt="Universitas Anwar Medika">
         </div>
         <h1>Akses Ditolak</h1>
-        <p>Anda harus login terlebih dahulu untuk mengakses sistem Shift Kasir Kantin UAM.</p>
-        
-        <div class="features">
-            <h3>Fitur yang Tersedia Setelah Login:</h3>
-            <ul>
-                <li>Manajemen Shift Kasir</li>
-                <li>Pencatatan Transaksi Harian</li>
-                <li>Monitoring Saldo Cashdrawer</li>
-                <li>Laporan Setoran Keuangan</li>
-                <li>Riwayat Transaksi Lengkap</li>
-            </ul>
-        </div>
+        <p>Anda perlu login untuk melanjutkan.</p>
         
         <a href="?q=login" class="login-btn">Login Sekarang</a>
-        
-        <div class="help-text">
-            <p>Belum memiliki akun? Hubungi administrator sistem.</p>
-        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="../JS/awal_shift.js"></script>
@@ -85,6 +70,40 @@ unset($_SESSION["error"], $_SESSION["success"]);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Shift Kasir - UAM</title>
+    <style>
+        .saldo-minimum-warning strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .shift-info-box {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            font-size: 0.9em;
+        }
+
+        .auto-cashdrawer-notice {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 0.85em;
+            color: #e65100;
+        }
+        
+        .saldo-rekomendasi {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 0.85em;
+        }
+    </style>
 </head>
 <body>
     <div class="container" role="main" aria-label="Halaman Shift Kasir">
@@ -136,51 +155,64 @@ unset($_SESSION["error"], $_SESSION["success"]);
 
             <section class="tab-panel current-panel <?= $active_tab === 'current' ? 'is-active' : '' ?>" data-tab-panel="current">
                 <section class="info">
-                    <p>
-                        <strong>Sistem Shift Kasir Kantin UAM</strong><br>
-                        Aplikasi kasir dengan sistem manajemen setoran terintegrasi.
-                    </p>
-                    <div style="margin-top: 12px; padding-left: 16px; border-left: 3px solid var(--primary-color);">
-                        <strong style="color: var(--text-primary);">Alur Kerja Sistem:</strong>
-                        <ul style="margin: 8px 0; padding-left: 20px; color: var(--text-secondary);">
-                            <li><strong>Mulai Shift</strong> - Input saldo awal cashdrawer</li>
-                            <li><strong>Operasional</strong> - Transaksi penjualan, pengeluaran, pemasukan/pengeluaran lain</li>
-                            <li><strong>Setoran Fleksibel</strong> - Setor kapan saja dari saldo akhir yang tersedia</li>
-                            <li><strong>Rekap Detail</strong> - Monitoring lengkap transaksi dan saldo</li>
-                            <li><strong>Akhiri Shift</strong> - Sistem hitung otomatis, saldo akhir disimpan</li>
-                        </ul>
-                    </div>
+                    <?php if ($is_shift_pertama): ?>
+                            <strong>SHIFT PERTAMA</strong><br>
+                            Ini adalah shift pertama sistem. Silakan pilih cashdrawer dan input saldo awal modal.
+                    <?php else: ?>
+                            <strong>SHIFT BERJALAN</strong><br>
+                            Saldo awal otomatis dari saldo akhir shift sebelumnya: <strong><?= format_rupiah($history[0]["saldo_akhir"]) ?></strong>
+                    <?php endif; ?>
                 </section>
                 
                 <form method="POST" class="shift-form" novalidate>
-                    <label for="cashdrawer">Pilih Cashdrawer</label>
-                    <div class="refresh-wrapper">
-                        <select id="cashdrawer" name="cashdrawer" required>
-                            <option value="">-- Pilih Cashdrawer --</option>
-                            <?php foreach ($cashdrawers as $option): ?>
-                                <option value="<?= htmlspecialchars($option) ?>">
-                                    <?= htmlspecialchars($option) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button type="button" class="refresh-btn" title="Refresh cashdrawer" id="refreshCashdrawer">&#x21bb;</button>
-                    </div>
+                    <?php if ($is_shift_pertama): ?>
+                        <label for="cashdrawer">Pilih Cashdrawer *</label>
+                        <div class="refresh-wrapper">
+                            <select id="cashdrawer" name="cashdrawer" required>
+                                <option value="">-- Pilih Cashdrawer --</option>
+                                <?php foreach ($cashdrawers as $option): ?>
+                                    <option value="<?= htmlspecialchars($option) ?>">
+                                        <?= htmlspecialchars($option) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="refresh-btn" title="Refresh cashdrawer" id="refreshCashdrawer">&#x21bb;</button>
+                        </div>
+                    <?php else: ?>
+                        <input type="hidden" name="cashdrawer" value="Cashdrawer-Otomatis">
+                        <div class="auto-cashdrawer-notice">
+                            <strong>Cashdrawer Otomatis</strong><br>
+                            Untuk shift berikutnya, sistem menggunakan cashdrawer otomatis.
+                        </div>
+                    <?php endif; ?>
 
-                    <label for="saldo_awal">Masukkan Saldo Awal</label>
+                    <label for="saldo_awal">
+                        Masukkan Saldo Awal 
+                        <?php if (!$is_shift_pertama): ?>
+                            <small>(Rekomendasi: <?= format_rupiah($history[0]["saldo_akhir"]) ?>)</small>
+                        <?php endif; ?>
+                    </label>
                     <div class="input-rp">
                         <span class="rp-label">Rp</span>
                         <input
                             type="text"
                             id="saldo_awal"
                             name="saldo_awal"
-                            placeholder="0"
+                            placeholder="<?= $is_shift_pertama ? '0' : number_format($saldo_awal_rekomendasi, 0, ',', '.') ?>"
                             autocomplete="off"
                             inputmode="numeric"
                             pattern="[0-9.,]*"
                             required
-                            value=""
+                            value="<?= !$is_shift_pertama && $saldo_awal_rekomendasi > 0 ? number_format($saldo_awal_rekomendasi, 0, ',', '.') : '' ?>"
                         />
                     </div>
+                    
+                    <?php if (!$is_shift_pertama && $saldo_awal_rekomendasi > 0): ?>
+                        <div class="saldo-rekomendasi">
+                            <strong>Rekomendasi:</strong> Gunakan saldo dari shift sebelumnya: <?= format_rupiah($saldo_awal_rekomendasi) ?>
+                        </div>
+                    <?php endif; ?>
+                    
                     <small id="lastData" class="last-data">
                         <?php if (!empty($history)): ?>
                             Data terakhir: <?= htmlspecialchars($history[0]["cashdrawer"]) ?> •
@@ -192,7 +224,11 @@ unset($_SESSION["error"], $_SESSION["success"]);
                     </small>
                     
                     <button type="submit" class="submit-btn" id="submitShiftBtn">
-                        Mulai Shift Anda
+                        <?php if ($is_shift_pertama): ?>
+                            Mulai Shift Pertama
+                        <?php else: ?>
+                            Mulai Shift Baru (Saldo: <?= format_rupiah($history[0]["saldo_akhir"]) ?>)
+                        <?php endif; ?>
                     </button>
 
                     <div class="action-buttons">
@@ -223,6 +259,12 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 <span class="label-detail">Saldo Awal:</span>
                                 <span class="nilai-detail" id="modalSaldoAwal"></span>
                             </div>
+                            <?php if (!$is_shift_pertama): ?>
+                            <div class="item-detail">
+                                <span class="label-detail">Sumber Saldo:</span>
+                                <span class="nilai-detail">Saldo akhir shift sebelumnya</span>
+                            </div>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="catatan-warisan">
@@ -295,6 +337,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 </div>
                                 <?php if ($can_setor): ?>
                                     <small class="saldo-tersedia">Saldo tersedia untuk disetor: <?= format_rupiah($saldo_tersedia) ?></small>
+                                    <small class="saldo-minimum">Minimal sisa setelah setor: Rp 100.000</small>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -337,7 +380,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 <input type="file" id="bukti_transfer" name="bukti_transfer" 
                                     accept="image/*,.pdf,.doc,.docx" <?= !$can_setor ? 'disabled' : '' ?>>
                                 <label for="bukti_transfer" class="file-input-label" id="fileInputLabel">
-                                    📎 Klik untuk upload bukti transfer
+                                    Klik untuk upload bukti transfer
                                     <div class="file-name" id="fileName"></div>
                                 </label>
                             </div>
@@ -346,9 +389,13 @@ unset($_SESSION["error"], $_SESSION["success"]);
 
                         <button type="submit" class="submit-btn setoran-submit" <?= !$can_setor ? 'disabled' : '' ?>>
                             <?php if ($can_setor): ?>
-                                Simpan Setoran dari Saldo Akhir
+                                Simpan Setoran (Sisa min. Rp 100.000)
                             <?php else: ?>
-                                <?= $saldo_akhir_riwayat > 0 ? 'Tidak Dapat Setoran' : 'Tidak Ada Saldo' ?>
+                                <?php if ($saldo_tersedia <= 100000): ?>
+                                Saldo tidak cukup untuk setor (Min. sisa Rp 100.000)
+                                <?php else: ?>
+                                Tidak Dapat Setoran
+                                <?php endif; ?>
                             <?php endif; ?>
                         </button>
                         
@@ -358,7 +405,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                             </div>
                         <?php elseif (!$can_setor): ?>
                             <div class="warning-message">
-                                <small>Tidak ada saldo, silahkan mulai shift terlebih dahulu</small>
+                                <small>Saldo tidak mencukupi untuk setor (minimal Rp 100.000+). Saldo tersedia: <?= format_rupiah($saldo_tersedia) ?></small>
                             </div>
                         <?php endif; ?>
                     </form>
@@ -390,22 +437,12 @@ unset($_SESSION["error"], $_SESSION["success"]);
                     
                     <div class="warisan-info">
                         <div class="info-item">
-                            <span class="info-label">Sumber Setoran:</span>
-                            <span class="info-value">
-                                Saldo akhir dari shift (berjalan/riwayat)
-                            </span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Rumus Setoran:</span>
-                            <span class="info-value">
-                                Saldo Tersedia = Saldo Akhir - Total Setoran Hari Ini
-                            </span>
-                        </div>
-                        <div class="info-item">
                             <span class="info-label">Status Setoran:</span>
                             <span class="info-value">
-                                <?php if ($saldo_tersedia > 0): ?>
-                                    <span style="color: #28a745;">● Masih bisa setor (<?= format_rupiah($saldo_tersedia) ?> tersedia)</span>
+                                <?php if ($saldo_tersedia > 100000): ?>
+                                    <span style="color: #28a745;">● Bisa setor (<?= format_rupiah($saldo_tersedia - 100000) ?> max)</span>
+                                <?php elseif ($saldo_tersedia > 0): ?>
+                                    <span style="color: #ffc107;">● Tidak bisa setor (minimal sisa Rp 100.000)</span>
                                 <?php else: ?>
                                     <span style="color: #dc3545;">● Saldo habis, mulai shift baru</span>
                                 <?php endif; ?>

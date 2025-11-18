@@ -374,7 +374,32 @@ function validate_setoran($jumlah_setoran, $saldo_tersedia) {
         return "Saldo tidak mencukupi. Saldo tersedia: " . format_rupiah($saldo_tersedia);
     }
     
+    $saldo_setelah_setor = $saldo_tersedia - $jumlah_setoran;
+    if ($saldo_setelah_setor < 100000) {
+        return "Setoran tidak boleh menghabiskan semua saldo. Minimal harus menyisakan Rp 100.000. Saldo tersisa setelah setor: " . format_rupiah($saldo_setelah_setor);
+    }
+    
     return null;
+}
+
+function is_shift_pertama($pdo) {
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM shifts");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return ($result['total'] ?? 0) == 0;
+    } catch (PDOException $e) {
+        error_log("Error is_shift_pertama: " . $e->getMessage());
+        return true; 
+    }
+}
+
+function get_saldo_awal_untuk_shift_baru($pdo) {
+    $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
+    if ($saldo_akhir_riwayat > 0) {
+        return $saldo_akhir_riwayat;
+    }
+    return 0;
 }
 
 function format_rupiah($value) {
@@ -438,8 +463,10 @@ function process_shift_requests($pdo) {
         $saldo_awal = isset($_POST["saldo_awal"]) ? trim($_POST["saldo_awal"]) : "";
         $confirmed = isset($_POST["confirmed"]) ? $_POST["confirmed"] === "true" : false;
 
-        if ($cashdrawer === "") {
-            $_SESSION["error"] = "Cashdrawer harus dipilih.";
+        $is_shift_pertama = is_shift_pertama($pdo);
+        
+        if ($is_shift_pertama && $cashdrawer === "") {
+            $_SESSION["error"] = "Cashdrawer harus dipilih untuk shift pertama.";
         } else {
             $saldo_clean = preg_replace("/[^\d]/", "", $saldo_awal);
             $saldo_value = $saldo_clean !== "" ? (float) $saldo_clean : NAN;
@@ -449,15 +476,18 @@ function process_shift_requests($pdo) {
             } else if (!$confirmed) {
                 $_SESSION["pending_shift"] = [
                     "cashdrawer" => $cashdrawer,
-                    "saldo_awal" => $saldo_value
+                    "saldo_awal" => $saldo_value,
+                    "is_shift_pertama" => $is_shift_pertama
                 ];
                 $_SESSION["show_confirmation"] = true;
             } else {
+                $cashdrawer_final = $is_shift_pertama ? $cashdrawer : "Cashdrawer-Otomatis";
+                
                 $shift = [
                     "id"         => uniqid("shift_", true),
                     "nama"       => $_SESSION['namalengkap'] ?? "namalengkap", 
                     "role"       => $_SESSION['nama'] ?? "nama",
-                    "cashdrawer" => $cashdrawer,
+                    "cashdrawer" => $cashdrawer_final,
                     "saldo_awal" => $saldo_value, 
                     "saldo_akhir" => $saldo_value,
                     "waktu_mulai" => date("Y-m-d H:i:s"),
@@ -588,17 +618,20 @@ function get_shift_display_data($pdo) {
 
     $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
 
+    $is_shift_pertama = is_shift_pertama($pdo);
+    $saldo_awal_rekomendasi = get_saldo_awal_untuk_shift_baru($pdo);
+    
     if ($currentShift) {
         $saldo_awal_hari_ini = $currentShift['saldo_awal'];
         $saldo_akhir_hari_ini = $currentShift['saldo_akhir'];
         $saldo_tersedia = calculate_saldo_tersedia($pdo, $currentShift);
-        $can_setor = $saldo_tersedia > 0;
+        $can_setor = $saldo_tersedia > 100000; 
         $saldo_akhir_display = $currentShift['saldo_akhir'];
     } else {
-        $saldo_awal_hari_ini = 0;
+        $saldo_awal_hari_ini = $saldo_awal_rekomendasi;
         $saldo_akhir_hari_ini = $saldo_akhir_riwayat;
         $saldo_tersedia = calculate_saldo_tersedia($pdo, null);
-        $can_setor = $saldo_tersedia > 0;
+        $can_setor = $saldo_tersedia > 100000; 
         $saldo_akhir_display = $saldo_akhir_riwayat;
     }
 
@@ -631,7 +664,9 @@ function get_shift_display_data($pdo) {
         'cashdrawers' => $cashdrawers,
         'history' => $history,
         'total_setoran_bulan_ini' => calculate_total_setoran_bulan_ini($pdo),
-        'rata_rata_setoran' => calculate_rata_rata_setoran($pdo)
+        'rata_rata_setoran' => calculate_rata_rata_setoran($pdo),
+        'is_shift_pertama' => $is_shift_pertama,
+        'saldo_awal_rekomendasi' => $saldo_awal_rekomendasi
     ];
 }
 ?>
