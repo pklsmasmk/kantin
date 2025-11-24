@@ -70,40 +70,6 @@ unset($_SESSION["error"], $_SESSION["success"]);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Shift Kasir - UAM</title>
-    <style>
-        .saldo-minimum-warning strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .shift-info-box {
-            background: #e8f5e8;
-            border: 1px solid #4caf50;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 12px 0;
-            font-size: 0.9em;
-        }
-
-        .auto-cashdrawer-notice {
-            background: #fff3e0;
-            border: 1px solid #ffb74d;
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin: 8px 0;
-            font-size: 0.85em;
-            color: #e65100;
-        }
-        
-        .saldo-rekomendasi {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin: 8px 0;
-            font-size: 0.85em;
-        }
-    </style>
 </head>
 <body>
     <div class="container" role="main" aria-label="Halaman Shift Kasir">
@@ -522,7 +488,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                 </div>
             </section>
              
-            <section class="tab-panel history-panel <?= $active_tab === 'history' ? 'is-active' : '' ?>" data-tab-panel="history" aria-label="Riwayat shift cashdrawer">
+            <section class="tab-panel history-panel <?= $active_tab === 'history' ? 'is-active' : '' ?>" data-tab-panel="history" aria-label="Riwayat shift">
                 <div class="search-date">
                     <form method="GET" class="date-search-form">
                         <input type="hidden" name="tab" value="history">
@@ -545,25 +511,29 @@ unset($_SESSION["error"], $_SESSION["success"]);
                 </div>
 
                 <?php
-                $searchDate = isset($_GET['search_date']) && !empty($_GET['search_date']) ? $_GET['search_date'] : date('Y-m-d');
+                $searchDate = isset($_GET['search_date']) && !empty($_GET['search_date']) ? $_GET['search_date'] : null;
                 
-                $filteredHistory = array_filter($history, function($item) use ($searchDate) {
-                    return date('Y-m-d', strtotime($item['waktu_mulai'])) === $searchDate;
-                });
+                if ($searchDate) {
+                    $filteredHistory = array_filter($history, function($item) use ($searchDate) {
+                        return date('Y-m-d', strtotime($item['waktu_mulai'])) === $searchDate;
+                    });
+                } else {
+                    $filteredHistory = $history;
+                }
                 $filteredHistory = array_values($filteredHistory);
                 
                 $displayHistory = $filteredHistory;
-                $isToday = $searchDate === date('Y-m-d');
-                $isCustomSearch = isset($_GET['search_date']) && $_GET['search_date'] !== date('Y-m-d');
+                $isToday = !$searchDate || $searchDate === date('Y-m-d');
+                $isCustomSearch = $searchDate && $searchDate !== date('Y-m-d');
                 ?>
 
                 <?php if (count($displayHistory) === 0): ?>
                     <div class="empty-state">
                         <?php if ($isCustomSearch): ?>
-                            <strong>Tidak ada riwayat shift pada tanggal <?= htmlspecialchars($_GET['search_date']) ?>.</strong>
-                            <p>Coba tanggal lain atau lihat riwayat hari ini</a>.</p>
+                            <strong>Tidak ada riwayat shift pada tanggal <?= htmlspecialchars($searchDate) ?>.</strong>
+                            <p>Coba tanggal lain atau <a href="<?= $_SERVER['PHP_SELF'] ?>?tab=history">lihat semua riwayat</a>.</p>
                         <?php else: ?>
-                            <strong>Belum ada riwayat shift hari ini.</strong>
+                            <strong>Belum ada riwayat shift.</strong>
                             <p>Mulai shift pertama Anda untuk melihat rekam jejak di sini.</p>
                         <?php endif; ?>
                     </div>
@@ -574,16 +544,18 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 <span class="summary-label">Total Shift</span>
                                 <strong><?= count($displayHistory) ?></strong>
                             </div>
+                            <?php if ($searchDate): ?>
+                                <div class="summary-item">
+                                    <span class="summary-label">Tanggal</span>
+                                    <strong><?= date('d M Y', strtotime($searchDate)) ?></strong>
+                                </div>
+                            <?php else: ?>
+                                <div class="summary-item">
+                                    <span class="summary-label">Periode</span>
+                                    <strong>Semua Riwayat</strong>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($isCustomSearch): ?>
-                            <div class="search-info">
-                                Menampilkan shift pada: <?= date('d M Y', strtotime($_GET['search_date'])) ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="search-info">
-                                Menampilkan shift hari ini: <?= date('d M Y') ?>
-                            </div>
-                        <?php endif; ?>
                     </div>
 
                     <ul class="history-list compact-view">
@@ -596,6 +568,11 @@ unset($_SESSION["error"], $_SESSION["success"]);
                             $selisih = $rekap_info['selisih'] ?? ($saldo_akhir - $saldo_awal);
                             $waktu_mulai = $rekap_info['waktu_mulai'] ?? $item['waktu_mulai'] ?? $item['waktu'];
                             $waktu_selesai = $rekap_info['waktu_selesai'] ?? $item['waktu_selesai'] ?? null;
+                            
+                            $cashdrawer_display = $item["cashdrawer"];
+                            if ($cashdrawer_display === "Cashdrawer-Otomatis") {
+                                $cashdrawer_display = "Riwayat Shift";
+                            }
                         ?>
 
                             <li class="history-card compact-card" 
@@ -604,8 +581,8 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 
                                 <div class="compact-header">
                                     <div class="shift-basic-info">
-                                        <span class="cashdrawer-name"><?= htmlspecialchars($item["cashdrawer"]) ?></span>
-                                        <span class="shift-date"><?= date('d M', strtotime($waktu_mulai)) ?></span>
+                                        <span class="cashdrawer-name"><?= htmlspecialchars($cashdrawer_display) ?></span>
+                                        <span class="shift-date"><?= date('d M Y', strtotime($waktu_mulai)) ?></span>
                                     </div>
                                     <div class="shift-status">
                                         <?php if ($is_synced): ?>
@@ -641,7 +618,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                                 </div>
 
                                 <div class="compact-user">
-                                    <small><?= htmlspecialchars($_SESSION["namalengkap"]) ?> • <?= htmlspecialchars($_SESSION["nama"]) ?></small>
+                                    <small><?= htmlspecialchars($item['nama'] ?? $_SESSION["namalengkap"]) ?> • <?= htmlspecialchars($item['role'] ?? $_SESSION["nama"]) ?></small>
                                 </div>
 
                                 <div class="view-detail-btn">
@@ -656,7 +633,8 @@ unset($_SESSION["error"], $_SESSION["success"]);
             <div id="shiftDetailModal" class="modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>Detail Shift</h3>
+                        <h3 id="modalShiftTitle">Detail Shift</h3>
+                        <button type="button" class="btn-close" onclick="shiftHistory.close()">&times;</button>
                     </div>
                     <div class="modal-body" id="shiftDetailContent"></div>
                 </div>

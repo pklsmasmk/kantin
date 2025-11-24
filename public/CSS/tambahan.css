@@ -332,3 +332,36 @@
         font-size: 0.875rem;
     }
 }
+
+.saldo-minimum-warning strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.shift-info-box {
+    background: #e8f5e8;
+    border: 1px solid #4caf50;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 0.9em;
+}
+
+.auto-cashdrawer-notice {
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.85em;
+    color: #e65100;
+}
+        
+.saldo-rekomendasi {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.85em;
+}

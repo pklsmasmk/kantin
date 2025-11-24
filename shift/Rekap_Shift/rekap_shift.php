@@ -163,7 +163,7 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
         </header>
 
         <div class="card">
-            <h1>Shift - <?= htmlspecialchars($current_rekap['cashdrawer']) ?></h1>
+            <h1>Rekap Shift</h1>
 
             <div class="info-section">
                 <div class="row">

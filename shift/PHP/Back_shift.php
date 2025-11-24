@@ -23,12 +23,17 @@ function read_shift_data($pdo) {
 }
 
 function refresh_shift_history($pdo) {
-    $_SESSION["shift_history"] = read_shift_data($pdo);
-    return $_SESSION["shift_history"];
+    if (isset($_SESSION["shift_history"])) {
+        unset($_SESSION["shift_history"]);
+    }
+    return read_shift_data($pdo);
 }
 
 function save_shift_data($pdo, $data) {
     try {
+        $saldo_awal = floatval($data['saldo_awal']);
+        $saldo_akhir = floatval($data['saldo_akhir']);
+        
         $stmt = $pdo->prepare("
             INSERT INTO shifts (id, nama, role, cashdrawer, saldo_awal, saldo_akhir, waktu_mulai, waktu_selesai) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -46,8 +51,8 @@ function save_shift_data($pdo, $data) {
             $data['nama'],
             $data['role'],
             $data['cashdrawer'],
-            $data['saldo_awal'],
-            $data['saldo_akhir'],
+            $saldo_awal,
+            $saldo_akhir,
             $data['waktu_mulai'],
             $data['waktu_selesai']
         ]);
@@ -66,7 +71,11 @@ function sync_to_rekap($pdo, $shift_data) {
         $stmt->execute([$shift_data['id']]);
         $existing = $stmt->fetch();
         
-        $selisih = $shift_data['saldo_akhir'] - $shift_data['saldo_awal'];
+        $saldo_awal = floatval($shift_data['saldo_awal']);
+        $saldo_akhir = floatval($shift_data['saldo_akhir']);
+        $selisih = $saldo_akhir - $saldo_awal;
+        
+        $cashdrawer_display = "Riwayat Shift";
         
         if ($existing) {
             $stmt = $pdo->prepare("
@@ -76,9 +85,9 @@ function sync_to_rekap($pdo, $shift_data) {
                 WHERE shift_id = ?
             ");
             $stmt->execute([
-                $shift_data['cashdrawer'],
-                $shift_data['saldo_awal'],
-                $shift_data['saldo_akhir'],
+                $cashdrawer_display,
+                $saldo_awal,
+                $saldo_akhir,
                 $selisih,
                 $shift_data['waktu_mulai'],
                 $shift_data['waktu_selesai'] ?? null,
@@ -95,9 +104,9 @@ function sync_to_rekap($pdo, $shift_data) {
             ");
             $stmt->execute([
                 $shift_data['id'],
-                $shift_data['cashdrawer'],
-                $shift_data['saldo_awal'],
-                $shift_data['saldo_akhir'],
+                $cashdrawer_display,
+                $saldo_awal,
+                $saldo_akhir,
                 0, 0, 0, 0, 
                 $selisih,
                 $shift_data['waktu_mulai'],
@@ -110,9 +119,9 @@ function sync_to_rekap($pdo, $shift_data) {
         
         return [
             'shift_id' => $shift_data['id'],
-            'cashdrawer' => $shift_data['cashdrawer'],
-            'saldo_awal' => $shift_data['saldo_awal'],
-            'saldo_akhir' => $shift_data['saldo_akhir'],
+            'cashdrawer' => $cashdrawer_display,
+            'saldo_awal' => $saldo_awal,
+            'saldo_akhir' => $saldo_akhir,
             'selisih' => $selisih,
             'waktu_mulai' => $shift_data['waktu_mulai'],
             'waktu_selesai' => $shift_data['waktu_selesai'] ?? null
@@ -125,6 +134,8 @@ function sync_to_rekap($pdo, $shift_data) {
 
 function akhiri_shift($pdo, $shift_id, $saldo_akhir) {
     try {
+        $saldo_akhir = floatval($saldo_akhir);
+        
         $stmt = $pdo->prepare("
             UPDATE shifts SET 
                 waktu_selesai = NOW(),
@@ -148,6 +159,11 @@ function sync_from_rekap($pdo, $shift_id) {
         $rekap = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($rekap) {
+            $saldo_awal = floatval($rekap['saldo_awal']);
+            $saldo_akhir = floatval($rekap['saldo_akhir']);
+            
+            $cashdrawer_display = "Riwayat Shift";
+            
             $stmt = $pdo->prepare("
                 UPDATE shifts SET 
                     saldo_akhir = ?, saldo_awal = ?, cashdrawer = ?,
@@ -155,9 +171,9 @@ function sync_from_rekap($pdo, $shift_id) {
                 WHERE id = ?
             ");
             $stmt->execute([
-                $rekap['saldo_akhir'],
-                $rekap['saldo_awal'],
-                $rekap['cashdrawer'],
+                $saldo_akhir,
+                $saldo_awal,
+                $cashdrawer_display,
                 $rekap['waktu_mulai'],
                 $rekap['waktu_selesai'],
                 $shift_id
@@ -177,7 +193,19 @@ function get_rekap_data_for_shift($pdo, $shift_id) {
     try {
         $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
         $stmt->execute([$shift_id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $rekap = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($rekap) {
+            $rekap['saldo_awal'] = floatval($rekap['saldo_awal']);
+            $rekap['saldo_akhir'] = floatval($rekap['saldo_akhir']);
+            $rekap['selisih'] = floatval($rekap['selisih']);
+            $rekap['total_penjualan'] = floatval($rekap['total_penjualan']);
+            $rekap['total_pengeluaran'] = floatval($rekap['total_pengeluaran']);
+            $rekap['total_pemasukan_lain'] = floatval($rekap['total_pemasukan_lain']);
+            $rekap['total_pengeluaran_lain'] = floatval($rekap['total_pengeluaran_lain']);
+        }
+        
+        return $rekap;
     } catch (PDOException $e) {
         error_log("Error get_rekap_data_for_shift: " . $e->getMessage());
         return null;
@@ -195,7 +223,7 @@ function get_saldo_akhir_dari_riwayat($pdo) {
         ");
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['saldo_akhir'] ?? 0;
+        return floatval($result['saldo_akhir'] ?? 0);
     } catch (PDOException $e) {
         error_log("Error get_saldo_akhir_dari_riwayat: " . $e->getMessage());
         return 0;
@@ -209,9 +237,9 @@ function update_current_shift_from_rekap($pdo, $current_shift) {
     
     $rekap_data = get_rekap_data_for_shift($pdo, $current_shift['id']);
     if ($rekap_data) {
-        $current_shift['saldo_akhir'] = $rekap_data['saldo_akhir'];
-        $current_shift['saldo_awal'] = $rekap_data['saldo_awal'];
-        $current_shift['cashdrawer'] = $rekap_data['cashdrawer'];
+        $current_shift['saldo_akhir'] = floatval($rekap_data['saldo_akhir']);
+        $current_shift['saldo_awal'] = floatval($rekap_data['saldo_awal']);
+        $current_shift['cashdrawer'] = "Riwayat Shift";
         $current_shift['waktu_mulai'] = $rekap_data['waktu_mulai'];
         $current_shift['waktu_selesai'] = $rekap_data['waktu_selesai'] ?? null;
         
@@ -249,7 +277,7 @@ function calculate_total_setoran_bulan_ini($pdo) {
         ");
         $stmt->execute([$current_month]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['total'] ?? 0;
+        return floatval($result['total'] ?? 0);
     } catch (PDOException $e) {
         error_log("Error calculate_total_setoran_bulan_ini: " . $e->getMessage());
         return 0;
@@ -267,8 +295,8 @@ function calculate_rata_rata_setoran($pdo) {
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        $total = $result['total'] ?? 0;
-        $hari = $result['hari'] ?? 0;
+        $total = floatval($result['total'] ?? 0);
+        $hari = intval($result['hari'] ?? 0);
         
         return $hari > 0 ? $total / $hari : 0;
     } catch (PDOException $e) {
@@ -287,7 +315,7 @@ function calculate_total_setoran_hari_ini($pdo) {
         ");
         $stmt->execute([$today]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result['total'] ?? 0;
+        return floatval($result['total'] ?? 0);
     } catch (PDOException $e) {
         error_log("Error calculate_total_setoran_hari_ini: " . $e->getMessage());
         return 0;
@@ -314,7 +342,13 @@ function get_setoran_hari_ini($pdo) {
             ORDER BY waktu DESC
         ");
         $stmt->execute([$today]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $setoran = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($setoran as &$item) {
+            $item['jumlah'] = floatval($item['jumlah']);
+        }
+        
+        return $setoran;
     } catch (PDOException $e) {
         error_log("Error get_setoran_hari_ini: " . $e->getMessage());
         return [];
@@ -323,7 +357,7 @@ function get_setoran_hari_ini($pdo) {
 
 function calculate_saldo_tersedia($pdo, $currentShift = null) {
     if ($currentShift) {
-        return max(0, $currentShift['saldo_akhir']);
+        return max(0, floatval($currentShift['saldo_akhir']));
     } else {
         $saldo_akhir_riwayat = get_saldo_akhir_dari_riwayat($pdo);
         return max(0, $saldo_akhir_riwayat);
@@ -331,8 +365,10 @@ function calculate_saldo_tersedia($pdo, $currentShift = null) {
 }
 
 function update_saldo_setelah_setoran($pdo, $jumlah_setoran, $currentShift = null) {
+    $jumlah_setoran = floatval($jumlah_setoran);
+    
     if ($currentShift) {
-        $new_saldo_akhir = $currentShift['saldo_akhir'] - $jumlah_setoran;
+        $new_saldo_akhir = floatval($currentShift['saldo_akhir']) - $jumlah_setoran;
         
         $stmt = $pdo->prepare("UPDATE shifts SET saldo_akhir = ? WHERE id = ?");
         $stmt->execute([$new_saldo_akhir, $currentShift['id']]);
@@ -351,7 +387,7 @@ function update_saldo_setelah_setoran($pdo, $jumlah_setoran, $currentShift = nul
             "id"         => uniqid("shift_auto_", true),
             "nama"       => $_SESSION['namalengkap'] ?? "System Auto",
             "role"       => $_SESSION['nama'] ?? "System",
-            "cashdrawer" => "Auto-Cashdrawer",
+            "cashdrawer" => "Riwayat Shift",
             "saldo_awal" => $saldo_akhir_riwayat,
             "saldo_akhir" => $new_saldo_akhir,
             "waktu_mulai" => date("Y-m-d H:i:s"),
@@ -366,6 +402,9 @@ function update_saldo_setelah_setoran($pdo, $jumlah_setoran, $currentShift = nul
 }
 
 function validate_setoran($jumlah_setoran, $saldo_tersedia) {
+    $jumlah_setoran = floatval($jumlah_setoran);
+    $saldo_tersedia = floatval($saldo_tersedia);
+    
     if ($jumlah_setoran <= 0) {
         return "Jumlah setoran harus lebih besar dari 0.";
     }
@@ -387,7 +426,7 @@ function is_shift_pertama($pdo) {
         $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM shifts");
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return ($result['total'] ?? 0) == 0;
+        return (intval($result['total'] ?? 0)) == 0;
     } catch (PDOException $e) {
         error_log("Error is_shift_pertama: " . $e->getMessage());
         return true; 
@@ -403,7 +442,8 @@ function get_saldo_awal_untuk_shift_baru($pdo) {
 }
 
 function format_rupiah($value) {
-    return "Rp " . number_format($value, 0, ",", ".");
+    $numeric_value = floatval($value);
+    return "Rp " . number_format($numeric_value, 0, ",", ".");
 }
 
 function format_datetime($datetime) {
@@ -416,11 +456,18 @@ function format_time($datetime) {
     return $date ? $date->format("H:i") : $datetime;
 }
 
-function process_shift_requests($pdo) {
-    if (!isset($_SESSION["shift_history"])) {
-        refresh_shift_history($pdo);
+function clean_shift_history_data($history) {
+    foreach ($history as &$item) {
+        $item['saldo_awal'] = floatval($item['saldo_awal']);
+        $item['saldo_akhir'] = floatval($item['saldo_akhir']);
+        if ($item['cashdrawer'] === "Cashdrawer-Otomatis" || $item['cashdrawer'] === "Auto-Cashdrawer") {
+            $item['cashdrawer'] = "Riwayat Shift";
+        }
     }
+    return $history;
+}
 
+function process_shift_requests($pdo) { 
     if (isset($_GET['action']) && $_GET['action'] === 'rekap_shift') {
         if (isset($_SESSION["shift_current"])) {
             $_SESSION['shift'] = $_SESSION["shift_current"];
@@ -444,7 +491,7 @@ function process_shift_requests($pdo) {
         $currentShift = $_SESSION["shift_current"];
         
         $stmt = $pdo->prepare("UPDATE shifts SET waktu_selesai = NOW(), saldo_akhir = ? WHERE id = ?");
-        $stmt->execute([$currentShift['saldo_akhir'], $currentShift['id']]);
+        $stmt->execute([floatval($currentShift['saldo_akhir']), $currentShift['id']]);
         
         sync_to_rekap($pdo, $currentShift);
         
@@ -469,7 +516,7 @@ function process_shift_requests($pdo) {
             $_SESSION["error"] = "Cashdrawer harus dipilih untuk shift pertama.";
         } else {
             $saldo_clean = preg_replace("/[^\d]/", "", $saldo_awal);
-            $saldo_value = $saldo_clean !== "" ? (float) $saldo_clean : NAN;
+            $saldo_value = $saldo_clean !== "" ? floatval($saldo_clean) : NAN;
 
             if (!is_numeric($saldo_value) || $saldo_value <= 0) {
                 $_SESSION["error"] = "Saldo awal harus berupa angka yang lebih besar dari 0.";
@@ -481,7 +528,7 @@ function process_shift_requests($pdo) {
                 ];
                 $_SESSION["show_confirmation"] = true;
             } else {
-                $cashdrawer_final = $is_shift_pertama ? $cashdrawer : "Cashdrawer-Otomatis";
+                $cashdrawer_final = $is_shift_pertama ? $cashdrawer : "Riwayat Shift";
                 
                 $shift = [
                     "id"         => uniqid("shift_", true),
@@ -566,7 +613,7 @@ function process_setoran_request($pdo) {
             $_SESSION["error"] = "Semua field bertanda * harus diisi.";
         } else {
             $jumlah_clean = preg_replace("/[^\d]/", "", $jumlah_input);
-            $jumlah_value = $jumlah_clean !== "" ? (float) $jumlah_clean : 0;
+            $jumlah_value = $jumlah_clean !== "" ? floatval($jumlah_clean) : 0;
 
             $validation_error = validate_setoran($jumlah_value, $saldo_tersedia);
             
@@ -603,7 +650,9 @@ function process_setoran_request($pdo) {
 }
 
 function get_shift_display_data($pdo) {
-    $history = refresh_shift_history($pdo);
+    $history = read_shift_data($pdo);
+    
+    $history = clean_shift_history_data($history);
     
     $today = date('Y-m-d');
     $total_setoran_hari_ini = calculate_total_setoran_hari_ini($pdo);
@@ -622,11 +671,11 @@ function get_shift_display_data($pdo) {
     $saldo_awal_rekomendasi = get_saldo_awal_untuk_shift_baru($pdo);
     
     if ($currentShift) {
-        $saldo_awal_hari_ini = $currentShift['saldo_awal'];
-        $saldo_akhir_hari_ini = $currentShift['saldo_akhir'];
+        $saldo_awal_hari_ini = floatval($currentShift['saldo_awal']);
+        $saldo_akhir_hari_ini = floatval($currentShift['saldo_akhir']);
         $saldo_tersedia = calculate_saldo_tersedia($pdo, $currentShift);
         $can_setor = $saldo_tersedia > 100000; 
-        $saldo_akhir_display = $currentShift['saldo_akhir'];
+        $saldo_akhir_display = floatval($currentShift['saldo_akhir']);
     } else {
         $saldo_awal_hari_ini = $saldo_awal_rekomendasi;
         $saldo_akhir_hari_ini = $saldo_akhir_riwayat;
@@ -662,11 +711,83 @@ function get_shift_display_data($pdo) {
         'can_setor' => $can_setor,
         'saldo_akhir_display' => $saldo_akhir_display,
         'cashdrawers' => $cashdrawers,
-        'history' => $history,
+        'history' => $history, 
         'total_setoran_bulan_ini' => calculate_total_setoran_bulan_ini($pdo),
         'rata_rata_setoran' => calculate_rata_rata_setoran($pdo),
         'is_shift_pertama' => $is_shift_pertama,
         'saldo_awal_rekomendasi' => $saldo_awal_rekomendasi
     ];
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'get_shift_detail' && isset($_GET['shift_id'])) {
+    $shift_id = $_GET['shift_id'];
+    
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM shifts WHERE id = ?");
+        $stmt->execute([$shift_id]);
+        $shift = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$shift) {
+            echo json_encode(['success' => false, 'message' => 'Shift tidak ditemukan']);
+            exit;
+        }
+        
+        if ($shift['cashdrawer'] === "Cashdrawer-Otomatis" || $shift['cashdrawer'] === "Auto-Cashdrawer") {
+            $shift['cashdrawer'] = "Riwayat Shift";
+        }
+        
+        $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
+        $stmt->execute([$shift_id]);
+        $rekap = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($shift) {
+            $shift['saldo_awal'] = floatval($shift['saldo_awal']);
+            $shift['saldo_akhir'] = floatval($shift['saldo_akhir']);
+        }
+        if ($rekap) {
+            $rekap['saldo_awal'] = floatval($rekap['saldo_awal']);
+            $rekap['saldo_akhir'] = floatval($rekap['saldo_akhir']);
+            $rekap['selisih'] = floatval($rekap['selisih']);
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'shift' => $shift,
+            'rekap' => $rekap ?: null
+        ]);
+        
+    } catch (PDOException $e) {
+        error_log("Error get_shift_detail: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Database error']);
+    }
+    exit;
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'sync_shift' && isset($_GET['shift_id'])) {
+    $shift_id = $_GET['shift_id'];
+    
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM shifts WHERE id = ?");
+        $stmt->execute([$shift_id]);
+        $shift = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$shift) {
+            echo json_encode(['success' => false, 'message' => 'Shift tidak ditemukan']);
+            exit;
+        }
+        
+        $sync_result = sync_to_rekap($pdo, $shift);
+        
+        if ($sync_result) {
+            echo json_encode(['success' => true, 'message' => 'Shift berhasil disinkronisasi']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Gagal menyinkronisasi shift']);
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error sync_shift: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Database error']);
+    }
+    exit;
 }
 ?>
