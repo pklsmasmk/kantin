@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-4 clkeranjang">
         <div class="card p-3 border-0 shadow-sm sticky-top" style="top: 80px;" data-aos="fade-left">
           <h4 class="mb-3 text-dark fw-bold"><i class="bi bi-cart4 me-2 text-primary"></i>Keranjang</h4>
 
@@ -165,9 +165,6 @@
 
           <button id="payBtn" class="btn btn-success w-100 fw-bold mb-2">
             <i class="bi bi-cash-coin me-1"></i>Bayar
-          </button>
-          <button id="finishBtn" class="btn btn-secondary w-100 fw-bold" style="display:none;">
-            <i class="bi bi-check-circle me-1"></i>Selesai Transaksi
           </button>
         </div>
       </div>

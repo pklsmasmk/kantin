@@ -1,5 +1,4 @@
 <?php
-session_start();
 
 $file = __DIR__ . '/data.json';
 
@@ -80,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-8">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3><i class="fas fa-plus-circle text-primary"></i> Tambah Data Baru</h3>
-                <a href="index.php" class="btn btn-outline-secondary">
+                <a href="/?q=piutang" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali
                 </a>
             </div>
@@ -137,14 +136,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </div>
 
-                        <!-- Bagian tambahan untuk menampilkan detail item -->
                         <div id="itemList" class="mt-4" style="display:none;">
                             <h6>Detail Item:</h6>
                             <ul class="list-group" id="itemContainer"></ul>
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
-                            <a href="index.php" class="btn btn-secondary me-2">Batal</a>
+                            <a href="/?q=menu" class="btn btn-secondary me-2">Batal</a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Simpan
                             </button>
@@ -169,7 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector("input[name='amount']").value = total;
     if (ket) document.querySelector("input[name='description']").value = ket;
 
-    // tampilkan daftar item jika ada
     if (items.length > 0) {
       const listContainer = document.getElementById("itemList");
       const itemUl = document.getElementById("itemContainer");
@@ -181,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
         itemUl.appendChild(li);
       });
 
-      // tambahkan input hidden agar ikut tersimpan
       const form = document.querySelector("form");
       const inputHidden = document.createElement("input");
       inputHidden.type = "hidden";
@@ -190,7 +186,6 @@ document.addEventListener("DOMContentLoaded", () => {
       form.appendChild(inputHidden);
     }
 
-    // hapus localStorage setelah digunakan
     localStorage.removeItem("pendingPiutangNama");
     localStorage.removeItem("pendingPiutangTotal");
     localStorage.removeItem("pendingPiutangKet");

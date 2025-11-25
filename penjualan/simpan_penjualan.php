@@ -1,15 +1,22 @@
 <?php
 header("Content-Type: application/json");
 date_default_timezone_set('Asia/Jakarta');
-include '../Database/config.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
-if (!$data || !isset($data["nama"])) {
-    echo json_encode(["status" => "error", "message" => "Data kosong atau tidak valid"]);
+include __DIR__ . '/../Database/config.php';
+
+$input = file_get_contents("php://input");
+$data = json_decode($input, true);
+
+if (!$data) {
+    echo json_encode(["status" => "error", "message" => "Data tidak valid"]);
     exit;
 }
 
 $data["tanggal"] = date("Y-m-d H:i:s");
+$data["nama"] = $data["nama"] ?? "Umum";
+$data["metode"] = $data["metode"] ?? "Tunai";
+$data["status"] = $data["status"] ?? "Lunas";
+$data["keterangan"] = $data["keterangan"] ?? "-";
 
 if (isset($data["items"]) && is_array($data["items"])) {
     $items = [];
@@ -30,17 +37,6 @@ $data["pajak"]      = (int) ($data["pajak"] ?? 0);
 $data["uang_masuk"] = (int) ($data["uang_masuk"] ?? 0);
 $data["kembalian"]  = (int) ($data["kembalian"] ?? 0);
 $data["total"]      = (int) ($data["total"] ?? 0);
-$data["metode"]     = $data["metode"] ?? "Tunai";
-$data["status"]     = $data["status"] ?? "Lunas";
-$data["keterangan"] = $data["keterangan"] ?? "-";
-
-if ($data["total"] <= 0) {
-    $subtotal = 0;
-    foreach ($data["items"] as $it) {
-        $subtotal += ($it["qty"] * $it["harga"]);
-    }
-    $data["total"] = max(0, $subtotal - $data["diskon"] + $data["pajak"]);
-}
 
 try {
     $pdo->beginTransaction();
@@ -83,8 +79,8 @@ try {
 
     echo json_encode([
         "status" => "success",
-        "message" => "Data berhasil disimpan ke database",
-        "redirect" => "../public/index.php",
+        "message" => "Data berhasil disimpan",
+        "id_penjualan" => $id_penjualan,
         "data" => $data
     ]);
 
