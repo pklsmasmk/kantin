@@ -1,11 +1,11 @@
 <?php
-$pdo = null;
 if (!defined('__DBCONFIG__')) {
     define('__DBCONFIG__', true);
-    $host = '192.168.109.195';
+    $host = '192.168.109.132';
     $username = 'smk';
     $password = 'smk123';
     $database = 'db_kantin';
+    
 
     try {
         $pdo = new PDO("mysql:host=$host;dbname=$database;charset=utf8mb4", $username, $password);

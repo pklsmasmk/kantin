@@ -15,6 +15,9 @@
       case 'full':
         include("../penjualan/js/pembayaran_js.php");
         break;
+      case 'piutang':
+        include("../piutangkantin/js/index_js.php");
+        break;
       default:
         break;
     }

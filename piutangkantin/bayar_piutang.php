@@ -1,68 +1,88 @@
 <?php
-session_start();
+require_once '../Database/config.php';
+require_once '../Database/functions_piutang.php';
 
-function loadData()
-{
-    $file = 'data.json';
-    if (file_exists($file)) {
-        $json = file_get_contents($file);
-        return json_decode($json, true) ?: [];
-    }
-    return [];
-}
-
-function saveData($records)
-{
-    file_put_contents('data.json', json_encode($records, JSON_PRETTY_PRINT));
-}
-
-function formatRupiah($amount)
-{
-    return 'Rp ' . number_format($amount, 0, ',', '.');
-}
-
-function formatTanggal($dateString)
-{
-    if (empty($dateString) || $dateString == '0000-00-00') {
-        return '-';
-    }
+function loadRecordWithPayments($id, $type) {
+    $database = db_kantin();
+    $db = $database->pdo;
+    
     try {
-        return date('d/m/Y', strtotime($dateString));
-    } catch (Exception $e) {
-        return '-';
-    }
-}
-
-function formatTanggalWaktu($dateString)
-{
-    if (empty($dateString) || $dateString == '0000-00-00 00:00:00') {
-        return '-';
-    }
-    try {
-        return date('d/m/Y H:i', strtotime($dateString));
-    } catch (Exception $e) {
-        return '-';
-    }
-}
-
-function formatWaktu($timeString)
-{
-    if (empty($timeString)) {
-        return '-';
-    }
-    try {
-        if (preg_match('/^\d{2}:\d{2}$/', $timeString)) {
-            return $timeString;
+        // Load record data
+        $query = "SELECT r.*, 
+                         COALESCE(SUM(p.jumlah), 0) as total_dibayar
+                  FROM records r 
+                  LEFT JOIN payments p ON r.id = p.record_id 
+                  WHERE r.id = ? AND r.type = ?
+                  GROUP BY r.id";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$id, $type]);
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$record) {
+            return null;
         }
-        return date('H:i', strtotime($timeString));
+        
+        // Load payments history
+        $query = "SELECT * FROM payments WHERE record_id = ? ORDER BY tanggal DESC, waktu DESC";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$id]);
+        $record['pembayaran'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return $record;
     } catch (Exception $e) {
-        return '-';
+        error_log("Error loading record: " . $e->getMessage());
+        return null;
     }
 }
 
+function savePayment($record_id, $paymentData) {
+    $database = db_kantin();
+    $db = $database->pdo;
+    
+    try {
+        $db->beginTransaction();
+        
+        // Insert payment
+        $query = "INSERT INTO payments (record_id, jumlah, tanggal, waktu, metode, keterangan) 
+                  VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $db->prepare($query);
+        $stmt->execute([
+            $record_id,
+            $paymentData['jumlah'],
+            $paymentData['tanggal'],
+            $paymentData['waktu'],
+            $paymentData['metode'],
+            $paymentData['keterangan']
+        ]);
+        
+        // Check if record is fully paid
+        $query = "SELECT r.amount, COALESCE(SUM(p.jumlah), 0) as total_dibayar
+                  FROM records r 
+                  LEFT JOIN payments p ON r.id = p.record_id 
+                  WHERE r.id = ? 
+                  GROUP BY r.id";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$record_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result && $result['total_dibayar'] >= $result['amount']) {
+            $query = "UPDATE records SET status = 'lunas' WHERE id = ?";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$record_id]);
+        }
+        
+        $db->commit();
+        return true;
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log("Error saving payment: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    $records = loadData();
     
     if ($action === 'bayar') {
         $id = $_POST['id'] ?? '';
@@ -75,37 +95,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($jumlahBayar <= 0) {
             $_SESSION['error'] = 'Jumlah bayar harus lebih dari 0!';
         } else {
-            foreach ($records as &$record) {
-                if ($record['id'] == $id) {
-
-                    if (!isset($record['pembayaran'])) {
-                        $record['pembayaran'] = [];
-                    }
-                    $record['pembayaran'][] = [
-                        'jumlah' => $jumlahBayar,
-                        'tanggal' => $tanggalBayar,
-                        'waktu' => $waktuBayar,
-                        'metode' => $metodeBayar,
-                        'keterangan' => $keterangan,
-                        'timestamp' => date('Y-m-d H:i:s')
-                    ];
-
-                    $totalDibayar = array_reduce($record['pembayaran'], function ($sum, $bayar) {
-                        return $sum + $bayar['jumlah'];
-                    }, 0);
-
-                    if ($totalDibayar >= $record['amount']) {
-                        $record['status'] = 'lunas';
-                    }
-                    
-                    $_SESSION['success'] = 'Pembayaran berhasil dicatat!';
-                    break;
-                }
+            if (savePayment($id, [
+                'jumlah' => $jumlahBayar,
+                'tanggal' => $tanggalBayar,
+                'waktu' => $waktuBayar,
+                'metode' => $metodeBayar,
+                'keterangan' => $keterangan
+            ])) {
+                $_SESSION['success'] = 'Pembayaran berhasil dicatat!';
+            } else {
+                $_SESSION['error'] = 'Gagal menyimpan pembayaran!';
             }
-            
-            saveData($records);
         }
-        header('Location: ' . $_SERVER['HTTP_REFERER']);
+        echo '<script>window.location.href = "' . $_SERVER['REQUEST_URI'] . '";</script>';
         exit;
     }
 }
@@ -113,45 +115,152 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $id = $_GET['id'] ?? '';
 $type = $_GET['type'] ?? '';
 
-$records = loadData();
-$record = null;
-
-foreach ($records as $r) {
-    if ($r['id'] == $id && $r['type'] === $type) {
-        $record = $r;
-        break;
-    }
-}
+$record = loadRecordWithPayments($id, $type);
 
 if (!$record) {
-    die('Data tidak ditemukan');
+    die('<div class="container my-5"><div class="alert alert-danger">Data tidak ditemukan</div></div>');
 }
 
-$totalDibayar = 0;
-if (isset($record['pembayaran'])) {
-    $totalDibayar = array_reduce($record['pembayaran'], function ($sum, $bayar) {
-        return $sum + $bayar['jumlah'];
-    }, 0);
-}
-
+$totalDibayar = $record['total_dibayar'] ?? 0;
 $sisaBayar = $record['amount'] - $totalDibayar;
 
 $defaultTanggal = date('Y-m-d');
 $defaultWaktu = date('H:i');
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pembayaran <?= ucfirst($record['type']) ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="CSS/bayar.css">
+    <style>
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+        .live-clock {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 2px solid #e9ecef;
+        }
+        .live-clock .date {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        .live-clock .time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #dc3545;
+            font-family: 'Courier New', monospace;
+        }
+        .live-clock .timezone {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .payment-section, .history-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .total-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        .btn-bayar {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .btn-bayar:hover {
+            background: linear-gradient(135deg, #218838, #1e9e8a);
+            color: white;
+        }
+        .time-form-group {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .time-form-label {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+        .datetime-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+        .time-input-container {
+            position: relative;
+        }
+        .time-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        .time-highlight {
+            background: #e7f3ff;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #007bff;
+            border-radius: 3px;
+        }
+        .new-payment .card {
+            border: 2px solid #28a745;
+            background: #f8fff9;
+        }
+        .payment-time-badge {
+            background: #007bff;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .history-time {
+            background: #e9ecef;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+        .badge-status {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+    </style>
 </head>
-
 <body>
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -159,13 +268,14 @@ $defaultWaktu = date('H:i');
                 <i class="fas fa-credit-card me-2"></i>
                 Pembayaran <?= ucfirst($record['type']) ?>
             </h1>
-            <a href="<?= $record['type'] === 'hutang' ? 'hutang.php' : 'piutang.php' ?>" class="btn btn-outline-secondary">
+            <a href="/?q=piutang_hasilpiutang" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
         </div>
 
         <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
                 <?= htmlspecialchars($_SESSION['success']) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -174,6 +284,7 @@ $defaultWaktu = date('H:i');
 
         <?php if (isset($_SESSION['error'])): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
                 <?= htmlspecialchars($_SESSION['error']) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -183,13 +294,14 @@ $defaultWaktu = date('H:i');
         <div class="header-section">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h3 class="text-dark mb-3"><?= htmlspecialchars($record['name']) ?></h3>
+                    <h3 class="mb-3"><?= htmlspecialchars($record['name']) ?></h3>
                     
-                    <div class="info-row">
+                    <div class="info-row mb-3">
                         <div class="row">
                             <div class="col-md-4">
                                 <strong>Status:</strong><br>
                                 <span class="badge <?= $record['status'] === 'lunas' ? 'bg-success' : 'bg-warning' ?> badge-status">
+                                    <i class="fas fa-<?= $record['status'] === 'lunas' ? 'check' : 'clock' ?> me-1"></i>
                                     <?= ucwords($record['status']) ?>
                                 </span>
                             </div>
@@ -208,7 +320,7 @@ $defaultWaktu = date('H:i');
                         <div class="row">
                             <div class="col-md-4">
                                 <strong>Total <?= ucfirst($record['type']) ?>:</strong><br>
-                                <span class="fs-5 fw-bold text-primary"><?= formatRupiah($record['amount']) ?></span>
+                                <span class="fs-5 fw-bold text-warning"><?= formatRupiah($record['amount']) ?></span>
                             </div>
                             <div class="col-md-4">
                                 <strong>Total Dibayar:</strong><br>
@@ -222,10 +334,10 @@ $defaultWaktu = date('H:i');
                     </div>
                 </div>
                 <div class="col-md-4 text-center">
-                    <div class="total-amount text-primary">
+                    <div class="total-amount text-white">
                         <?= formatRupiah($sisaBayar) ?>
                     </div>
-                    <div class="text-muted">Sisa yang harus dibayar</div>
+                    <div class="text-light">Sisa yang harus dibayar</div>
                 </div>
             </div>
         </div>
@@ -239,25 +351,25 @@ $defaultWaktu = date('H:i');
         <div class="payment-section">
             <h4 class="mb-4"><i class="fas fa-money-bill-wave me-2"></i>Bayar <?= ucfirst($record['type']) ?></h4>
             
-            <form method="POST">
+            <form method="POST" id="paymentForm">
                 <input type="hidden" name="action" value="bayar">
                 <input type="hidden" name="id" value="<?= $record['id'] ?>">
                 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Jumlah Bayar (Rp)</label>
+                        <label class="form-label fw-semibold">Jumlah Bayar (Rp)</label>
                         <input type="number" name="jumlah_bayar" class="form-control" 
                                min="1" max="<?= $sisaBayar ?>" value="<?= $sisaBayar ?>"
-                               placeholder="Masukkan jumlah pembayaran" required>
+                               placeholder="Masukkan jumlah pembayaran" required step="1000">
                         <div class="form-text">Maksimal: <?= formatRupiah($sisaBayar) ?></div>
                     </div>
 
-                    <div class="col-12">
+                    <div class="col-12 mb-4">
                         <div class="time-form-group">
                             <div class="time-form-label">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-clock text-primary me-2"></i>
                                 <span>Waktu Pembayaran</span>
-                                <button type="button" class="btn-time-now ms-2" onclick="setCurrentTime()">
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="setCurrentTime()">
                                     <i class="fas fa-sync-alt me-1"></i> Gunakan Waktu Sekarang
                                 </button>
                             </div>
@@ -283,8 +395,8 @@ $defaultWaktu = date('H:i');
                             </div>
                             <div class="time-highlight mt-3">
                                 <div class="d-flex align-items-center justify-content-between">
-                                    <span>Pembayaran akan dicatat pada:</span>
-                                    <span class="current-time" id="displayTime">
+                                    <span class="fw-semibold">Pembayaran akan dicatat pada:</span>
+                                    <span class="current-time fw-bold text-primary" id="displayTime">
                                         <?= date('d/m/Y') ?> | <?= date('H:i') ?>
                                     </span>
                                 </div>
@@ -293,7 +405,7 @@ $defaultWaktu = date('H:i');
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Metode Pembayaran</label>
+                        <label class="form-label fw-semibold">Metode Pembayaran</label>
                         <select name="metode_bayar" class="form-select" required>
                             <option value="Cash">Cash</option>
                             <option value="Transfer">Transfer Bank</option>
@@ -307,7 +419,7 @@ $defaultWaktu = date('H:i');
                     </div>
                     
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Keterangan</label>
+                        <label class="form-label fw-semibold">Keterangan</label>
                         <input type="text" name="keterangan" class="form-control" 
                                placeholder="Contoh: Masukkan ke kas, Bayar cicilan ke-1, dll.">
                     </div>
@@ -322,30 +434,30 @@ $defaultWaktu = date('H:i');
         </div>
 
         <div class="history-section">
-            <h4 class="mb-4"><i class="fas fa-history me-2"></i>History Pembayaran</h4>
+            <h4 class="mb-4"><i class="fas fa-history me-2"></i>Riwayat Pembayaran</h4>
             
             <?php if (empty($record['pembayaran'])): ?>
                 <div class="text-center py-4 text-muted">
                     <i class="fas fa-receipt fa-3x mb-3"></i>
-                    <p>Belum ada history pembayaran</p>
+                    <p class="fs-5">Belum ada riwayat pembayaran</p>
                 </div>
             <?php else: ?>
-
                 <div class="timeline mb-4">
                     <?php foreach ($record['pembayaran'] as $index => $bayar): ?>
-                        <div class="timeline-item <?= $index === count($record['pembayaran']) - 1 ? 'new-payment' : '' ?>">
-                            <div class="card">
+                        <div class="timeline-item <?= $index === 0 ? 'new-payment' : '' ?>">
+                            <div class="card shadow-sm">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
                                             <span class="payment-time-badge">
-                                                Pembayaran #<?= $index + 1 ?>
+                                                <i class="fas fa-receipt me-1"></i>
+                                                Pembayaran #<?= count($record['pembayaran']) - $index ?>
                                             </span>
                                         </div>
                                         <div class="text-end">
                                             <div class="payment-datetime">
-                                                <span class="payment-date"><?= formatTanggal($bayar['tanggal']) ?></span>
-                                                <span class="payment-time">
+                                                <span class="payment-date fw-semibold"><?= formatTanggal($bayar['tanggal']) ?></span>
+                                                <span class="payment-time badge bg-secondary ms-2">
                                                     <i class="fas fa-clock me-1"></i>
                                                     <?= formatWaktu($bayar['waktu']) ?>
                                                 </span>
@@ -356,10 +468,16 @@ $defaultWaktu = date('H:i');
                                     
                                     <div class="row align-items-center">
                                         <div class="col-md-4">
-                                            <h5 class="text-success mb-0"><?= formatRupiah($bayar['jumlah']) ?></h5>
+                                            <h5 class="text-success mb-0">
+                                                <i class="fas fa-money-bill-wave me-2"></i>
+                                                <?= formatRupiah($bayar['jumlah']) ?>
+                                            </h5>
                                         </div>
                                         <div class="col-md-4">
-                                            <span class="badge bg-info"><?= $bayar['metode'] ?></span>
+                                            <span class="badge bg-info fs-6">
+                                                <i class="fas fa-wallet me-1"></i>
+                                                <?= $bayar['metode'] ?>
+                                            </span>
                                         </div>
                                         <div class="col-md-4 text-md-end">
                                             <small class="text-muted"><?= htmlspecialchars($bayar['keterangan'] ?: '-') ?></small>
@@ -372,10 +490,10 @@ $defaultWaktu = date('H:i');
                 </div>
                 
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
                             <tr>
-                                <th>No</th>
+                                <th>#</th>
                                 <th>Jumlah Bayar</th>
                                 <th>Tanggal</th>
                                 <th>Waktu</th>
@@ -385,20 +503,17 @@ $defaultWaktu = date('H:i');
                         </thead>
                         <tbody>
                             <?php foreach ($record['pembayaran'] as $index => $bayar): ?>
-                                <tr class="<?= $index === count($record['pembayaran']) - 1 ? 'new-payment' : '' ?>">
-                                    <td><?= $index + 1 ?></td>
+                                <tr class="<?= $index === 0 ? 'table-success' : '' ?>">
+                                    <td class="fw-bold"><?= $index + 1 ?></td>
                                     <td class="fw-bold text-success"><?= formatRupiah($bayar['jumlah']) ?></td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
                                             <?= formatTanggal($bayar['tanggal']) ?>
-                                            <span class="history-time">
-                                                <i class="fas fa-clock me-1"></i>
-                                                <?= formatWaktu($bayar['waktu']) ?>
-                                            </span>
                                         </div>
                                     </td>
                                     <td>
                                         <span class="history-time">
+                                            <i class="fas fa-clock me-1"></i>
                                             <?= formatWaktu($bayar['waktu']) ?>
                                         </span>
                                     </td>
@@ -497,18 +612,35 @@ $defaultWaktu = date('H:i');
             timeInput.setAttribute('data-manual', 'true');
             
             updateTimeHighlight();
+            
+            // Show confirmation
+            const toast = document.createElement('div');
+            toast.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+            toast.style.zIndex = '1050';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                Waktu berhasil diatur ke waktu sekarang
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
 
+        // Validasi jumlah bayar
         document.querySelector('input[name="jumlah_bayar"]').addEventListener('input', function() {
             const maxAmount = <?= $sisaBayar ?>;
             const inputAmount = parseFloat(this.value) || 0;
             
             if (inputAmount > maxAmount) {
                 this.value = maxAmount;
-                alert('Jumlah pembayaran tidak boleh melebihi sisa bayar: <?= formatRupiah($sisaBayar) ?>');
+                showAlert('Jumlah pembayaran tidak boleh melebihi sisa bayar: <?= formatRupiah($sisaBayar) ?>', 'warning');
             }
         });
 
+        // Update highlight ketika input berubah
         document.querySelector('input[name="tanggal_bayar"]').addEventListener('change', function() {
             this.setAttribute('data-manual', 'true');
             updateTimeHighlight();
@@ -519,6 +651,36 @@ $defaultWaktu = date('H:i');
             updateTimeHighlight();
         });
 
+        // Validasi form
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            const jumlahBayar = parseFloat(document.querySelector('input[name="jumlah_bayar"]').value);
+            if (jumlahBayar <= 0) {
+                e.preventDefault();
+                showAlert('Jumlah bayar harus lebih dari 0!', 'error');
+                return false;
+            }
+        });
+
+        function showAlert(message, type = 'info') {
+            const alertClass = type === 'error' ? 'alert-danger' : 
+                             type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alert.style.zIndex = '1050';
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             updateClock();
             setInterval(updateClock, 1000);
@@ -526,5 +688,4 @@ $defaultWaktu = date('H:i');
         });
     </script>
 </body>
-
 </html>

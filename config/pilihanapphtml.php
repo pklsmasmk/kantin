@@ -15,11 +15,14 @@
       case 'piutang':
         include("../piutangkantin/index.php");
         break;
-      case 'piutang_tambah':
-        include("../piutangkantin/tambah.php");
+      case 'piutang_tambahpiutang':
+        include("../piutangkantin/tambah_piutang.php");
         break;
-      case 'piutang_data':
-        include("../piutangkantin/piutang.php");
+      case 'piutang_hasilpiutang':
+        include("../piutangkantin/hasil_piutang.php");
+        break;
+      case 'piutang__bayarpiutang':
+        include("../piutangkantin/bayar_piutang.php");
         break;
       case 'menu':
         include("../penjualan/menu.php");
