@@ -1,10 +1,16 @@
 <?php
-session_start();
-include("../Database/config.php");
+function safe_redirect($url) {
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit;
+    } else {
+        echo "<script>window.location.href='" . $url . "';</script>";
+        exit;
+    }
+}
 
 if (!isset($_SESSION['shift'])) {
-    header("Location: ../index.php");
-    exit;
+    safe_redirect('../index.php');
 }
 
 date_default_timezone_set('Asia/Jakarta');
@@ -82,8 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             sync_rekap_to_database($pdo, $shift, $transaksi);
             
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?success=added_main');
-            exit;
+            safe_redirect($_SERVER['PHP_SELF'] . '?success=added_main');
         } else {
             $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
         }
@@ -108,8 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             sync_rekap_to_database($pdo, $shift, $transaksi);
             
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?success=added');
-            exit;
+            safe_redirect($_SERVER['PHP_SELF'] . '?success=added');
         } else {
             $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
         }
@@ -153,34 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 sync_rekap_to_database($pdo, $shift, $transaksi);
                 
-                header('Location: ' . $_SERVER['PHP_SELF'] . '?success=edited');
-                exit;
+                safe_redirect($_SERVER['PHP_SELF'] . '?success=edited');
             } else {
                 $error = "Transaksi tidak ditemukan.";
             }
         } else {
             $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
         }
-    }
-}
-
-if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) {
-    $delete_id = validateInput($_GET['delete_id']);
-    $initial_count = count($transaksi);
-    
-    $transaksi = array_filter($transaksi, function($t) use ($delete_id) {
-        return isset($t['id']) && $t['id'] !== $delete_id;
-    });
-    
-    if (count($transaksi) !== $initial_count) {
-        $_SESSION['transaksi'] = array_values($transaksi);
-        
-        sync_rekap_to_database($pdo, $shift, $transaksi);
-        
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?success=deleted');
-        exit;
-    } else {
-        $error = "Transaksi tidak ditemukan untuk dihapus.";
     }
 }
 
@@ -216,7 +199,6 @@ $rekap_data = $stmt->fetch();
 <head>
     <meta charset="UTF-8">
     <title>Detail Rekap Kas - UAM</title>
-    <link rel="stylesheet" href="../CSS/rekap_detail.css">
 </head>
 <body>
     <div class="container">
@@ -247,8 +229,6 @@ $rekap_data = $stmt->fetch();
                     <span>
                         <?php if ($success === 'edited'): ?>
                             Transaksi berhasil diedit
-                        <?php elseif ($success === 'deleted'): ?>
-                            Transaksi berhasil dihapus
                         <?php elseif ($success === 'added'): ?>
                             Catatan kas berhasil ditambahkan
                         <?php elseif ($success === 'added_main'): ?>
@@ -292,14 +272,10 @@ $rekap_data = $stmt->fetch();
                                         <?= $t['nominal'] >= 0 ? '+' : '-' ?> Rp <?= number_format(abs($t['nominal']), 0, ',', '.') ?>
                                     </div>
                                 </div>
-                                <div class="transaction-actions" id="actions-<?= $index ?>">
-                                    <button type="button" class="btn-action btn-edit" data-index="<?= $index ?>">
+                                <div class="transaction-actions">
+                                    <button type="button" class="btn-action btn-edit" onclick="openEditModal(<?= $index ?>)">
                                         <span>✏️</span>
                                         Edit
-                                    </button>
-                                    <button type="button" class="btn-action btn-delete" data-index="<?= $index ?>">
-                                        <span>🗑️</span>
-                                        Hapus
                                     </button>
                                 </div>
                             </div>
@@ -344,7 +320,7 @@ $rekap_data = $stmt->fetch();
                         Keterangan Harian
                     </button>
                 </div>
-                <a href="rekap_shift.php" class="btn-secondary">
+                <a href="/?q=shift__Rekap_Shift__rekap_shift" class="btn-secondary">
                     <span>⬅</span>
                     Kembali ke Rekap Shift
                 </a>
@@ -422,7 +398,7 @@ $rekap_data = $stmt->fetch();
             </form>
         </div>
     </div>
-
+    
     <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -465,6 +441,5 @@ $rekap_data = $stmt->fetch();
     <script>
         window.transaksiData = <?= json_encode(array_values($transaksi), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
     </script>
-    <script src="../JS/rekap_detail.js"></script>
 </body>
 </html>

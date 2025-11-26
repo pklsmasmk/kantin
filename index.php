@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "../Database/config.php";  
+require_once "Database/config.php";
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -236,6 +236,7 @@ require_once "../Database/config.php";
   </nav>
 
   <?php
+  
   include("layout/sidemenu.php");
   ?>
 

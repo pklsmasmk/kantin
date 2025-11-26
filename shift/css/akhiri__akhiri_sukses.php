@@ -1,0 +1,1 @@
+<link rel="stylesheet" href="CSS/akhiri_sukses.css">

@@ -1,9 +1,16 @@
 <?php
-session_start();
+function safe_redirect($url) {
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit;
+    } else {
+        echo "<script>window.location.href='" . $url . "';</script>";
+        exit;
+    }
+}
 
 if (!isset($_SESSION['shift'])) {
-    header("Location: ../index.php");
-    exit;
+    safe_redirect('../index.php');
 }
 
 date_default_timezone_set('Asia/Jakarta');
@@ -109,8 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
     unset($_SESSION['shift']);
     unset($_SESSION['transaksi']);
     
-    header('Location: akhiri_sukses.php?shift_id=' . $shift['id'] . '&saldo_akhir=' . $saldo_akhir);
-    exit;
+    safe_redirect('/?q=shift__Akhiri__akhiri_sukses&shift_id=' . $shift['id'] . '&saldo_akhir=' . $saldo_akhir);
 }
 ?>
 <!DOCTYPE html>
@@ -118,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
 <head>
     <meta charset="UTF-8">
     <title>Akhiri Shift - UAM</title>
-    <link rel="stylesheet" href="../CSS/akhiri_shift.css">
 </head>
 <body>
     <div class="container">
@@ -128,7 +133,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
                 <div class="shift-info">
                     <span><?= htmlspecialchars($shift['cashdrawer']) ?></span>
                     <span>•</span>
-                    <span>Mulai: <?= date('d M Y H:i', strtotime($shift['waktu'])) ?></span>
+                    <span>Mulai: 
+                        <?php 
+                        if (isset($shift['waktu_mulai'])) {
+                            echo date('d M Y H:i', strtotime($shift['waktu_mulai']));
+                        } elseif (isset($shift['created_at'])) {
+                            echo date('d M Y H:i', strtotime($shift['created_at']));
+                        } elseif (isset($shift['start_time'])) {
+                            echo date('d M Y H:i', strtotime($shift['start_time']));
+                        } else {
+                            echo 'Tidak tersedia';
+                        }
+                        ?>
+                    </span>
                 </div>
             </header>
 
@@ -178,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
                 </div>
 
                 <div class="rumus-info">
-                    <h4>🧮 Rumus Perhitungan:</h4>
+                    <h4>Rumus Perhitungan:</h4>
                     <div class="rumus-text">
                         <strong>Saldo Akhir = Saldo Awal + Penjualan Tunai + Masuk Lain - Pengeluaran - Keluar Lain</strong>
                     </div>
@@ -242,15 +259,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
                         <h3>Konfirmasi Akhir Shift</h3>
                         <p>Setelah mengakhiri shift:</p>
                         <ul>
-                            <li>✅ Saldo akhir: <strong>Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></strong></li>
-                            <li>✅ Data akan tersimpan permanen</li>
-                            <li>✅ Saldo akan menjadi warisan untuk shift berikutnya</li>
-                            <li>❌ Tidak dapat diubah atau dihapus</li>
+                            <li>Saldo akhir: <strong>Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></strong></li>
+                            <li>Data akan tersimpan permanen</li>
+                            <li>Saldo akan menjadi warisan untuk shift berikutnya</li>
+                            <li>Tidak dapat diubah atau dihapus</li>
                         </ul>
                     </div>
                 </div>
 
-                <form method="post" class="konfirmasi-form">
+                <form method="post" class="konfirmasi-form" id="akhiriForm">
+                    <input type="hidden" name="akhiri_shift" value="1">
                     <div class="form-group">
                         <label for="catatan">Catatan Akhir Shift (Opsional)</label>
                         <textarea id="catatan" name="catatan" rows="3" 
@@ -258,11 +276,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
                     </div>
                     
                     <div class="action-buttons">
-                        <a href="../Rekap_Shift/rekap_shift.php" class="btn btn-secondary">
+                        <a href="/?q=shift__Rekap_Shift__rekap_shift" class="btn btn-secondary">
                             <span>←</span>
                             Kembali ke Rekap
                         </a>
-                        <button type="submit" name="akhiri_shift" class="btn btn-primary">
+                        <button type="button" class="btn btn-primary" onclick="showConfirmModal()">
                             <span>✅</span>
                             Konfirmasi Akhiri Shift
                         </button>
@@ -272,12 +290,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['akhiri_shift'])) {
         </div>
     </div>
 
-    <script>
-        document.querySelector('form').addEventListener('submit', function(e) {
-            if (!confirm('🚨 KONFIRMASI AKHIRI SHIFT\n\nApakah Anda yakin ingin mengakhiri shift ini?\n\n• Saldo akhir: Rp <?= number_format($saldo_akhir, 0, ',', '.') ?>\n• Data akan tersimpan permanen\n• Tidak dapat diubah kembali')) {
-                e.preventDefault();
-            }
-        });
-    </script>
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Konfirmasi Akhir Shift</h3>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-message">
+                    <p><strong>Apakah Anda yakin ingin mengakhiri shift ini?</strong></p>
+                    <p>Setelah dikonfirmasi, data tidak dapat diubah kembali.</p>
+                </div>
+                
+                <div class="confirm-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Saldo Akhir:</span>
+                        <span class="detail-value">Rp <?= number_format($saldo_akhir, 0, ',', '.') ?></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Transaksi:</span>
+                        <span class="detail-value"><?= count($transaksi) ?> transaksi</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Perubahan Saldo:</span>
+                        <span class="detail-value <?= $selisih >= 0 ? 'income' : 'expense' ?>">
+                            <?= $selisih >= 0 ? '+' : '' ?>Rp <?= number_format(abs($selisih), 0, ',', '.') ?>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal btn-modal-cancel" onclick="hideConfirmModal()">
+                        Batal
+                    </button>
+                    <button type="button" class="btn-modal btn-modal-confirm" onclick="submitForm()">
+                        Ya, Akhiri Shift
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
