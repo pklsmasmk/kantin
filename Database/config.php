@@ -1,5 +1,5 @@
 <?php
-$host = '192.168.109.195';
+$host = '192.168.109.132';
 $username = 'smk';
 $password = 'smk123';
 $database = 'db_kantin';

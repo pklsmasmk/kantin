@@ -27,15 +27,17 @@ function updateStokBarang($id, $stok) {
     $stmt = $pdo->prepare($sql);
     return $stmt->execute([$stok, $id]);
 }
-
 function catatTransaksi($data) {
     $pdo = getDBConnection();
+    
+    // Temporary: disable foreign key checks
+    $pdo->exec("SET FOREIGN_KEY_CHECKS=0");
     
     $sql = "INSERT INTO riwayat_transaksi (nama_barang, jenis_transaksi, pemasok, jumlah, harga, total, keterangan) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $pdo->prepare($sql);
-    return $stmt->execute([
+    $result = $stmt->execute([
         $data['nama_barang'],
         $data['jenis_transaksi'],
         $data['pemasok'],
@@ -44,5 +46,10 @@ function catatTransaksi($data) {
         $data['total'],
         $data['keterangan']
     ]);
+    
+    // Re-enable foreign key checks
+    $pdo->exec("SET FOREIGN_KEY_CHECKS=1");
+    
+    return $result;
 }
 ?>
