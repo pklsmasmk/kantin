@@ -13,9 +13,7 @@ $(function() {
     let isSubmitting = false;
     let saldoAkhirSebelumnya = 0;
 
-    // Fungsi untuk mendapatkan saldo akhir sebelumnya
     function getSaldoAkhirSebelumnya() {
-        // Cari dari berbagai elemen di halaman
         const elementsToCheck = [
             '.saldo-rekomendasi',
             '.info',
@@ -28,7 +26,6 @@ $(function() {
             const element = $(selector);
             if (element.length) {
                 const text = element.text();
-                // Cari pola saldo akhir
                 const patterns = [
                     /Saldo akhir:\s*Rp\s*([\d.,]+)/i,
                     /akhir[^:]*:\s*Rp\s*([\d.,]+)/i,
@@ -48,7 +45,6 @@ $(function() {
             }
         }
 
-        // Coba dari tombol submit
         if (submitShiftBtn.length) {
             const text = submitShiftBtn.text();
             const match = text.match(/Rp\s*([\d.,]+)/);
@@ -940,7 +936,6 @@ $(function() {
         console.log('Menginisialisasi aplikasi shift UAM...');
         
         try {
-            // Inisialisasi saldo akhir sebelumnya pertama kali
             saldoAkhirSebelumnya = getSaldoAkhirSebelumnya();
             
             inisialisasiTab();

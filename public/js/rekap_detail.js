@@ -1,6 +1,5 @@
 class RekapDetailManager {
     constructor() {
-        this.currentOpenActions = null;
         this.init();
     }
 
@@ -16,11 +15,6 @@ class RekapDetailManager {
     }
 
     setupEventListeners() {
-        $(document).on('click', (e) => {
-            this.handleTransactionClick(e);
-            this.handleActionButtonClick(e);
-        });
-
         $(document).on('click', (e) => {
             if ($(e.target).hasClass('modal')) {
                 this.closeAllModals();
@@ -40,20 +34,6 @@ class RekapDetailManager {
         $('input[name="jumlah"]').on('input', (e) => {
             this.formatRupiah(e.target);
         });
-
-        const $editJumlahInput = $('#edit_jumlah');
-        if ($editJumlahInput.length) {
-            $editJumlahInput.on('input', (e) => {
-                this.formatRupiah(e.target);
-            });
-        }
-
-        const $mainJumlahInput = $('#main_jumlah');
-        if ($mainJumlahInput.length) {
-            $mainJumlahInput.on('input', (e) => {
-                this.formatRupiah(e.target);
-            });
-        }
     }
 
     formatRupiah(input) {
@@ -66,92 +46,11 @@ class RekapDetailManager {
         $(input).val(value);
     }
 
-    handleTransactionClick(event) {
-        const $transactionItem = $(event.target).closest('.transaction-item');
-        if (!$transactionItem.length) return;
-
-        if ($(event.target).closest('.btn-action').length) return;
-
-        const index = $transactionItem.attr('data-index');
-        this.toggleTransactionActions(index);
-    }
-
-    handleActionButtonClick(event) {
-        if ($(event.target).closest('.btn-edit').length) {
-            event.stopPropagation();
-            const $button = $(event.target).closest('.btn-edit');
-            const index = $button.attr('data-index');
-            this.openEditModal(index);
-        }
-    }
-
-    toggleTransactionActions(index) {
-        const $actionsElement = $(`#actions-${index}`);
-        if (!$actionsElement.length) return;
-
-        if (this.currentOpenActions && this.currentOpenActions !== $actionsElement[0]) {
-            $(this.currentOpenActions).hide();
-        }
-
-        if ($ActionsElement.css('display') === 'flex') {
-            $ActionsElement.hide();
-            this.currentOpenActions = null;
-        } else {
-            $ActionsElement.show();
-            this.currentOpenActions = $ActionsElement[0];
-        }
-    }
-
-    openEditModal(index) {
-        if (!window.transaksiData || !window.transaksiData[index]) {
-            alert('Data transaksi tidak ditemukan');
-            return;
-        }
-
-        const transaksi = window.transaksiData[index];
-        
-        $('#edit_id').val(transaksi.id);
-        $('#edit_jumlah').val(Math.abs(transaksi.nominal).toLocaleString('id-ID'));
-        $('#edit_catatan').val(transaksi.keterangan);
-        
-        let aksiValue;
-        if (transaksi.tipe === 'Penjualan Tunai') {
-            aksiValue = 'penjualan';
-        } else if (transaksi.tipe === 'Pengeluaran') {
-            aksiValue = 'pengeluaran';
-        } else if (transaksi.tipe === 'Masuk Lain') {
-            aksiValue = 'masuk';
-        } else if (transaksi.tipe === 'Keluar Lain') {
-            aksiValue = 'keluar';
-        } else {
-            aksiValue = transaksi.nominal >= 0 ? 'masuk' : 'keluar';
-        }
-        
-        $('#edit_aksi').val(aksiValue);
-
-        this.showModal('editModal');
-
-        if (this.currentOpenActions) {
-            $(this.currentOpenActions).hide();
-            this.currentOpenActions = null;
-        }
-    }
-
     setupFormValidation() {
         const $addForm = $('#addForm');
-        const $editForm = $('#editForm');
-        const $mainTransactionForm = $('#mainTransactionForm');
 
         if ($addForm.length) {
             $addForm.on('submit', (e) => this.validateForm(e));
-        }
-
-        if ($editForm.length) {
-            $editForm.on('submit', (e) => this.validateForm(e));
-        }
-
-        if ($mainTransactionForm.length) {
-            $mainTransactionForm.on('submit', (e) => this.validateForm(e));
         }
     }
 
@@ -214,13 +113,6 @@ class RekapDetailManager {
 
     closeAllModals() {
         this.hideModal('addModal');
-        this.hideModal('editModal');
-        this.hideModal('mainTransactionModal');
-        
-        if (this.currentOpenActions) {
-            $(this.currentOpenActions).hide();
-            this.currentOpenActions = null;
-        }
     }
 
     autoCloseAlerts() {
@@ -249,30 +141,6 @@ function openAddModal() {
 function closeAddModal() {
     if (window.rekapManager) {
         window.rekapManager.hideModal('addModal');
-    }
-}
-
-function openMainTransactionModal() {
-    if (window.rekapManager) {
-        window.rekapManager.showModal('mainTransactionModal');
-    }
-}
-
-function closeMainTransactionModal() {
-    if (window.rekapManager) {
-        window.rekapManager.hideModal('mainTransactionModal');
-    }
-}
-
-function closeEditModal() {
-    if (window.rekapManager) {
-        window.rekapManager.hideModal('editModal');
-    }
-}
-
-function openEditModal(index) {
-    if (window.rekapManager) {
-        window.rekapManager.openEditModal(index);
     }
 }
 

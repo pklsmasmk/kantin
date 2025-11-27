@@ -69,98 +69,25 @@ function sync_rekap_to_database($pdo, $shift_data, $transaksi_data) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['main_transaction'])) {
+    if (isset($_POST['uang_masuk_lain'])) {
         $jumlah_input = $_POST['jumlah'] ?? '';
         $catatan = validateInput($_POST['catatan'] ?? '');
-        $aksi = $_POST['aksi'] === 'penjualan' ? 'penjualan' : 'pengeluaran';
 
         $jumlah = validateAmount($jumlah_input);
 
         if ($jumlah !== false && !empty($catatan)) {
             $transaksi[] = [
-                'id'        => uniqid('main_', true),
+                'id'        => uniqid('masuk_', true),
                 'waktu'     => date('Y-m-d H:i:s'),
-                'tipe'      => $aksi === 'penjualan' ? 'Penjualan Tunai' : 'Pengeluaran',
+                'tipe'      => 'Masuk Lain',
                 'keterangan' => $catatan,
-                'nominal'   => $aksi === 'penjualan' ? $jumlah : -$jumlah,
+                'nominal'   => $jumlah,
             ];
             $_SESSION['transaksi'] = $transaksi;
             
             sync_rekap_to_database($pdo, $shift, $transaksi);
             
-            safe_redirect($_SERVER['PHP_SELF'] . '?success=added_main');
-        } else {
-            $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
-        }
-    }
-    
-    if (isset($_POST['aksi']) && !isset($_POST['edit_id']) && !isset($_POST['main_transaction'])) {
-        $jumlah_input = $_POST['jumlah'] ?? '';
-        $catatan = validateInput($_POST['catatan'] ?? '');
-        $aksi = $_POST['aksi'] === 'masuk' ? 'masuk' : 'keluar';
-
-        $jumlah = validateAmount($jumlah_input);
-
-        if ($jumlah !== false && !empty($catatan)) {
-            $transaksi[] = [
-                'id'        => uniqid('trx_', true),
-                'waktu'     => date('Y-m-d H:i:s'),
-                'tipe'      => $aksi === 'masuk' ? 'Masuk Lain' : 'Keluar Lain',
-                'keterangan' => $catatan,
-                'nominal'   => $aksi === 'masuk' ? $jumlah : -$jumlah,
-            ];
-            $_SESSION['transaksi'] = $transaksi;
-            
-            sync_rekap_to_database($pdo, $shift, $transaksi);
-            
-            safe_redirect($_SERVER['PHP_SELF'] . '?success=added');
-        } else {
-            $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
-        }
-    }
-    
-    if (isset($_POST['edit_id']) && !empty($_POST['edit_id'])) {
-        $edit_id = validateInput($_POST['edit_id']);
-        $jumlah_input = $_POST['jumlah'] ?? '';
-        $catatan = validateInput($_POST['catatan'] ?? '');
-        $aksi = $_POST['aksi'] ?? '';
-
-        $jumlah = validateAmount($jumlah_input);
-
-        if ($jumlah !== false && !empty($catatan) && !empty($aksi)) {
-            $found = false;
-            foreach ($transaksi as &$t) {
-                if (isset($t['id']) && $t['id'] === $edit_id) {
-                    if ($aksi === 'penjualan') {
-                        $t['tipe'] = 'Penjualan Tunai';
-                        $t['nominal'] = $jumlah;
-                    } elseif ($aksi === 'pengeluaran') {
-                        $t['tipe'] = 'Pengeluaran';
-                        $t['nominal'] = -$jumlah;
-                    } elseif ($aksi === 'masuk') {
-                        $t['tipe'] = 'Masuk Lain';
-                        $t['nominal'] = $jumlah;
-                    } elseif ($aksi === 'keluar') {
-                        $t['tipe'] = 'Keluar Lain';
-                        $t['nominal'] = -$jumlah;
-                    }
-                    
-                    $t['keterangan'] = $catatan;
-                    $t['waktu'] = date('Y-m-d H:i:s');
-                    $found = true;
-                    break;
-                }
-            }
-            
-            if ($found) {
-                $_SESSION['transaksi'] = $transaksi;
-                
-                sync_rekap_to_database($pdo, $shift, $transaksi);
-                
-                safe_redirect($_SERVER['PHP_SELF'] . '?success=edited');
-            } else {
-                $error = "Transaksi tidak ditemukan.";
-            }
+            safe_redirect($_SERVER['PHP_SELF'] . '?success=added_masuk');
         } else {
             $error = "Data tidak valid. Pastikan jumlah angka positif dan keterangan diisi.";
         }
@@ -211,28 +138,22 @@ $rekap_data = $stmt->fetch();
                 </div>
                 <?php if ($rekap_data): ?>
                 <div class="sync-info">
-                    <small>🔄 Data tersinkronisasi: <?= date('H:i', strtotime($rekap_data['last_updated'])) ?></small>
+                    <small>Data tersinkronisasi: <?= date('H:i', strtotime($rekap_data['last_updated'])) ?></small>
                 </div>
                 <?php endif; ?>
             </header>
 
             <?php if (isset($error)): ?>
                 <div class="alert alert-error">
-                    <span>❌</span>
                     <span><?= $error ?></span>
                 </div>
             <?php endif; ?>
 
             <?php if ($success): ?>
                 <div class="alert alert-success">
-                    <span>✅</span>
                     <span>
-                        <?php if ($success === 'edited'): ?>
-                            Transaksi berhasil diedit
-                        <?php elseif ($success === 'added'): ?>
-                            Catatan kas berhasil ditambahkan
-                        <?php elseif ($success === 'added_main'): ?>
-                            Keterangan harian berhasil disimpan
+                        <?php if ($success === 'added_masuk'): ?>
+                            Uang masuk lain berhasil ditambahkan
                         <?php endif; ?>
                     </span>
                 </div>
@@ -241,7 +162,6 @@ $rekap_data = $stmt->fetch();
             <div class="transactions-section">
                 <?php if (empty($transaksi)): ?>
                     <div class="empty-state">
-                        <div class="empty-icon">💼</div>
                         <h3>Belum ada catatan kas</h3>
                         <p>Mulai dengan menambahkan transaksi pertama Anda</p>
                     </div>
@@ -271,12 +191,6 @@ $rekap_data = $stmt->fetch();
                                     <div class="transaction-amount <?= $t['nominal'] >= 0 ? 'amount-income' : 'amount-expense' ?>">
                                         <?= $t['nominal'] >= 0 ? '+' : '-' ?> Rp <?= number_format(abs($t['nominal']), 0, ',', '.') ?>
                                     </div>
-                                </div>
-                                <div class="transaction-actions">
-                                    <button type="button" class="btn-action btn-edit" onclick="openEditModal(<?= $index ?>)">
-                                        <span>✏️</span>
-                                        Edit
-                                    </button>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -313,11 +227,7 @@ $rekap_data = $stmt->fetch();
                 <div class="button-group">
                     <button type="button" class="btn-primary" onclick="openAddModal()">
                         <span>+</span>
-                        Tambah Catatan Kas Lain
-                    </button>
-                    <button type="button" class="btn-primary main-transaction" onclick="openMainTransactionModal()">
-                        <span>💰</span>
-                        Keterangan Harian
+                        Tambah Uang Masuk Lain
                     </button>
                 </div>
                 <a href="/?q=shift__Rekap_Shift__rekap_shift" class="btn-secondary">
@@ -331,10 +241,11 @@ $rekap_data = $stmt->fetch();
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Tambah Catatan Kas Lain</h3>
+                <h3>Tambah Uang Masuk Lain</h3>
                 <button type="button" class="btn-close" onclick="closeAddModal()">×</button>
             </div>
             <form method="post" class="modal-form" id="addForm">
+                <input type="hidden" name="uang_masuk_lain" value="1">
                 <div class="form-group">
                     <label for="jumlah">Jumlah (Rp)</label>
                     <input type="text" id="jumlah" name="jumlah" required 
@@ -344,94 +255,11 @@ $rekap_data = $stmt->fetch();
                 <div class="form-group">
                     <label for="catatan">Keterangan</label>
                     <textarea id="catatan" name="catatan" rows="3" 
-                              placeholder="Contoh: belanja kebutuhan kantin..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="aksi">Jenis Aksi</label>
-                    <select id="aksi" name="aksi" required>
-                        <option value="masuk">Kas Masuk Lain</option>
-                        <option value="keluar">Kas Keluar Lain</option>
-                    </select>
+                              placeholder="Contoh: penerimaan dari..." required></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn-submit">
-                        <span>💾</span>
-                        Simpan Catatan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="mainTransactionModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Keterangan Harian</h3>
-                <button type="button" class="btn-close" onclick="closeMainTransactionModal()">×</button>
-            </div>
-            <form method="post" class="modal-form" id="mainTransactionForm">
-                <input type="hidden" name="main_transaction" value="1">
-                <div class="form-group">
-                    <label for="main_jumlah">Jumlah (Rp)</label>
-                    <input type="text" id="main_jumlah" name="jumlah" required 
-                           placeholder="Contoh: 100000 atau 100.000">
-                    <small class="form-hint">Bisa menggunakan titik atau tanpa titik</small>
-                </div>
-                <div class="form-group">
-                    <label for="main_catatan">Keterangan</label>
-                    <textarea id="main_catatan" name="catatan" rows="3" 
-                              placeholder="Contoh: Penjualan hari ini..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="main_aksi">Jenis Transaksi</label>
-                    <select id="main_aksi" name="aksi" required>
-                        <option value="penjualan">Penjualan Tunai</option>
-                        <option value="pengeluaran">Pengeluaran</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn-submit">
-                        <span>💾</span>
-                        Simpan Transaksi
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Catatan Kas</h3>
-                <button type="button" class="btn-close" onclick="closeEditModal()">×</button>
-            </div>
-            <form method="post" class="modal-form" id="editForm">
-                <input type="hidden" name="edit_id" id="edit_id">
-                <div class="form-group">
-                    <label for="edit_jumlah">Jumlah (Rp)</label>
-                    <input type="text" id="edit_jumlah" name="jumlah" required>
-                    <small class="form-hint">Bisa menggunakan titik atau tanpa titik</small>
-                </div>
-                <div class="form-group">
-                    <label for="edit_catatan">Keterangan</label>
-                    <textarea id="edit_catatan" name="catatan" rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="edit_aksi">Jenis Transaksi</label>
-                    <select id="edit_aksi" name="aksi" required>
-                        <option value="penjualan">Penjualan Tunai</option>
-                        <option value="pengeluaran">Pengeluaran</option>
-                        <option value="masuk">Kas Masuk Lain</option>
-                        <option value="keluar">Kas Keluar Lain</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeEditModal()">
-                        Batal
-                    </button>
-                    <button type="submit" class="btn-submit">
-                        <span>💾</span>
-                        Update Catatan
+                        Simpan Uang Masuk
                     </button>
                 </div>
             </form>
