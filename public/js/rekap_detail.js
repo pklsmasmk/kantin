@@ -8,6 +8,7 @@ class RekapDetailManager {
         this.setupEventListeners();
         this.autoCloseAlerts();
         this.setupRupiahFormatting();
+        this.setupTransactionTypeHandling();
         
         if (window.transaksiData) {
             console.log('Transaction data loaded:', window.transaksiData);
@@ -46,6 +47,25 @@ class RekapDetailManager {
         $(input).val(value);
     }
 
+    setupTransactionTypeHandling() {
+        $('input[name="jenis_transaksi"]').on('change', (e) => {
+            this.updateSubmitButtonText();
+        });
+    }
+
+    updateSubmitButtonText() {
+        const selectedType = $('input[name="jenis_transaksi"]:checked').val();
+        const $submitButton = $('#submitButton');
+        
+        if (selectedType === 'masuk') {
+            $submitButton.text('Simpan Uang Masuk');
+            $submitButton.removeClass('btn-expense').addClass('btn-income');
+        } else {
+            $submitButton.text('Simpan Uang Keluar');
+            $submitButton.removeClass('btn-income').addClass('btn-expense');
+        }
+    }
+
     setupFormValidation() {
         const $addForm = $('#addForm');
 
@@ -56,8 +76,15 @@ class RekapDetailManager {
 
     validateForm(event) {
         const $form = $(event.target);
+        const $jenisTransaksi = $form.find('input[name="jenis_transaksi"]:checked');
         const $jumlahInput = $form.find('input[name="jumlah"]');
         const $catatanInput = $form.find('textarea[name="catatan"]');
+
+        if (!$jenisTransaksi.length) {
+            event.preventDefault();
+            alert('Pilih jenis transaksi (Masuk atau Keluar)');
+            return false;
+        }
 
         if ($jumlahInput.length) {
             const jumlahValue = $jumlahInput.val().trim();
@@ -80,7 +107,28 @@ class RekapDetailManager {
             return false;
         }
 
+        if ($jenisTransaksi.val() === 'keluar') {
+            const jumlahClean = $jumlahInput.val().replace(/[^\d]/g, '');
+            const saldoAkhir = this.getCurrentBalance();
+            
+            if (parseInt(jumlahClean) > saldoAkhir) {
+                event.preventDefault();
+                alert('Saldo tidak mencukupi untuk transaksi pengeluaran ini');
+                $jumlahInput.trigger('focus');
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    getCurrentBalance() {
+        const $saldoAkhirElement = $('.summary-value.total-amount');
+        if ($saldoAkhirElement.length) {
+            const saldoText = $saldoAkhirElement.text().replace(/[^\d]/g, '');
+            return parseInt(saldoText) || 0;
+        }
+        return 0;
     }
 
     showModal(modalId) {
@@ -93,11 +141,20 @@ class RekapDetailManager {
             });
             $('body').css('overflow', 'hidden');
             
+            this.initializeModalState();
+            
             const $firstInput = $modal.find('input, textarea, select').first();
             if ($firstInput.length) {
                 setTimeout(() => $firstInput.trigger('focus'), 100);
             }
         }
+    }
+
+    initializeModalState() {
+        $('input[name="jenis_transaksi"][value="masuk"]').prop('checked', true);
+        this.updateSubmitButtonText();
+        
+        $('#addForm')[0].reset();
     }
 
     hideModal(modalId) {
@@ -130,6 +187,18 @@ class RekapDetailManager {
             }, 5000);
         });
     }
+
+    handleTransactionTypeChange() {
+        const selectedType = $('input[name="jenis_transaksi"]:checked').val();
+        const $jumlahGroup = $('.form-group').has('input[name="jumlah"]');
+        const $catatanInput = $('textarea[name="catatan"]');
+        
+        if (selectedType === 'masuk') {
+            $catatanInput.attr('placeholder', 'Contoh: penerimaan dari...');
+        } else {
+            $catatanInput.attr('placeholder', 'Contoh: pembayaran untuk...');
+        }
+    }
 }
 
 function openAddModal() {
@@ -158,6 +227,14 @@ $(function() {
             window.rekapManager.closeAllModals();
         }
     });
+
+    $(document).on('change', 'input[name="jenis_transaksi"]', function() {
+        window.rekapManager.handleTransactionTypeChange();
+    });
+});
+
+$(document).ready(function() {
+    $('head').append(`<style>${additionalStyles}</style>`);
 });
 
 if (typeof module !== 'undefined' && module.exports) {

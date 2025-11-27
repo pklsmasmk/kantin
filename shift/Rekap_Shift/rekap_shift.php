@@ -7,7 +7,7 @@ error_log("All session: " . print_r($_SESSION, true));
 
 if (!isset($_SESSION['shift'])) {
     error_log("Tidak ada session shift, coba gunakan shift_current");
-    
+
     if (isset($_SESSION['shift_current'])) {
         $_SESSION['shift'] = $_SESSION['shift_current'];
         error_log("Berhasil menggunakan shift_current sebagai session shift");
@@ -48,16 +48,17 @@ foreach ($transaksi as $t) {
     }
 }
 
-function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
+function get_or_create_rekap($pdo, $shift_data, $transaksi_data)
+{
     $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
     $stmt->execute([$shift_data['id']]);
     $current_rekap = $stmt->fetch();
-    
+
     $total_penjualan_tunai = 0;
     $total_pengeluaran_utama = 0;
     $total_pemasukan_lain = 0;
     $total_pengeluaran_lain = 0;
-    
+
     foreach ($transaksi_data as $t) {
         if (isset($t['nominal'])) {
             if ($t['tipe'] === 'Penjualan Tunai') {
@@ -71,17 +72,17 @@ function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
             }
         }
     }
-    
+
     $saldo_akhir = $shift_data['saldo_awal'] + $total_penjualan_tunai + $total_pemasukan_lain - $total_pengeluaran_utama - $total_pengeluaran_lain;
     $selisih = $saldo_akhir - $shift_data['saldo_awal'];
-    
+
     if (!$current_rekap) {
         $sql = "INSERT INTO rekap_shift 
                 (shift_id, cashdrawer, saldo_awal, saldo_akhir, total_penjualan, 
                  total_pengeluaran, total_pemasukan_lain, total_pengeluaran_lain, 
                  selisih, waktu_mulai, waktu_selesai, kasir, role, last_updated) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $shift_data['id'],
@@ -98,7 +99,7 @@ function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
             $shift_data['nama'],
             $shift_data['role']
         ]);
-        
+
         $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
         $stmt->execute([$shift_data['id']]);
         return $stmt->fetch();
@@ -108,7 +109,7 @@ function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
                 total_pemasukan_lain = ?, total_pengeluaran_lain = ?,
                 saldo_akhir = ?, selisih = ?, last_updated = NOW()
                 WHERE shift_id = ?";
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $total_penjualan_tunai,
@@ -119,7 +120,7 @@ function get_or_create_rekap($pdo, $shift_data, $transaksi_data) {
             $selisih,
             $shift_data['id']
         ]);
-        
+
         $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
         $stmt->execute([$shift_data['id']]);
         return $stmt->fetch();
@@ -153,10 +154,10 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
         <header class="header">
             <h2>Rekap Shift Berjalan</h2>
             <div class="sync-status">
-                <div class="sync-ok">✅ Data tersinkronisasi dengan Database</div>
+                <div class="sync-ok">Data tersinkronisasi dengan Database</div>
                 <?php if (count($transaksi) > 0): ?>
                     <div class="transaksi-info">
-                        📊 <?= count($transaksi) ?> catatan kas terdaftar
+                        <?= count($transaksi) ?> catatan kas terdaftar
                     </div>
                 <?php endif; ?>
             </div>
@@ -193,34 +194,34 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
                     <span>Penjualan Tunai</span>
                     <span class="income">Rp <?= number_format($total_penjualan, 0, ',', '.') ?></span>
                 </div>
-                
+
                 <?php if ($total_pemasukan_lain > 0): ?>
-                <div class="row">
-                    <span>Pemasukan Lain</span>
-                    <span class="income">Rp <?= number_format($total_pemasukan_lain, 0, ',', '.') ?></span>
-                    <?php if ($count_pemasukan_lain > 0): ?>
-                        <small style="color: #666; font-size: 12px;">(<?= $count_pemasukan_lain ?> transaksi)</small>
-                    <?php endif; ?>
-                </div>
+                    <div class="row">
+                        <span>Pemasukan Lain</span>
+                        <span class="income">Rp <?= number_format($total_pemasukan_lain, 0, ',', '.') ?></span>
+                        <?php if ($count_pemasukan_lain > 0): ?>
+                            <small style="color: #666; font-size: 12px;">(<?= $count_pemasukan_lain ?> transaksi)</small>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
-                
+
                 <?php if ($total_pengeluaran > 0): ?>
-                <div class="row">
-                    <span>Pengeluaran</span>
-                    <span class="expense">Rp <?= number_format($total_pengeluaran, 0, ',', '.') ?></span>
-                </div>
+                    <div class="row">
+                        <span>Pengeluaran</span>
+                        <span class="expense">Rp <?= number_format($total_pengeluaran, 0, ',', '.') ?></span>
+                    </div>
                 <?php endif; ?>
-                
+
                 <?php if ($total_pengeluaran_lain > 0): ?>
-                <div class="row">
-                    <span>Pengeluaran Lain</span>
-                    <span class="expense">Rp <?= number_format($total_pengeluaran_lain, 0, ',', '.') ?></span>
-                    <?php if ($count_pengeluaran_lain > 0): ?>
-                        <small style="color: #666; font-size: 12px;">(<?= $count_pengeluaran_lain ?> transaksi)</small>
-                    <?php endif; ?>
-                </div>
+                    <div class="row">
+                        <span>Pengeluaran Lain</span>
+                        <span class="expense">Rp <?= number_format($total_pengeluaran_lain, 0, ',', '.') ?></span>
+                        <?php if ($count_pengeluaran_lain > 0): ?>
+                            <small style="color: #666; font-size: 12px;">(<?= $count_pengeluaran_lain ?> transaksi)</small>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
-                
+
                 <div class="row subtotal">
                     <strong>Subtotal</strong>
                     <strong class="<?= $subtotal >= 0 ? 'income' : 'expense' ?>">
@@ -253,7 +254,7 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
 
             <div class="btns">
                 <a href="/?q=shift__Rekap_Shift__rekap_detail" class="btn btn-green">
-                    REKAP DETAIL 
+                    REKAP DETAIL
                     <?php if (count($transaksi) > 0): ?>
                         <span class="badge"><?= count($transaksi) ?></span>
                     <?php endif; ?>
@@ -265,7 +266,7 @@ $count_pengeluaran_lain = count(array_filter($transaksi, fn($t) => isset($t['nom
             <div class="last-updated">
                 <small>Terakhir diperbarui: <?= date('d M Y H:i', strtotime($current_rekap['last_updated'])) ?></small>
                 <?php if (count($transaksi) > 0): ?>
-                    <br><small>📝 <?= count($transaksi) ?> catatan kas terdaftar</small>
+                    <br><small><?= count($transaksi) ?> catatan kas terdaftar</small>
                 <?php endif; ?>
             </div>
         </div>

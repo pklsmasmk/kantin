@@ -16,7 +16,7 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
             <div class="success-icon">🎉</div>
             <h1>Shift Berhasil Diakhiri</h1>
             <p>Shift kasir telah berhasil disimpan ke sistem dan tidak dapat diubah kembali.</p>
-            
+
             <div class="success-info">
                 <div class="info-item">
                     <span>ID Shift:</span>
