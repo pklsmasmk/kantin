@@ -21,7 +21,7 @@
       case 'piutang_hasilpiutang':
         include("../piutangkantin/hasil_piutang.php");
         break;
-      case 'piutang__bayarpiutang':
+      case 'piutang_bayarpiutang':
         include("../piutangkantin/bayar_piutang.php");
         break;
       case 'menu':

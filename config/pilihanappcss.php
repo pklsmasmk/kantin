@@ -18,6 +18,9 @@
       case 'piutang':
         include("../piutangkantin/css/index_css.php");
         break;
+      case 'hasil_piutang':
+        include("../piutangkantin/css/hasil_piutang_css.php");
+        break;
       default:
         break;
     }
