@@ -30,6 +30,99 @@ function validateAmount($amount)
     return is_numeric($amount_clean) && $amount_clean > 0 ? (int) $amount_clean : false;
 }
 
+// FUNGSI BARU: Cek struktur tabel penjualan
+function get_penjualan_columns($pdo) {
+    $stmt = $pdo->query("SHOW COLUMNS FROM penjualan");
+    $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    return $columns;
+}
+
+// FUNGSI BARU: Ambil data penjualan dari database dengan menyesuaikan struktur
+function get_penjualan_terbaru($pdo)
+{
+    $tanggal_hari_ini = date('Y-m-d');
+    
+    // Cek kolom yang ada di tabel penjualan
+    $columns = get_penjualan_columns($pdo);
+    
+    // Buat SELECT berdasarkan kolom yang ada
+    $select_columns = [];
+    if (in_array('id', $columns)) $select_columns[] = 'id';
+    if (in_array('id_penjualan', $columns)) $select_columns[] = 'id_penjualan';
+    if (in_array('nama_pembeli', $columns)) $select_columns[] = 'nama_pembeli';
+    if (in_array('tanggal', $columns)) $select_columns[] = 'tanggal';
+    if (in_array('total', $columns)) $select_columns[] = 'total';
+    if (in_array('metode', $columns)) $select_columns[] = 'metode';
+    if (in_array('status', $columns)) $select_columns[] = 'status';
+    if (in_array('diskon', $columns)) $select_columns[] = 'diskon';
+    if (in_array('pajak', $columns)) $select_columns[] = 'pajak';
+    if (in_array('uang_masuk', $columns)) $select_columns[] = 'uang_masuk';
+    if (in_array('kembalian', $columns)) $select_columns[] = 'kembalian';
+    if (in_array('keterangan', $columns)) $select_columns[] = 'keterangan';
+    
+    if (empty($select_columns)) {
+        return [];
+    }
+    
+    // Hanya ambil data yang statusnya "Lunas"
+    $sql = "SELECT " . implode(', ', $select_columns) . " 
+            FROM penjualan 
+            WHERE DATE(tanggal) = ? AND status = 'Lunas'
+            ORDER BY tanggal DESC";
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$tanggal_hari_ini]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// FUNGSI BARU: Sinkronkan data penjualan ke transaksi
+function sync_penjualan_to_transaksi($pdo, &$transaksi)
+{
+    // Ambil data penjualan terbaru (hanya yang Lunas)
+    $penjualan_terbaru = get_penjualan_terbaru($pdo);
+    
+    // Filter transaksi yang bukan Penjualan Tunai (untuk mempertahankan data uang lain)
+    $transaksi_lain = array_filter($transaksi, function($t) {
+        return isset($t['tipe']) && $t['tipe'] !== 'Penjualan Tunai';
+    });
+    
+    // Konversi penjualan menjadi format transaksi
+    $transaksi_penjualan = [];
+    foreach ($penjualan_terbaru as $penjualan) {
+        // Tentukan ID yang benar
+        $id_penjualan = isset($penjualan['id_penjualan']) ? $penjualan['id_penjualan'] : 
+                        (isset($penjualan['id']) ? $penjualan['id'] : uniqid());
+        
+        $nama_pembeli = !empty($penjualan['nama_pembeli']) ? $penjualan['nama_pembeli'] : 'Umum';
+        
+        $transaksi_penjualan[] = [
+            'id' => 'penjualan_' . $id_penjualan,
+            'waktu' => $penjualan['tanggal'],
+            'tipe' => 'Penjualan Tunai',
+            'keterangan' => 'Penjualan kepada ' . $nama_pembeli,
+            'nominal' => (int) $penjualan['total'],
+            'id_penjualan' => $id_penjualan,
+            'nama_pembeli' => $nama_pembeli,
+            'status' => $penjualan['status'] ?? 'Lunas',
+            'metode' => $penjualan['metode'] ?? 'Tunai',
+            'diskon' => $penjualan['diskon'] ?? 0,
+            'pajak' => $penjualan['pajak'] ?? 0,
+            'uang_masuk' => $penjualan['uang_masuk'] ?? 0,
+            'kembalian' => $penjualan['kembalian'] ?? 0
+        ];
+    }
+    
+    $transaksi = array_merge($transaksi_penjualan, array_values($transaksi_lain));
+    
+    usort($transaksi, function($a, $b) {
+        $timeA = isset($a['waktu']) ? strtotime($a['waktu']) : 0;
+        $timeB = isset($b['waktu']) ? strtotime($b['waktu']) : 0;
+        return $timeB - $timeA; 
+    });
+    
+    return $transaksi;
+}
+
 function sync_rekap_to_database($pdo, $shift_data, $transaksi_data)
 {
     $total_penjualan_tunai = 0;
@@ -71,6 +164,9 @@ function sync_rekap_to_database($pdo, $shift_data, $transaksi_data)
         $shift_data['id']
     ]);
 }
+
+$transaksi = sync_penjualan_to_transaksi($pdo, $transaksi);
+$_SESSION['transaksi'] = $transaksi;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['uang_lain'])) {
@@ -129,12 +225,32 @@ $success = $_GET['success'] ?? '';
 $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
 $stmt->execute([$shift['id']]);
 $rekap_data = $stmt->fetch();
+
+$penjualan_hari_ini = get_penjualan_terbaru($pdo);
+$jumlah_penjualan = count($penjualan_hari_ini);
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Detail Rekap Kas - UAM</title>
+    <style>
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-error { background: #fee; border: 1px solid #fcc; color: #c00; }
+        .alert-success { background: #efe; border: 1px solid #cfc; color: #0c0; }
+        .sync-info { font-size: 12px; color: #666; margin: 5px 0; }
+        .summary-note { font-size: 11px; color: #888; display: block; }
+        .customer-name { font-weight: bold; color: #333; }
+        .transaction-status { 
+            display: inline-block; 
+            padding: 2px 8px; 
+            border-radius: 12px; 
+            font-size: 0.8em; 
+            margin-left: 8px;
+        }
+        .status-lunas { background: #e8f5e8; color: #2e7d32; }
+        .transaction-details { font-size: 0.8em; color: #666; margin-top: 5px; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -145,9 +261,12 @@ $rekap_data = $stmt->fetch();
                     <span>Saldo Awal:</span>
                     <strong>Rp <?= number_format($saldo_awal, 0, ',', '.') ?></strong>
                 </div>
+                <div class="sync-info">
+                    <small>Data penjualan otomatis tersinkronisasi | Total transaksi: <?= $jumlah_penjualan ?> penjualan (Lunas)</small>
+                </div>
                 <?php if ($rekap_data): ?>
                     <div class="sync-info">
-                        <small>Data tersinkronisasi: <?= date('H:i', strtotime($rekap_data['last_updated'])) ?></small>
+                        <small>Terakhir diperbarui: <?= date('H:i', strtotime($rekap_data['last_updated'])) ?></small>
                     </div>
                 <?php endif; ?>
             </header>
@@ -173,20 +292,20 @@ $rekap_data = $stmt->fetch();
             <div class="transactions-section">
                 <?php if (empty($transaksi)): ?>
                     <div class="empty-state">
-                        <h3>Belum ada data keuangan anda</h3>
-                        <p>Mulai dengan menambahkan transaksi pertama Anda</p>
+                        <h3>Belum ada data keuangan</h3>
+                        <p>Mulai dengan melakukan penjualan atau menambahkan transaksi pertama Anda</p>
                     </div>
                 <?php else: ?>
                     <div class="transactions-list" id="transactions-list">
                         <?php foreach ($transaksi as $index => $t): ?>
-                            <?php if (!isset($t['id']) || !isset($t['nominal']) || !isset($t['keterangan']))
+                            <?php if (!isset($t['id']) || !isset($t['nominal']) || !isset($t['keterangan']) || !isset($t['tipe']))
                                 continue; ?>
                             <div class="transaction-item" data-index="<?= $index ?>">
                                 <div class="transaction-main">
                                     <div class="transaction-info">
                                         <div class="transaction-meta">
                                             <span class="transaction-time">
-                                                <?= date('d M H:i', strtotime($t['waktu'])) ?>
+                                                <?= isset($t['waktu']) ? date('d M H:i', strtotime($t['waktu'])) : 'Waktu tidak tersedia' ?>
                                             </span>
                                             <span class="transaction-type <?=
                                                 $t['tipe'] === 'Penjualan Tunai' ? 'type-penjualan' :
@@ -195,9 +314,32 @@ $rekap_data = $stmt->fetch();
                                                 ?>">
                                                 <?= $t['tipe'] ?>
                                             </span>
+                                            <?php if ($t['tipe'] === 'Penjualan Tunai' && isset($t['status'])): ?>
+                                                <span class="transaction-status status-<?= strtolower($t['status']) ?>">
+                                                    <?= $t['status'] ?>
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="transaction-desc">
+                                            <?php if ($t['tipe'] === 'Penjualan Tunai' && isset($t['nama_pembeli'])): ?>
+                                                <div class="customer-name"><?= htmlspecialchars($t['nama_pembeli']) ?></div>
+                                            <?php endif; ?>
                                             <?= htmlspecialchars($t['keterangan']) ?>
+                                            
+                                            <?php if ($t['tipe'] === 'Penjualan Tunai' && isset($t['id_penjualan'])): ?>
+                                                <div class="transaction-details">
+                                                    <small>
+                                                        ID: <?= $t['id_penjualan'] ?> 
+                                                        | <?= $t['metode'] ?? 'Tunai' ?>
+                                                        <?php if (isset($t['diskon']) && $t['diskon'] > 0): ?>
+                                                            | Diskon: Rp <?= number_format($t['diskon'], 0, ',', '.') ?>
+                                                        <?php endif; ?>
+                                                        <?php if (isset($t['pajak']) && $t['pajak'] > 0): ?>
+                                                            | Pajak: Rp <?= number_format($t['pajak'], 0, ',', '.') ?>
+                                                        <?php endif; ?>
+                                                    </small>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div
@@ -218,6 +360,7 @@ $rekap_data = $stmt->fetch();
                         <span class="summary-label">Penjualan Tunai</span>
                         <span class="summary-value income">Rp
                             <?= number_format($total_penjualan_tunai, 0, ',', '.') ?></span>
+                        <small class="summary-note"><?= $jumlah_penjualan ?> transaksi (Lunas)</small>
                     </div>
                     <div class="summary-item">
                         <span class="summary-label">Pengeluaran</span>
@@ -247,6 +390,10 @@ $rekap_data = $stmt->fetch();
                     <button type="button" class="btn-primary" onclick="openAddModal()">
                         <span>+</span>
                         Uang Lainnya
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="refreshData()">
+                        <span>↻</span>
+                        Refresh Data
                     </button>
                 </div>
                 <a href="/?q=shift__Rekap_Shift__rekap_shift" class="btn-secondary">

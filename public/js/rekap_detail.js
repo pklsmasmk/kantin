@@ -201,6 +201,10 @@ class RekapDetailManager {
     }
 }
 
+function refreshData() {
+            window.location.reload();
+        }
+
 function openAddModal() {
     if (window.rekapManager) {
         window.rekapManager.showModal('addModal');
