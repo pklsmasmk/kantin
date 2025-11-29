@@ -28,6 +28,5 @@ switch ($_GET["q"] ?? "") {
     case 'pembelian_barang__stok':
         include("../pembelian_barang/stok_css.php");
         break;
-    default:
-        break;
+    
 }
