@@ -1,36 +1,44 @@
 <?php
-include '../Database/config.php';
+require_once '../Database/config.php';
 
-$sql = "SELECT r.*, b.nama as nama_barang 
-        FROM retur_barang r 
-        JOIN barang b ON r.barang_id = b.id 
-        ORDER BY r.tanggal DESC";
-$result = $conn->query($sql);
+header('Content-Type: application/json');
 
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        $alasan = $row['alasan'] == 'Lainnya' ? $row['alasan_lainnya'] : $row['alasan'];
-        $foto = $row['foto_bukti'] ? "<br><img src='{$row['foto_bukti']}' width='100' class='img-thumbnail'>" : "";
-        
-        echo "
-        <div class='col-md-6'>
-            <div class='panel panel-warning'>
-                <div class='panel-heading'>
-                    <h4 class='panel-title'>{$row['nama_barang']}</h4>
-                </div>
-                <div class='panel-body'>
-                    <p><strong>Jumlah:</strong> {$row['jumlah']}</p>
-                    <p><strong>Alasan:</strong> {$alasan}</p>
-                    <p><strong>Keterangan:</strong> {$row['keterangan']}</p>
-                    <p><strong>Tanggal:</strong> {$row['tanggal']}</p>
-                    {$foto}
-                </div>
-            </div>
-        </div>";
+try {
+    $conn = getDBConnection();
+    
+    $sql = "SELECT r.*, sb.nama as nama_barang 
+            FROM retur_barang r 
+            JOIN stok_barang sb ON r.barang_id = sb.id 
+            ORDER BY r.tanggal DESC 
+            LIMIT 10";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    if (count($data) > 0) {
+        $result = [];
+        foreach ($data as $row) {
+            // Gunakan alasan_lainnya jika alasan adalah 'Lainnya'
+            $alasan_final = ($row['alasan'] == 'Lainnya' && !empty($row['alasan_lainnya'])) 
+                ? $row['alasan_lainnya'] 
+                : $row['alasan'];
+                
+            $result[] = [
+                'nama_barang' => $row['nama_barang'],
+                'jumlah' => $row['jumlah'],
+                'alasan' => $alasan_final,
+                'tanggal' => $row['tanggal']
+            ];
+        }
+        echo json_encode($result);
+    } else {
+        echo json_encode(["message" => "Belum ada riwayat retur"]);
     }
-} else {
-    echo "<div class='col-xs-12 text-center text-muted'>Belum ada riwayat retur</div>";
-}
 
-$conn->close();
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
+}
 ?>

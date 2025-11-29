@@ -1,6 +1,6 @@
 <?php
-    switch ($_GET["q"] ?? "") {
-      case 'retur':
+switch ($_GET["q"] ?? "") {
+    case 'retur_indexretur':
         include("../retur/css/index_css.php");
         break;
      case 'menu':
@@ -26,9 +26,6 @@
         break;   
       case 'shift__Rekap_Shift__rekap_shift':
         include("../shift/css/rekap_shift__rekap_shift.php");
-        break;
-      case 'shift__Rekap_Shift__rekap_detail':
-        include("../shift/css/rekap_shift__rekap_detail.php");
         break; 
       case 'shift__Akhiri__akhiri_shift':
         include("../shift/css/akhiri__akhiri_shift.php");
@@ -38,4 +35,10 @@
         break; 
       default:
         break;
-    }
+    case 'shift__Rekap_Shift__rekap_detail':
+        include("../shift/css/rekap_shift__rekap_detail.php");
+        break;
+    case 'pembelian_barang__stok':
+        include("../pembelian_barang/stok_css.php");
+        break;
+}

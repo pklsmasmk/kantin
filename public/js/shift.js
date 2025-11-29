@@ -154,7 +154,6 @@ $(function() {
             };
         }
         
-        // VALIDASI BARU: Cek apakah saldo awal kurang dari saldo akhir sebelumnya
         const isShiftPertama = $('.info').text().includes('SHIFT PERTAMA');
         if (!isShiftPertama && saldoAkhirSebelumnya > 0 && numericValue < saldoAkhirSebelumnya) {
             return {
@@ -272,10 +271,8 @@ $(function() {
             if (dataForm.isShiftPertama) {
                 modalBody.find('.item-detail:contains("Sumber Saldo")').remove();
             } else {
-                // Tampilkan informasi saldo akhir sebelumnya di modal
                 let saldoSebelumnyaElement = modalBody.find('.item-detail:contains("Sumber Saldo")');
                 if (!saldoSebelumnyaElement.length) {
-                    // Tambahkan elemen jika belum ada
                     saldoSebelumnyaElement = $(`
                         <div class="item-detail">
                             <span class="label-detail">Sumber Saldo:</span>
@@ -317,16 +314,13 @@ $(function() {
     function inisialisasiInputSaldo() {
         if (!saldoInput.length) return;
 
-        // Dapatkan saldo akhir sebelumnya saat inisialisasi
         saldoAkhirSebelumnya = getSaldoAkhirSebelumnya();
         console.log('Saldo akhir sebelumnya:', saldoAkhirSebelumnya);
 
-        // Set placeholder dan nilai default jika ada saldo akhir sebelumnya
         const isShiftPertama = $('.info').text().includes('SHIFT PERTAMA');
         if (!isShiftPertama && saldoAkhirSebelumnya > 0) {
             saldoInput.attr('placeholder', `Min. ${formatRupiah(saldoAkhirSebelumnya)}`);
             
-            // Set nilai default jika input kosong
             if (!saldoInput.val() || saldoInput.val().trim() === '') {
                 saldoInput.val(saldoAkhirSebelumnya.toLocaleString('id-ID'));
             }
@@ -341,7 +335,6 @@ $(function() {
                 $(this).val('');
             }
 
-            // Validasi real-time
             const validasi = validasiInputSaldo($(this).val());
             if (!validasi.isValid && $(this).val().trim() !== '') {
                 $(this).css('border-color', '#dc3545');

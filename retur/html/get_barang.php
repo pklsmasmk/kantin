@@ -1,24 +1,19 @@
 <?php
-include '../Database/config.php';
+require_once '../Database/config.php';  // PASTIKAN path benar
 
-if (!isset($_GET['id'])) {
-    echo json_encode(["error" => "ID tidak ditemukan"]);
-    exit;
+header('Content-Type: application/json');
+
+try {
+    $conn = getDBConnection();
+    $sql = "SELECT id, nama, stok FROM stok_barang WHERE stok > 0 ORDER BY nama";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode($data);
+
+} catch (Exception $e) {
+    http_response_code(500);  // Tambahkan status code error
+    echo json_encode(['error' => $e->getMessage()]);
 }
-
-$id = (int)$_GET['id'];
-
-$stmt = $conn->prepare("SELECT * FROM db_stok WHERE id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($row = $result->fetch_assoc()) {
-    echo json_encode($row);
-} else {
-    echo json_encode(["error" => "Data tidak ditemukan"]);
-}
-
-$stmt->close();
-$conn->close();
 ?>
