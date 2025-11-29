@@ -30,12 +30,10 @@ function validateAmount($amount)
     return is_numeric($amount_clean) && $amount_clean > 0 ? (int) $amount_clean : false;
 }
 
-// FUNGSI BARU: Ambil data pengeluaran (hutang yang sudah dibayar cash)
 function get_pengeluaran_hari_ini($pdo)
 {
     $tanggal_hari_ini = date('Y-m-d');
     
-    // Ambil data dari riwayat_pembayaran_hutang yang dibayar hari ini
     $sql = "SELECT 
                 rph.id,
                 rph.hutang_id,
@@ -59,12 +57,10 @@ function get_pengeluaran_hari_ini($pdo)
     }
 }
 
-// FUNGSI BARU: Ambil data pengeluaran dari riwayat_transaksi (restock cash)
 function get_pengeluaran_restock_cash($pdo)
 {
     $tanggal_hari_ini = date('Y-m-d');
     
-    // Ambil data restock dengan metode cash dari riwayat_transaksi
     $sql = "SELECT 
                 id,
                 nama_barang,
@@ -131,24 +127,15 @@ function get_penjualan_terbaru($pdo)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// FUNGSI REVISI: Sinkronkan data penjualan DAN pengeluaran ke transaksi
 function sync_data_to_transaksi($pdo, &$transaksi)
 {
-    // Ambil data penjualan terbaru (hanya yang Lunas)
     $penjualan_terbaru = get_penjualan_terbaru($pdo);
-    
-    // Ambil data pengeluaran (pembayaran hutang cash)
     $pengeluaran_hutang = get_pengeluaran_hari_ini($pdo);
-    
-    // Ambil data pengeluaran restock cash
     $pengeluaran_restock = get_pengeluaran_restock_cash($pdo);
-    
-    // Filter transaksi yang bukan Penjualan Tunai dan bukan Pengeluaran (untuk mempertahankan data uang lain)
     $transaksi_lain = array_filter($transaksi, function($t) {
         return isset($t['tipe']) && $t['tipe'] !== 'Penjualan Tunai' && $t['tipe'] !== 'Pengeluaran';
     });
     
-    // Konversi penjualan menjadi format transaksi
     $transaksi_penjualan = [];
     foreach ($penjualan_terbaru as $penjualan) {
         $id_penjualan = isset($penjualan['id_penjualan']) ? $penjualan['id_penjualan'] : 
@@ -169,10 +156,8 @@ function sync_data_to_transaksi($pdo, &$transaksi)
         ];
     }
     
-    // Konversi pengeluaran hutang menjadi format transaksi
     $transaksi_pengeluaran = [];
     
-    // Data dari pembayaran hutang
     foreach ($pengeluaran_hutang as $pengeluaran) {
         $transaksi_pengeluaran[] = [
             'id' => 'pengeluaran_hutang_' . $pengeluaran['id'],
@@ -186,7 +171,6 @@ function sync_data_to_transaksi($pdo, &$transaksi)
         ];
     }
     
-    // Data dari restock cash
     foreach ($pengeluaran_restock as $restock) {
         $transaksi_pengeluaran[] = [
             'id' => 'pengeluaran_restock_' . $restock['id'],
@@ -200,7 +184,6 @@ function sync_data_to_transaksi($pdo, &$transaksi)
         ];
     }
     
-    // Gabungkan semua transaksi
     $transaksi = array_merge($transaksi_penjualan, $transaksi_pengeluaran, array_values($transaksi_lain));
     
     usort($transaksi, function($a, $b) {
@@ -254,7 +237,6 @@ function sync_rekap_to_database($pdo, $shift_data, $transaksi_data)
     ]);
 }
 
-// SINCRONISASI OTOMATIS: Ambil data penjualan DAN pengeluaran terbaru
 $transaksi = sync_data_to_transaksi($pdo, $transaksi);
 $_SESSION['transaksi'] = $transaksi;
 
@@ -289,7 +271,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Hitung total setelah sinkronisasi
 $total_penjualan_tunai = 0;
 $total_pengeluaran_utama = 0;
 $total_masuk_lain = 0;
@@ -317,7 +298,6 @@ $stmt = $pdo->prepare("SELECT * FROM rekap_shift WHERE shift_id = ?");
 $stmt->execute([$shift['id']]);
 $rekap_data = $stmt->fetch();
 
-// Ambil info untuk ditampilkan
 $penjualan_hari_ini = get_penjualan_terbaru($pdo);
 $pengeluaran_hari_ini = array_merge(get_pengeluaran_hari_ini($pdo), get_pengeluaran_restock_cash($pdo));
 
