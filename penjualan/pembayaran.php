@@ -35,8 +35,6 @@
               <label for="metodePembayaran" class="form-label fw-bold">Metode Pembayaran</label>
               <select id="metodePembayaran" class="form-select" data-next="keterangan">
                 <option value="Cash">Cash</option>
-                <option value="QRIS">QRIS</option>
-                <option value="Transfer">Transfer</option>
                 <option value="Piutang">Piutang</option>
               </select>
             </div>

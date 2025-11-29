@@ -2,10 +2,11 @@
 require_once '../Database/config.php';
 require_once '../Database/functions_piutang.php';
 
-function loadRecordWithPayments($id, $type) {
+function loadRecordWithPayments($id, $type)
+{
     $database = db_kantin();
     $db = $database->pdo;
-    
+
     try {
         // Load record data
         $query = "SELECT r.*, 
@@ -17,17 +18,17 @@ function loadRecordWithPayments($id, $type) {
         $stmt = $db->prepare($query);
         $stmt->execute([$id, $type]);
         $record = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$record) {
             return null;
         }
-        
+
         // Load payments history
         $query = "SELECT * FROM payments WHERE record_id = ? ORDER BY tanggal DESC, waktu DESC";
         $stmt = $db->prepare($query);
         $stmt->execute([$id]);
         $record['pembayaran'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         return $record;
     } catch (Exception $e) {
         error_log("Error loading record: " . $e->getMessage());
@@ -35,13 +36,14 @@ function loadRecordWithPayments($id, $type) {
     }
 }
 
-function savePayment($record_id, $paymentData) {
+function savePayment($record_id, $paymentData)
+{
     $database = db_kantin();
     $db = $database->pdo;
-    
+
     try {
         $db->beginTransaction();
-        
+
         // Insert payment
         $query = "INSERT INTO payments (record_id, jumlah, tanggal, waktu, metode, keterangan) 
                   VALUES (?, ?, ?, ?, ?, ?)";
@@ -54,7 +56,7 @@ function savePayment($record_id, $paymentData) {
             $paymentData['metode'],
             $paymentData['keterangan']
         ]);
-        
+
         // Check if record is fully paid
         $query = "SELECT r.amount, COALESCE(SUM(p.jumlah), 0) as total_dibayar
                   FROM records r 
@@ -64,13 +66,13 @@ function savePayment($record_id, $paymentData) {
         $stmt = $db->prepare($query);
         $stmt->execute([$record_id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($result && $result['total_dibayar'] >= $result['amount']) {
             $query = "UPDATE records SET status = 'lunas' WHERE id = ?";
             $stmt = $db->prepare($query);
             $stmt->execute([$record_id]);
         }
-        
+
         $db->commit();
         return true;
     } catch (Exception $e) {
@@ -83,7 +85,7 @@ function savePayment($record_id, $paymentData) {
 // Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    
+
     if ($action === 'bayar') {
         $id = $_POST['id'] ?? '';
         $jumlahBayar = (float) ($_POST['jumlah_bayar'] ?? 0);
@@ -95,13 +97,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($jumlahBayar <= 0) {
             $_SESSION['error'] = 'Jumlah bayar harus lebih dari 0!';
         } else {
-            if (savePayment($id, [
-                'jumlah' => $jumlahBayar,
-                'tanggal' => $tanggalBayar,
-                'waktu' => $waktuBayar,
-                'metode' => $metodeBayar,
-                'keterangan' => $keterangan
-            ])) {
+            if (
+                savePayment($id, [
+                    'jumlah' => $jumlahBayar,
+                    'tanggal' => $tanggalBayar,
+                    'waktu' => $waktuBayar,
+                    'metode' => $metodeBayar,
+                    'keterangan' => $keterangan
+                ])
+            ) {
                 $_SESSION['success'] = 'Pembayaran berhasil dicatat!';
             } else {
                 $_SESSION['error'] = 'Gagal menyimpan pembayaran!';
@@ -129,10 +133,13 @@ $defaultWaktu = date('H:i');
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pembayaran <?= ucfirst($record['type']) ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .header-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -141,6 +148,7 @@ $defaultWaktu = date('H:i');
             border-radius: 15px;
             margin-bottom: 2rem;
         }
+
         .live-clock {
             background: #f8f9fa;
             padding: 1rem;
@@ -149,33 +157,40 @@ $defaultWaktu = date('H:i');
             margin-bottom: 2rem;
             border: 2px solid #e9ecef;
         }
+
         .live-clock .date {
             font-size: 1.2rem;
             font-weight: 600;
             color: #495057;
         }
+
         .live-clock .time {
             font-size: 2.5rem;
             font-weight: 700;
             color: #dc3545;
             font-family: 'Courier New', monospace;
         }
+
         .live-clock .timezone {
             font-size: 0.9rem;
             color: #6c757d;
         }
-        .payment-section, .history-section {
+
+        .payment-section,
+        .history-section {
             background: white;
             padding: 2rem;
             border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
         }
+
         .total-amount {
             font-size: 2.5rem;
             font-weight: 700;
             text-align: center;
         }
+
         .btn-bayar {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -184,16 +199,19 @@ $defaultWaktu = date('H:i');
             font-size: 1.1rem;
             font-weight: 600;
         }
+
         .btn-bayar:hover {
             background: linear-gradient(135deg, #218838, #1e9e8a);
             color: white;
         }
+
         .time-form-group {
             background: #f8f9fa;
             padding: 1.5rem;
             border-radius: 10px;
             border: 1px solid #e9ecef;
         }
+
         .time-form-label {
             display: flex;
             align-items: center;
@@ -201,14 +219,17 @@ $defaultWaktu = date('H:i');
             margin-bottom: 1rem;
             color: #495057;
         }
+
         .datetime-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 1rem;
         }
+
         .time-input-container {
             position: relative;
         }
+
         .time-icon {
             position: absolute;
             right: 15px;
@@ -216,17 +237,20 @@ $defaultWaktu = date('H:i');
             transform: translateY(-50%);
             color: #6c757d;
         }
+
         .time-highlight {
             background: #e7f3ff;
             padding: 1rem;
             border-radius: 8px;
             border-left: 4px solid #007bff;
         }
+
         .timeline-item {
             position: relative;
             padding-left: 2rem;
             margin-bottom: 1.5rem;
         }
+
         .timeline-item::before {
             content: '';
             position: absolute;
@@ -237,10 +261,12 @@ $defaultWaktu = date('H:i');
             background: #007bff;
             border-radius: 3px;
         }
+
         .new-payment .card {
             border: 2px solid #28a745;
             background: #f8fff9;
         }
+
         .payment-time-badge {
             background: #007bff;
             color: white;
@@ -249,18 +275,21 @@ $defaultWaktu = date('H:i');
             font-size: 0.8rem;
             font-weight: 600;
         }
+
         .history-time {
             background: #e9ecef;
             padding: 0.2rem 0.5rem;
             border-radius: 5px;
             font-size: 0.8rem;
         }
+
         .badge-status {
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
         }
     </style>
 </head>
+
 <body>
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -295,12 +324,13 @@ $defaultWaktu = date('H:i');
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h3 class="mb-3"><?= htmlspecialchars($record['name']) ?></h3>
-                    
+
                     <div class="info-row mb-3">
                         <div class="row">
                             <div class="col-md-4">
                                 <strong>Status:</strong><br>
-                                <span class="badge <?= $record['status'] === 'lunas' ? 'bg-success' : 'bg-warning' ?> badge-status">
+                                <span
+                                    class="badge <?= $record['status'] === 'lunas' ? 'bg-success' : 'bg-warning' ?> badge-status">
                                     <i class="fas fa-<?= $record['status'] === 'lunas' ? 'check' : 'clock' ?> me-1"></i>
                                     <?= ucwords($record['status']) ?>
                                 </span>
@@ -315,7 +345,7 @@ $defaultWaktu = date('H:i');
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="info-row">
                         <div class="row">
                             <div class="col-md-4">
@@ -350,17 +380,16 @@ $defaultWaktu = date('H:i');
 
         <div class="payment-section">
             <h4 class="mb-4"><i class="fas fa-money-bill-wave me-2"></i>Bayar <?= ucfirst($record['type']) ?></h4>
-            
+
             <form method="POST" id="paymentForm">
                 <input type="hidden" name="action" value="bayar">
                 <input type="hidden" name="id" value="<?= $record['id'] ?>">
-                
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Jumlah Bayar (Rp)</label>
-                        <input type="number" name="jumlah_bayar" class="form-control" 
-                               min="1" max="<?= $sisaBayar ?>" value="<?= $sisaBayar ?>"
-                               placeholder="Masukkan jumlah pembayaran" required step="1000">
+                        <input type="number" name="jumlah_bayar" class="form-control" min="1" max="<?= $sisaBayar ?>"
+                            value="<?= $sisaBayar ?>" placeholder="Masukkan jumlah pembayaran" required>
                         <div class="form-text">Maksimal: <?= formatRupiah($sisaBayar) ?></div>
                     </div>
 
@@ -369,28 +398,29 @@ $defaultWaktu = date('H:i');
                             <div class="time-form-label">
                                 <i class="fas fa-clock text-primary me-2"></i>
                                 <span>Waktu Pembayaran</span>
-                                <button type="button" class="btn btn-sm btn-outline-primary ms-2" onclick="setCurrentTime()">
+                                <button type="button" class="btn btn-sm btn-outline-primary ms-2"
+                                    onclick="setCurrentTime()">
                                     <i class="fas fa-sync-alt me-1"></i> Gunakan Waktu Sekarang
                                 </button>
                             </div>
                             <div class="datetime-inputs">
                                 <div class="flex-grow-1">
                                     <label class="form-label">Tanggal Pembayaran</label>
-                                    <input type="date" name="tanggal_bayar" class="form-control" 
-                                           value="<?= $defaultTanggal ?>" required>
+                                    <input type="date" name="tanggal_bayar" class="form-control"
+                                        value="<?= $defaultTanggal ?>" required>
                                 </div>
                                 <div class="flex-grow-1">
                                     <label class="form-label">Waktu Pembayaran</label>
                                     <div class="time-input-container">
-                                        <input type="time" name="waktu_bayar" class="form-control time-input" 
-                                               value="<?= $defaultWaktu ?>" required>
+                                        <input type="time" name="waktu_bayar" class="form-control time-input"
+                                            value="<?= $defaultWaktu ?>" required>
                                         <i class="fas fa-clock time-icon"></i>
                                     </div>
                                 </div>
                                 <div class="flex-grow-1">
                                     <label class="form-label">Zona Waktu</label>
-                                    <input type="text" class="form-control" value="WIB (UTC+7)" readonly 
-                                           style="background: #e9ecef;">
+                                    <input type="text" class="form-control" value="WIB (UTC+7)" readonly
+                                        style="background: #e9ecef;">
                                 </div>
                             </div>
                             <div class="time-highlight mt-3">
@@ -403,7 +433,7 @@ $defaultWaktu = date('H:i');
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Metode Pembayaran</label>
                         <select name="metode_bayar" class="form-select" required>
@@ -417,14 +447,14 @@ $defaultWaktu = date('H:i');
                             <option value="Kredit">Kartu Kredit</option>
                         </select>
                     </div>
-                    
+
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold">Keterangan</label>
-                        <input type="text" name="keterangan" class="form-control" 
-                               placeholder="Contoh: Masukkan ke kas, Bayar cicilan ke-1, dll.">
+                        <input type="text" name="keterangan" class="form-control"
+                            placeholder="Contoh: Masukkan ke kas, Bayar cicilan ke-1, dll.">
                     </div>
                 </div>
-                
+
                 <div class="d-grid">
                     <button type="submit" class="btn btn-bayar">
                         <i class="fas fa-save me-2"></i> SIMPAN PEMBAYARAN
@@ -435,7 +465,7 @@ $defaultWaktu = date('H:i');
 
         <div class="history-section">
             <h4 class="mb-4"><i class="fas fa-history me-2"></i>Riwayat Pembayaran</h4>
-            
+
             <?php if (empty($record['pembayaran'])): ?>
                 <div class="text-center py-4 text-muted">
                     <i class="fas fa-receipt fa-3x mb-3"></i>
@@ -456,7 +486,8 @@ $defaultWaktu = date('H:i');
                                         </div>
                                         <div class="text-end">
                                             <div class="payment-datetime">
-                                                <span class="payment-date fw-semibold"><?= formatTanggal($bayar['tanggal']) ?></span>
+                                                <span
+                                                    class="payment-date fw-semibold"><?= formatTanggal($bayar['tanggal']) ?></span>
                                                 <span class="payment-time badge bg-secondary ms-2">
                                                     <i class="fas fa-clock me-1"></i>
                                                     <?= formatWaktu($bayar['waktu']) ?>
@@ -465,7 +496,7 @@ $defaultWaktu = date('H:i');
                                             <small class="text-muted"><?= formatTanggalWaktu($bayar['timestamp']) ?></small>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="row align-items-center">
                                         <div class="col-md-4">
                                             <h5 class="text-success mb-0">
@@ -480,7 +511,8 @@ $defaultWaktu = date('H:i');
                                             </span>
                                         </div>
                                         <div class="col-md-4 text-md-end">
-                                            <small class="text-muted"><?= htmlspecialchars($bayar['keterangan'] ?: '-') ?></small>
+                                            <small
+                                                class="text-muted"><?= htmlspecialchars($bayar['keterangan'] ?: '-') ?></small>
                                         </div>
                                     </div>
                                 </div>
@@ -488,7 +520,7 @@ $defaultWaktu = date('H:i');
                         </div>
                     <?php endforeach; ?>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-hover table-striped">
                         <thead class="table-dark">
@@ -534,16 +566,16 @@ $defaultWaktu = date('H:i');
     <script>
         function updateClock() {
             const now = new Date();
-            const optionsDate = { 
-                day: '2-digit', 
-                month: '2-digit', 
+            const optionsDate = {
+                day: '2-digit',
+                month: '2-digit',
                 year: 'numeric',
                 timeZone: 'Asia/Jakarta'
             };
             const date = now.toLocaleDateString('id-ID', optionsDate);
-            const time = now.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
+            const time = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
                 second: '2-digit',
                 hour12: false,
                 timeZone: 'Asia/Jakarta'
@@ -570,7 +602,7 @@ $defaultWaktu = date('H:i');
             if (!dateInput.hasAttribute('data-manual') && dateInput.value === '<?= $defaultTanggal ?>') {
                 dateInput.value = currentDate;
             }
-            
+
             if (!timeInput.hasAttribute('data-manual') && timeInput.value === '<?= $defaultWaktu ?>') {
                 timeInput.value = currentTime;
             }
@@ -582,7 +614,7 @@ $defaultWaktu = date('H:i');
             const dateInput = document.querySelector('input[name="tanggal_bayar"]');
             const timeInput = document.querySelector('input[name="waktu_bayar"]');
             const highlightElement = document.getElementById('displayTime');
-            
+
             if (dateInput.value && timeInput.value) {
                 const [year, month, day] = dateInput.value.split('-');
                 const formattedDate = `${day}/${month}/${year}`;
@@ -604,15 +636,15 @@ $defaultWaktu = date('H:i');
 
             const dateInput = document.querySelector('input[name="tanggal_bayar"]');
             const timeInput = document.querySelector('input[name="waktu_bayar"]');
-            
+
             dateInput.value = currentDate;
             timeInput.value = currentTime;
 
             dateInput.setAttribute('data-manual', 'true');
             timeInput.setAttribute('data-manual', 'true');
-            
+
             updateTimeHighlight();
-            
+
             // Show confirmation
             const toast = document.createElement('div');
             toast.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
@@ -623,17 +655,17 @@ $defaultWaktu = date('H:i');
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             document.body.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.remove();
             }, 3000);
         }
 
         // Validasi jumlah bayar
-        document.querySelector('input[name="jumlah_bayar"]').addEventListener('input', function() {
+        document.querySelector('input[name="jumlah_bayar"]').addEventListener('input', function () {
             const maxAmount = <?= $sisaBayar ?>;
             const inputAmount = parseFloat(this.value) || 0;
-            
+
             if (inputAmount > maxAmount) {
                 this.value = maxAmount;
                 showAlert('Jumlah pembayaran tidak boleh melebihi sisa bayar: <?= formatRupiah($sisaBayar) ?>', 'warning');
@@ -641,18 +673,18 @@ $defaultWaktu = date('H:i');
         });
 
         // Update highlight ketika input berubah
-        document.querySelector('input[name="tanggal_bayar"]').addEventListener('change', function() {
+        document.querySelector('input[name="tanggal_bayar"]').addEventListener('change', function () {
             this.setAttribute('data-manual', 'true');
             updateTimeHighlight();
         });
 
-        document.querySelector('input[name="waktu_bayar"]').addEventListener('change', function() {
+        document.querySelector('input[name="waktu_bayar"]').addEventListener('change', function () {
             this.setAttribute('data-manual', 'true');
             updateTimeHighlight();
         });
 
         // Validasi form
-        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        document.getElementById('paymentForm').addEventListener('submit', function (e) {
             const jumlahBayar = parseFloat(document.querySelector('input[name="jumlah_bayar"]').value);
             if (jumlahBayar <= 0) {
                 e.preventDefault();
@@ -662,9 +694,9 @@ $defaultWaktu = date('H:i');
         });
 
         function showAlert(message, type = 'info') {
-            const alertClass = type === 'error' ? 'alert-danger' : 
-                             type === 'warning' ? 'alert-warning' : 'alert-info';
-            
+            const alertClass = type === 'error' ? 'alert-danger' :
+                type === 'warning' ? 'alert-warning' : 'alert-info';
+
             const alert = document.createElement('div');
             alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
             alert.style.zIndex = '1050';
@@ -674,18 +706,19 @@ $defaultWaktu = date('H:i');
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             document.body.appendChild(alert);
-            
+
             setTimeout(() => {
                 alert.remove();
             }, 5000);
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             updateClock();
             setInterval(updateClock, 1000);
             updateTimeHighlight();
         });
     </script>
 </body>
+
 </html>

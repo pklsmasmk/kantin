@@ -86,6 +86,9 @@ switch ($_GET["q"] ?? "") {
   case 'multi_restock':
     include("../stok_barang/multi_restock.php");
     break;
+  case 'indexretur':
+    include("../retur/html/index_retur.php");
+    break;
   case 'retur__prosesretur':
     include("../retur/html/proses_retur.php");
     break;
@@ -95,10 +98,9 @@ switch ($_GET["q"] ?? "") {
   case 'retur__tampilriwayat':
     include("../retur/html/tampil_riwayat.php");
     break;
-  case 'retur__updatestok':
-    include("../pembelian_barang/update_stok.php");
+  case 'retur__getbarang':
+    include("../retur/html/get_barang.php");
     break;
-
   default:
     include("../konten/ori.php");
     break;

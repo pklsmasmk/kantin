@@ -14,8 +14,8 @@ function getDashboardStats()
     ];
 
     try {
-        // Total Piutang Belum Lunas
-        $query = "SELECT COALESCE(SUM(r.amount - COALESCE(SUM(p.jumlah), 0)), 0) as total
+        // Total Piutang Belum Lunas - PERBAIKAN QUERY
+        $query = "SELECT r.id, r.amount, COALESCE(SUM(p.jumlah), 0) as total_dibayar
                   FROM records r 
                   LEFT JOIN payments p ON r.id = p.record_id 
                   WHERE r.type = 'piutang' AND r.status = 'belum lunas'
@@ -25,7 +25,10 @@ function getDashboardStats()
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($results as $row) {
-            $stats['total_piutang'] += $row['total'];
+            $sisa_bayar = $row['amount'] - $row['total_dibayar'];
+            if ($sisa_bayar > 0) {
+                $stats['total_piutang'] += $sisa_bayar;
+            }
         }
 
         // Count records piutang

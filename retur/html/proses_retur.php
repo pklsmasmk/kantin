@@ -1,5 +1,5 @@
 <?php
-require_once '..Database/config.php';
+require_once '../Database/config.php';  // PASTIKAN path benar
 
 header('Content-Type: application/json');
 
@@ -52,6 +52,7 @@ try {
     echo json_encode(['status' => 'success', 'message' => 'Retur berhasil diproses']);
 
 } catch (Exception $e) {
+    http_response_code(500);  // Tambahkan status code error
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
 ?>

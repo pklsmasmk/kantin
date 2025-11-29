@@ -1,10 +1,12 @@
 <?php
 if (!defined('__DBCONFIG__')) {
     define('__DBCONFIG__', true);
+    
     $host = '192.168.109.132';
     $username = 'smk';
     $password = 'smk123';
     $database = 'db_kantin';
+    
     $pdo = null;
     
     try {

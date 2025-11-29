@@ -12,10 +12,6 @@ function db_kantin()
     ];
 }
 
-// Di file lain, ganti cara pemanggilannya:
-// $database = db_kantin();
-// $db = $database->pdo;  // Ganti getDBConnection() jadi pdo
-
 function formatRupiah($angka)
 {
     return 'Rp ' . number_format($angka, 0, ',', '.');

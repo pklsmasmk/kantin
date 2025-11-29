@@ -1,3 +1,4 @@
+// bayar.js - VERSI DIPERBAIKI
 function updateClock() {
     const now = new Date();
     const optionsDate = { 
@@ -15,14 +16,20 @@ function updateClock() {
         timeZone: 'Asia/Jakarta'
     });
 
-    document.getElementById('currentDate').textContent = date;
-    document.getElementById('currentTime').textContent = time;
+    const currentDateEl = document.getElementById('currentDate');
+    const currentTimeEl = document.getElementById('currentTime');
+    
+    if (currentDateEl) currentDateEl.textContent = date;
+    if (currentTimeEl) currentTimeEl.textContent = time;
+    
     updateFormTime(now);
 }
 
 function updateFormTime(now) {
     const dateInput = document.querySelector('input[name="tanggal_bayar"]');
     const timeInput = document.querySelector('input[name="waktu_bayar"]');
+
+    if (!dateInput || !timeInput) return;
 
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -33,11 +40,12 @@ function updateFormTime(now) {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const currentTime = `${hours}:${minutes}`;
 
-    if (!dateInput.hasAttribute('data-manual') && dateInput.value === '<?= $defaultTanggal ?>') {
+    // Only update if not manually set
+    if (!dateInput.hasAttribute('data-manual')) {
         dateInput.value = currentDate;
     }
     
-    if (!timeInput.hasAttribute('data-manual') && timeInput.value === '<?= $defaultWaktu ?>') {
+    if (!timeInput.hasAttribute('data-manual')) {
         timeInput.value = currentTime;
     }
 
@@ -49,7 +57,7 @@ function updateTimeHighlight() {
     const timeInput = document.querySelector('input[name="waktu_bayar"]');
     const highlightElement = document.getElementById('displayTime');
     
-    if (dateInput.value && timeInput.value) {
+    if (dateInput && timeInput && highlightElement && dateInput.value && timeInput.value) {
         const [year, month, day] = dateInput.value.split('-');
         const formattedDate = `${day}/${month}/${year}`;
         highlightElement.textContent = `${formattedDate} | ${timeInput.value}`;
@@ -71,47 +79,91 @@ function setCurrentTime() {
     const dateInput = document.querySelector('input[name="tanggal_bayar"]');
     const timeInput = document.querySelector('input[name="waktu_bayar"]');
     
-    dateInput.value = currentDate;
-    timeInput.value = currentTime;
+    if (dateInput && timeInput) {
+        dateInput.value = currentDate;
+        timeInput.value = currentTime;
 
-    dateInput.setAttribute('data-manual', 'true');
-    timeInput.setAttribute('data-manual', 'true');
+        dateInput.setAttribute('data-manual', 'true');
+        timeInput.setAttribute('data-manual', 'true');
+        
+        updateTimeHighlight();
+        
+        // Show confirmation
+        showAlert('Waktu berhasil diatur ke waktu sekarang', 'success');
+    }
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                     type === 'warning' ? 'alert-warning' : 
+                     type === 'success' ? 'alert-success' : 'alert-info';
     
-    updateTimeHighlight();
+    const alert = document.createElement('div');
+    alert.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alert.style.zIndex = '1050';
+    alert.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 
+                         type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
 }
 
 // Event Listeners
-document.querySelector('input[name="jumlah_bayar"]').addEventListener('input', function() {
-    const maxAmount =  $sisaBayar;
-    const inputAmount = parseFloat(this.value) || 0;
-    
-    if (inputAmount > maxAmount) {
-        this.value = maxAmount;
-        alert('Jumlah pembayaran tidak boleh melebihi sisa bayar: <?= formatRupiah($sisaBayar) ?>');
-    }
-});
-
-document.querySelector('input[name="tanggal_bayar"]').addEventListener('change', function() {
-    this.setAttribute('data-manual', 'true');
-    updateTimeHighlight();
-});
-
-document.querySelector('input[name="waktu_bayar"]').addEventListener('change', function() {
-    this.setAttribute('data-manual', 'true');
-    updateTimeHighlight();
-});
-
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Validasi jumlah bayar
+    const jumlahBayarInput = document.querySelector('input[name="jumlah_bayar"]');
+    if (jumlahBayarInput) {
+        jumlahBayarInput.addEventListener('input', function() {
+            // Gunakan max attribute dari HTML untuk validasi
+            const maxAmount = parseFloat(this.max) || 0;
+            const inputAmount = parseFloat(this.value) || 0;
+            
+            if (inputAmount > maxAmount) {
+                this.value = maxAmount;
+                showAlert('Jumlah pembayaran tidak boleh melebihi sisa bayar', 'warning');
+            }
+        });
+    }
+
+    // Update highlight ketika input berubah
+    const dateInput = document.querySelector('input[name="tanggal_bayar"]');
+    const timeInput = document.querySelector('input[name="waktu_bayar"]');
+    
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            this.setAttribute('data-manual', 'true');
+            updateTimeHighlight();
+        });
+    }
+
+    if (timeInput) {
+        timeInput.addEventListener('change', function() {
+            this.setAttribute('data-manual', 'true');
+            updateTimeHighlight();
+        });
+    }
+
+    // Validasi form
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            const jumlahBayar = parseFloat(document.querySelector('input[name="jumlah_bayar"]').value);
+            if (jumlahBayar <= 0) {
+                e.preventDefault();
+                showAlert('Jumlah bayar harus lebih dari 0!', 'error');
+                return false;
+            }
+        });
+    }
+
+    // Initialize clock
     updateClock();
     setInterval(updateClock, 1000);
-    updateTimeHighlight();
-    
-    // Set default waktu bayar to current time
-    const now = new Date();
-    const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
-                     now.getMinutes().toString().padStart(2, '0');
-    
-    document.querySelector('input[name="waktu_bayar"]').value = timeString;
     updateTimeHighlight();
 });

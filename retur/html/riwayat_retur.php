@@ -1,5 +1,5 @@
 <?php
-require_once '..Database/config.php';
+require_once '../Database/config.php';
 
 header('Content-Type: application/json');
 
@@ -9,32 +9,36 @@ try {
     $sql = "SELECT r.*, sb.nama as nama_barang 
             FROM retur_barang r 
             JOIN stok_barang sb ON r.barang_id = sb.id 
-            ORDER BY r.tanggal DESC";
+            ORDER BY r.tanggal DESC 
+            LIMIT 10";
     
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     
-    $data = [];
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if (count($rows) > 0) {
-        foreach ($rows as $row) {
-            $alasan = $row['alasan'] == 'Lainnya' ? $row['alasan_lainnya'] : $row['alasan'];
-            $data[] = [
+    if (count($data) > 0) {
+        $result = [];
+        foreach ($data as $row) {
+            // Gunakan alasan_lainnya jika alasan adalah 'Lainnya'
+            $alasan_final = ($row['alasan'] == 'Lainnya' && !empty($row['alasan_lainnya'])) 
+                ? $row['alasan_lainnya'] 
+                : $row['alasan'];
+                
+            $result[] = [
                 'nama_barang' => $row['nama_barang'],
                 'jumlah' => $row['jumlah'],
-                'alasan' => $alasan,
-                'keterangan' => $row['keterangan'],
+                'alasan' => $alasan_final,
                 'tanggal' => $row['tanggal']
             ];
         }
+        echo json_encode($result);
     } else {
-        $data = ["message" => "Belum ada riwayat retur"];
+        echo json_encode(["message" => "Belum ada riwayat retur"]);
     }
 
-    echo json_encode($data);
-
 } catch (Exception $e) {
+    http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
 ?>
