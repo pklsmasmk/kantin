@@ -196,7 +196,6 @@ if (isset($_POST['login'])) {
     }
   </style>
 </head>
-<<<<<<< HEAD
 <body>
 
 <div class="login-container">
