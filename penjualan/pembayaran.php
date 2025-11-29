@@ -15,27 +15,35 @@
         <div class="text-center mb-3">
           <div class="fs-5">Uang Diterima:</div>
           <div class="display-amount" id="inputBayar">0</div>
+          <div class="change-display" id="changeDisplay" style="display: none;"></div>
+        </div>
+
+        <div class="mb-4" id="uangInputSection">  
+          <label for="inputUangManual" class="form-label fw-bold">Input Jumlah Uang</label>
+          <input type="text" id="inputUangManual" class="form-control form-control-lg"
+            placeholder="Masukkan jumlah uang" data-next="namaPelanggan">
         </div>
 
         <form id="formPembayaran">
           <div class="row g-3">
             <div class="col-md-6">
-              <label for="namaPelanggan">Nama Pelanggan</label>
-              <input type="text" id="namaPelanggan" class="form-control" placeholder="Masukkan nama">
+              <label for="namaPelanggan" class="form-label fw-bold">Nama Pelanggan</label>
+              <input type="text" id="namaPelanggan" class="form-control" placeholder="Masukkan nama"
+                data-next="metodePembayaran">
             </div>
-            <div class="col-md-4">
-              <label for="metodePembayaran">Metode Pembayaran</label>
-              <select id="metodePembayaran" class="form-select">
+            <div class="col-md-6">
+              <label for="metodePembayaran" class="form-label fw-bold">Metode Pembayaran</label>
+              <select id="metodePembayaran" class="form-select" data-next="keterangan">
                 <option value="Cash">Cash</option>
                 <option value="QRIS">QRIS</option>
                 <option value="Transfer">Transfer</option>
                 <option value="Piutang">Piutang</option>
               </select>
             </div>
-            <div class="col-md-12">
-              <label for="keterangan">Keterangan</label>
-              <textarea id="keterangan" class="form-control" rows="2"
-                placeholder="Tambahkan catatan (opsional)"></textarea>
+            <div class="col-12">
+              <label for="keterangan" class="form-label fw-bold">Keterangan</label>
+              <textarea id="keterangan" class="form-control" rows="2" placeholder="Tambahkan catatan (opsional)"
+                data-next="confirmBtn"></textarea>
             </div>
           </div>
 
@@ -79,7 +87,7 @@
         <button class="btn btn-success w-100 mt-3" id="confirmBtn">Konfirmasi Pembayaran</button>
       </div>
     </div>
-    
+
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -180,5 +188,3 @@
 
   </div>
 </div>
-
-<!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->

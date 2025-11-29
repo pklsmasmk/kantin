@@ -1,16 +1,65 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const saldoInput = document.getElementById("saldo_awal");
-    const shiftForm = document.querySelector(".shift-form");
-    const cashdrawerSelect = document.getElementById("cashdrawer");
-    const refreshBtn = document.getElementById("refreshCashdrawer");
-    const confirmationModal = document.getElementById("confirmationModal");
-    const confirmedForm = document.getElementById("confirmedForm");
-    const cancelBtn = document.getElementById("cancelBtn");
-    const confirmBtn = document.getElementById("confirmBtn");
-    const submitShiftBtn = document.getElementById("submitShiftBtn");
+$(function() {
+    const saldoInput = $("#saldo_awal");
+    const shiftForm = $(".shift-form");
+    const cashdrawerSelect = $("#cashdrawer");
+    const refreshBtn = $("#refreshCashdrawer");
+    const confirmationModal = $("#confirmationModal");
+    const confirmedForm = $("#confirmedForm");
+    const cancelBtn = $("#cancelBtn");
+    const confirmBtn = $("#confirmBtn");
+    const submitShiftBtn = $("#submitShiftBtn");
     
     let counter = 0;
     let isSubmitting = false;
+    let saldoAkhirSebelumnya = 0;
+
+    function getSaldoAkhirSebelumnya() {
+        const elementsToCheck = [
+            '.saldo-rekomendasi',
+            '.info',
+            '#lastData',
+            '.compact-card:first .saldo-akhir',
+            '.history-list .compact-card:first .saldo-akhir'
+        ];
+
+        for (const selector of elementsToCheck) {
+            const element = $(selector);
+            if (element.length) {
+                const text = element.text();
+                const patterns = [
+                    /Saldo akhir:\s*Rp\s*([\d.,]+)/i,
+                    /akhir[^:]*:\s*Rp\s*([\d.,]+)/i,
+                    /Rp\s*([\d.,]+)/
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = text.match(pattern);
+                    if (match) {
+                        const saldo = parseRupiah(match[0]);
+                        if (saldo > 0) {
+                            console.log('Saldo akhir sebelumnya ditemukan:', saldo, 'dari:', selector);
+                            return saldo;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (submitShiftBtn.length) {
+            const text = submitShiftBtn.text();
+            const match = text.match(/Rp\s*([\d.,]+)/);
+            if (match) {
+                const saldo = parseRupiah(match[0]);
+                if (saldo > 0) {
+                    console.log('Saldo akhir sebelumnya ditemukan dari tombol:', saldo);
+                    return saldo;
+                }
+            }
+        }
+
+        console.log('Tidak ditemukan saldo akhir sebelumnya');
+        return 0;
+    }
 
     function formatRupiah(value) {
         if (!value && value !== 0) return "Rp 0";
@@ -26,45 +75,56 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function getSaldoTersedia() {
-        const saldoTersediaElement = document.querySelector('.saldo-tersedia');
-        if (saldoTersediaElement) {
-            const text = saldoTersediaElement.textContent || '';
+        const saldoTersediaElement = $('.saldo-tersedia');
+        if (saldoTersediaElement.length) {
+            const text = saldoTersediaElement.text() || '';
             const match = text.match(/Rp\s*([\d.,]+)/);
             if (match) {
                 return parseRupiah(match[0]);
             }
         }
         
-        const saldoAkhirElement = document.querySelector('.saldo-card:nth-child(3) .saldo-value');
-        if (saldoAkhirElement) {
-            return parseRupiah(saldoAkhirElement.textContent);
+        const saldoElements = [
+            $('.saldo-value'),
+            $('.saldo-akhir'),
+            $('[class*="saldo"]')
+        ];
+        
+        for (const element of saldoElements) {
+            if (element.length) {
+                const text = element.text();
+                const match = text.match(/Rp\s*([\d.,]+)/);
+                if (match) {
+                    return parseRupiah(match[0]);
+                }
+            }
         }
         
         return 0;
     }
 
     function updateSaldoTersedia() {
-        const jumlahSetoran = document.getElementById('jumlah_setoran');
+        const jumlahSetoran = $('#jumlah_setoran');
         
-        if (!jumlahSetoran) return;
+        if (!jumlahSetoran.length) return;
         
-        jumlahSetoran.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/[^\d]/g, '');
+        jumlahSetoran.on('input', function(e) {
+            let value = $(this).val().replace(/[^\d]/g, '');
             if (value) {
                 value = parseInt(value).toLocaleString('id-ID');
-                e.target.value = value;
+                $(this).val(value);
             } else {
-                e.target.value = '';
+                $(this).val('');
             }
 
             const jumlahNumeric = parseRupiah(value);
             const saldoTersedia = getSaldoTersedia();
             
             if (jumlahNumeric > saldoTersedia) {
-                this.style.borderColor = '#dc3545';
+                $(this).css('border-color', '#dc3545');
                 tampilkanError(`Jumlah setoran melebihi saldo tersedia. Saldo tersedia: ${formatRupiah(saldoTersedia)}`);
             } else {
-                this.style.borderColor = '';
+                $(this).css('border-color', '');
                 hapusAlertYangAda();
             }
         });
@@ -94,6 +154,14 @@ document.addEventListener("DOMContentLoaded", function () {
             };
         }
         
+        const isShiftPertama = $('.info').text().includes('SHIFT PERTAMA');
+        if (!isShiftPertama && saldoAkhirSebelumnya > 0 && numericValue < saldoAkhirSebelumnya) {
+            return {
+                isValid: false,
+                message: `Saldo awal tidak boleh kurang dari saldo akhir shift sebelumnya (${formatRupiah(saldoAkhirSebelumnya)}).`
+            };
+        }
+        
         return {
             isValid: true,
             numericValue: numericValue
@@ -101,79 +169,54 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function validasiFormShift() {
-        const cashdrawerValue = cashdrawerSelect ? cashdrawerSelect.value : '';
-        const saldoAwalValue = saldoInput ? saldoInput.value : '';
+        const isShiftPertama = $('.info').text().includes('SHIFT PERTAMA');
+        const cashdrawerValue = isShiftPertama && cashdrawerSelect.length ? cashdrawerSelect.val() : 'Cashdrawer-Otomatis';
+        const saldoAwalValue = saldoInput.length ? saldoInput.val() : '';
 
-        if (!cashdrawerValue) {
+        if (isShiftPertama && !cashdrawerValue) {
             tampilkanError("Pilih cashdrawer terlebih dahulu.");
-            if (cashdrawerSelect) cashdrawerSelect.focus();
+            if (cashdrawerSelect.length) cashdrawerSelect.trigger('focus');
             return null;
         }
 
         const validasiSaldo = validasiInputSaldo(saldoAwalValue);
         if (!validasiSaldo.isValid) {
             tampilkanError(validasiSaldo.message);
-            if (saldoInput) saldoInput.focus();
+            if (saldoInput.length) saldoInput.trigger('focus');
             return null;
         }
 
         return {
             cashdrawer: cashdrawerValue,
             saldoAwal: validasiSaldo.numericValue,
-            saldoWarisan: getSaldoWarisan()
+            isShiftPertama: isShiftPertama
         };
-    }
-
-    function getSaldoWarisan() {
-        const elemenWarisan = [
-            document.querySelector('.saldo-warisan-info'),
-            document.querySelector('.warisan-notice'),
-            document.querySelector('[class*="warisan"]')
-        ].filter(el => el !== null);
-
-        for (const element of elemenWarisan) {
-            const text = element.textContent || element.innerText;
-            const match = text.match(/Rp\s*([\d.,]+)/);
-            if (match) {
-                return parseRupiah(match[0]);
-            }
-        }
-
-        if (submitShiftBtn) {
-            const teksTombol = submitShiftBtn.textContent || submitShiftBtn.innerText;
-            const match = teksTombol.match(/Rp\s*([\d.,]+)/);
-            if (match) {
-                return parseRupiah(match[0]);
-            }
-        }
-
-        return 0;
     }
 
     function tampilkanError(pesan) {
         hapusAlertYangAda();
         
-        const alertError = document.createElement('div');
-        alertError.className = 'alert error';
-        alertError.setAttribute('role', 'alert');
-        alertError.textContent = pesan;
+        const alertError = $('<div>')
+            .addClass('alert error')
+            .attr('role', 'alert')
+            .text(pesan);
         
-        const infoUser = document.querySelector('.user-info');
-        if (infoUser && infoUser.parentNode) {
-            infoUser.parentNode.insertBefore(alertError, infoUser.nextSibling);
+        const infoUser = $('.user-info');
+        if (infoUser.length && infoUser.parent().length) {
+            infoUser.after(alertError);
         } else {
-            const main = document.querySelector('main');
-            if (main) {
-                main.insertBefore(alertError, main.firstChild);
+            const main = $('main');
+            if (main.length) {
+                main.prepend(alertError);
             }
         }
         
         setTimeout(() => {
-            if (alertError.parentNode) {
-                alertError.style.opacity = '0';
+            if (alertError.parent().length) {
+                alertError.css('opacity', '0');
                 setTimeout(() => {
-                    if (alertError.parentNode) {
-                        alertError.parentNode.removeChild(alertError);
+                    if (alertError.parent().length) {
+                        alertError.remove();
                     }
                 }, 300);
             }
@@ -183,22 +226,22 @@ document.addEventListener("DOMContentLoaded", function () {
     function tampilkanSukses(pesan) {
         hapusAlertYangAda();
         
-        const alertSukses = document.createElement('div');
-        alertSukses.className = 'alert success';
-        alertSukses.setAttribute('role', 'status');
-        alertSukses.textContent = pesan;
+        const alertSukses = $('<div>')
+            .addClass('alert success')
+            .attr('role', 'status')
+            .text(pesan);
         
-        const infoUser = document.querySelector('.user-info');
-        if (infoUser && infoUser.parentNode) {
-            infoUser.parentNode.insertBefore(alertSukses, infoUser.nextSibling);
+        const infoUser = $('.user-info');
+        if (infoUser.length && infoUser.parent().length) {
+            infoUser.after(alertSukses);
         }
         
         setTimeout(() => {
-            if (alertSukses.parentNode) {
-                alertSukses.style.opacity = '0';
+            if (alertSukses.parent().length) {
+                alertSukses.css('opacity', '0');
                 setTimeout(() => {
-                    if (alertSukses.parentNode) {
-                        alertSukses.parentNode.removeChild(alertSukses);
+                    if (alertSukses.parent().length) {
+                        alertSukses.remove();
                     }
                 }, 300);
             }
@@ -206,114 +249,147 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function hapusAlertYangAda() {
-        const alertYangAda = document.querySelectorAll('.alert');
-        alertYangAda.forEach(alert => {
-            if (alert.parentNode) {
-                alert.parentNode.removeChild(alert);
-            }
-        });
+        $('.alert').remove();
     }
 
     function tampilkanModalKonfirmasi(dataForm) {
-        if (!confirmationModal) return;
+        if (!confirmationModal.length) return;
         
-        const modalCashdrawer = document.getElementById('modalCashdrawer');
-        const modalSaldoAwal = document.getElementById('modalSaldoAwal');
-        const modalSaldoWarisan = document.getElementById('modalSaldoWarisan');
-        const modalTotalSaldo = document.getElementById('modalTotalSaldo');
+        const modalCashdrawer = $('#modalCashdrawer');
+        const modalSaldoAwal = $('#modalSaldoAwal');
         
-        if (modalCashdrawer) modalCashdrawer.textContent = dataForm.cashdrawer;
-        if (modalSaldoAwal) modalSaldoAwal.textContent = formatRupiah(dataForm.saldoAwal);
+        if (modalCashdrawer.length) {
+            modalCashdrawer.text(dataForm.cashdrawer);
+        }
         
-        const saldoWarisan = dataForm.saldoWarisan || 0;
-        if (modalSaldoWarisan) modalSaldoWarisan.textContent = formatRupiah(saldoWarisan);
+        if (modalSaldoAwal.length) {
+            modalSaldoAwal.text(formatRupiah(dataForm.saldoAwal));
+        }
         
-        const totalSaldo = dataForm.saldoAwal + saldoWarisan;
-        if (modalTotalSaldo) modalTotalSaldo.textContent = formatRupiah(totalSaldo);
+        const modalBody = $('.body-modal-konfirmasi');
+        if (modalBody.length) {
+            if (dataForm.isShiftPertama) {
+                modalBody.find('.item-detail:contains("Sumber Saldo")').remove();
+            } else {
+                let saldoSebelumnyaElement = modalBody.find('.item-detail:contains("Sumber Saldo")');
+                if (!saldoSebelumnyaElement.length) {
+                    saldoSebelumnyaElement = $(`
+                        <div class="item-detail">
+                            <span class="label-detail">Sumber Saldo:</span>
+                            <span class="nilai-detail">${formatRupiah(saldoAkhirSebelumnya)}</span>
+                        </div>
+                    `);
+                    modalBody.find('.detail-konfirmasi').append(saldoSebelumnyaElement);
+                } else {
+                    saldoSebelumnyaElement.find('.nilai-detail').text(formatRupiah(saldoAkhirSebelumnya));
+                }
+            }
+        }
         
-        const confirmedCashdrawer = document.getElementById('confirmedCashdrawer');
-        const confirmedSaldoAwal = document.getElementById('confirmedSaldoAwal');
+        const confirmedCashdrawer = $('#confirmedCashdrawer');
+        const confirmedSaldoAwal = $('#confirmedSaldoAwal');
         
-        if (confirmedCashdrawer) confirmedCashdrawer.value = dataForm.cashdrawer;
-        if (confirmedSaldoAwal) confirmedSaldoAwal.value = dataForm.saldoAwal;
+        if (confirmedCashdrawer.length) confirmedCashdrawer.val(dataForm.cashdrawer);
+        if (confirmedSaldoAwal.length) confirmedSaldoAwal.val(dataForm.saldoAwal);
         
-        confirmationModal.classList.add('aktif');
-        document.body.style.overflow = 'hidden';
+        confirmationModal.addClass('aktif');
+        $('body').css('overflow', 'hidden');
         
         setTimeout(() => {
-            if (cancelBtn) cancelBtn.focus();
+            if (cancelBtn.length) cancelBtn.trigger('focus');
         }, 100);
     }
 
     function sembunyikanModalKonfirmasi() {
-        if (!confirmationModal) return;
+        if (!confirmationModal.length) return;
         
-        confirmationModal.classList.remove('aktif');
-        document.body.style.overflow = '';
+        confirmationModal.removeClass('aktif');
+        $('body').css('overflow', '');
         
-        if (submitShiftBtn) {
-            setTimeout(() => submitShiftBtn.focus(), 100);
+        if (submitShiftBtn.length) {
+            setTimeout(() => submitShiftBtn.trigger('focus'), 100);
         }
     }
 
     function inisialisasiInputSaldo() {
-        if (!saldoInput) return;
+        if (!saldoInput.length) return;
 
-        saldoInput.addEventListener("input", function (e) {
-            let value = e.target.value.replace(/[^\d]/g, "");
+        saldoAkhirSebelumnya = getSaldoAkhirSebelumnya();
+        console.log('Saldo akhir sebelumnya:', saldoAkhirSebelumnya);
+
+        const isShiftPertama = $('.info').text().includes('SHIFT PERTAMA');
+        if (!isShiftPertama && saldoAkhirSebelumnya > 0) {
+            saldoInput.attr('placeholder', `Min. ${formatRupiah(saldoAkhirSebelumnya)}`);
+            
+            if (!saldoInput.val() || saldoInput.val().trim() === '') {
+                saldoInput.val(saldoAkhirSebelumnya.toLocaleString('id-ID'));
+            }
+        }
+
+        saldoInput.on("input", function (e) {
+            let value = $(this).val().replace(/[^\d]/g, "");
             if (value) {
                 value = parseInt(value).toLocaleString('id-ID');
-                e.target.value = value;
+                $(this).val(value);
             } else {
-                e.target.value = '';
+                $(this).val('');
+            }
+
+            const validasi = validasiInputSaldo($(this).val());
+            if (!validasi.isValid && $(this).val().trim() !== '') {
+                $(this).css('border-color', '#dc3545');
+            } else {
+                $(this).css('border-color', '');
+                hapusAlertYangAda();
             }
         });
         
-        saldoInput.addEventListener("blur", function(e) {
-            const validasi = validasiInputSaldo(this.value);
-            if (!validasi.isValid && this.value.trim() !== '') {
+        saldoInput.on("blur", function(e) {
+            const validasi = validasiInputSaldo($(this).val());
+            if (!validasi.isValid && $(this).val().trim() !== '') {
                 tampilkanError(validasi.message);
-                this.value = '';
-                this.focus();
+                $(this).css('border-color', '#dc3545');
+                $(this).trigger('focus');
+            } else {
+                $(this).css('border-color', '');
             }
         });
 
-        saldoInput.addEventListener("keypress", function(e) {
+        saldoInput.on("keypress", function(e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             if (!/[\d]/.test(char)) {
                 e.preventDefault();
             }
         });
 
-        saldoInput.addEventListener("paste", function(e) {
+        saldoInput.on("paste", function(e) {
             e.preventDefault();
-            const teksTempel = (e.clipboardData || window.clipboardData).getData('text');
+            const teksTempel = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
             const nilaiNumerik = teksTempel.replace(/[^\d]/g, '');
             if (nilaiNumerik) {
                 const nilaiTerformat = parseInt(nilaiNumerik).toLocaleString('id-ID');
-                this.value = nilaiTerformat;
+                $(this).val(nilaiTerformat);
                 
-                const eventInput = new Event('input', { bubbles: true });
-                this.dispatchEvent(eventInput);
+                $(this).trigger('input');
             }
         });
 
-        saldoInput.addEventListener("keyup", function(e) {
-            if (this.value.trim() === '') return;
+        saldoInput.on("keyup", function(e) {
+            if ($(this).val().trim() === '') return;
             
-            const validasi = validasiInputSaldo(this.value);
+            const validasi = validasiInputSaldo($(this).val());
             if (!validasi.isValid) {
-                this.style.borderColor = '#dc3545';
+                $(this).css('border-color', '#dc3545');
             } else {
-                this.style.borderColor = '';
+                $(this).css('border-color', '');
             }
         });
     }
 
     function inisialisasiPengirimanForm() {
-        if (!shiftForm) return;
+        if (!shiftForm.length) return;
 
-        shiftForm.addEventListener("submit", function (e) {
+        shiftForm.on("submit", function (e) {
             e.preventDefault();
 
             if (isSubmitting) {
@@ -331,41 +407,41 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function inisialisasiRefreshCashdrawer() {
-        if (!refreshBtn || !cashdrawerSelect) return;
+        if (!refreshBtn.length || !cashdrawerSelect.length) return;
 
-        refreshBtn.addEventListener("click", function () {
-            if (this.disabled) return;
+        refreshBtn.on("click", function () {
+            if ($(this).prop('disabled')) return;
             
             counter += 1;
             if (counter > 3) counter = 1; 
 
-            const opsiPlaceholder = cashdrawerSelect.querySelector('option[value=""]');
-            cashdrawerSelect.innerHTML = '';
-            if (opsiPlaceholder) {
-                cashdrawerSelect.appendChild(opsiPlaceholder);
+            const opsiPlaceholder = cashdrawerSelect.find('option[value=""]');
+            cashdrawerSelect.empty();
+            if (opsiPlaceholder.length) {
+                cashdrawerSelect.append(opsiPlaceholder);
             }
 
             const labelOpsi = `Kasir ${String(counter).padStart(2, "0")} - Cashdrawer ${counter}`;
-            const opsi = document.createElement("option");
-            opsi.value = labelOpsi;
-            opsi.textContent = labelOpsi;
-            opsi.selected = true;
+            const opsi = $('<option>')
+                .val(labelOpsi)
+                .text(labelOpsi)
+                .prop('selected', true);
 
-            cashdrawerSelect.appendChild(opsi);
+            cashdrawerSelect.append(opsi);
 
-            const htmlAsli = this.innerHTML;
-            this.innerHTML = "✓";
-            this.disabled = true;
+            const htmlAsli = $(this).html();
+            $(this).html("✓");
+            $(this).prop('disabled', true);
             
             setTimeout(() => {
-                this.innerHTML = htmlAsli;
-                this.disabled = false;
+                $(this).html(htmlAsli);
+                $(this).prop('disabled', false);
             }, 1000);
         });
 
-        const opsiTerpilih = cashdrawerSelect.options[cashdrawerSelect.selectedIndex];
-        if (opsiTerpilih && opsiTerpilih.value) {
-            const match = opsiTerpilih.value.match(/Kasir\s+(\d+)/);
+        const opsiTerpilih = cashdrawerSelect.find('option:selected');
+        if (opsiTerpilih.length && opsiTerpilih.val()) {
+            const match = opsiTerpilih.val().match(/Kasir\s+(\d+)/);
             if (match) {
                 counter = parseInt(match[1]);
             }
@@ -373,86 +449,84 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function inisialisasiPenanganModal() {
-        if (!cancelBtn || !confirmBtn) return;
+        if (!cancelBtn.length || !confirmBtn.length) return;
 
-        cancelBtn.addEventListener('click', function() {
+        cancelBtn.on('click', function() {
             sembunyikanModalKonfirmasi();
         });
 
-        confirmBtn.addEventListener('click', function() {
+        confirmBtn.on('click', function() {
             if (isSubmitting) return;
             
             isSubmitting = true;
             
-            const teksAsli = confirmBtn.textContent;
-            confirmBtn.textContent = "Memulai...";
-            confirmBtn.disabled = true;
+            const teksAsli = confirmBtn.text();
+            confirmBtn.text("Memulai...");
+            confirmBtn.prop('disabled', true);
 
-            if (confirmedForm) {
-                confirmedForm.submit();
+            if (confirmedForm.length) {
+                confirmedForm.trigger('submit');
             } else {
-                shiftForm.submit();
+                shiftForm.trigger('submit');
             }
         });
 
-        confirmationModal.addEventListener('click', function(e) {
-            if (e.target === confirmationModal) {
+        confirmationModal.on('click', function(e) {
+            if (e.target === confirmationModal[0]) {
                 sembunyikanModalKonfirmasi();
             }
         });
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && confirmationModal.classList.contains('aktif')) {
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && confirmationModal.hasClass('aktif')) {
                 sembunyikanModalKonfirmasi();
             }
         });
 
-        confirmationModal.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && confirmationModal.classList.contains('aktif')) {
+        confirmationModal.on('keydown', function(e) {
+            if (e.key === 'Enter' && confirmationModal.hasClass('aktif')) {
                 e.preventDefault();
-                confirmBtn.click();
+                confirmBtn.trigger('click');
             }
         });
     }
 
     function inisialisasiTab() {
-        const tabs = document.querySelectorAll(".tabs button");
-        const panels = document.querySelectorAll(".tab-panel");
+        const tabs = $(".tabs button");
+        const panels = $(".tab-panel");
 
-        panels.forEach(panel => {
-            if (!panel.classList.contains('is-active')) {
-                panel.style.display = 'none';
+        panels.each(function() {
+            if (!$(this).hasClass('is-active')) {
+                $(this).hide();
             }
         });
 
-        tabs.forEach((tab) => {
-            tab.addEventListener("click", function (e) {
+        tabs.each(function() {
+            $(this).on("click", function (e) {
                 e.preventDefault();
                 
-                const target = this.dataset.tab;
+                const target = $(this).data('tab');
                 if (!target) return;
 
-                tabs.forEach((t) => {
-                    t.classList.remove("active");
-                    t.setAttribute("aria-selected", "false");
-                    t.setAttribute("tabindex", "-1");
+                tabs.each(function() {
+                    $(this).removeClass("active")
+                        .attr("aria-selected", "false")
+                        .attr("tabindex", "-1");
                 });
 
-                this.classList.add("active");
-                this.setAttribute("aria-selected", "true");
-                this.setAttribute("tabindex", "0");
+                $(this).addClass("active")
+                    .attr("aria-selected", "true")
+                    .attr("tabindex", "0");
 
-                panels.forEach((panel) => {
-                    const isActive = panel.dataset.tabPanel === target;
-                    panel.classList.toggle("is-active", isActive);
+                panels.each(function() {
+                    const isActive = $(this).data('tab-panel') === target;
+                    $(this).toggleClass("is-active", isActive);
                     
                     if (isActive) {
-                        panel.style.display = 'block';
-                        panel.dispatchEvent(new CustomEvent('tabActivated', { 
-                            detail: { tabName: target } 
-                        }));
+                        $(this).show();
+                        $(this).trigger('tabActivated', { tabName: target });
                     } else {
-                        panel.style.display = 'none';
+                        $(this).hide();
                     }
                 });
 
@@ -461,13 +535,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.history.replaceState({}, '', url);
 
                 setTimeout(() => {
-                    const panelAktif = document.querySelector(`.tab-panel.is-active`);
-                    if (panelAktif) {
-                        const fokusPertama = panelAktif.querySelector(
+                    const panelAktif = $('.tab-panel.is-active');
+                    if (panelAktif.length) {
+                        const fokusPertama = panelAktif.find(
                             'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                        );
-                        if (fokusPertama) {
-                            fokusPertama.focus();
+                        ).first();
+                        if (fokusPertama.length) {
+                            fokusPertama.trigger('focus');
                         }
                     }
                 }, 100);
@@ -477,81 +551,81 @@ document.addEventListener("DOMContentLoaded", function () {
         const parameterUrl = new URLSearchParams(window.location.search);
         const tabAktif = parameterUrl.get('tab') || 'current';
         
-        const tabAwal = document.querySelector(`.tabs button[data-tab="${tabAktif}"]`);
-        if (tabAwal) {
-            tabAwal.click();
+        const tabAwal = $(`.tabs button[data-tab="${tabAktif}"]`);
+        if (tabAwal.length) {
+            tabAwal.trigger('click');
         } else if (tabs.length > 0) {
-            tabs[0].click();
+            tabs.first().trigger('click');
         }
     }
 
     function inisialisasiFormSetoran() {
-        const jenisSetoran = document.getElementById('jenis_setoran');
-        const metodeSetoran = document.getElementById('metode_setoran');
-        const grupDetailLainnya = document.getElementById('detail_lainnya_group');
-        const grupBuktiTransfer = document.getElementById('bukti_transfer_group');
-        const jumlahSetoran = document.getElementById('jumlah_setoran');
-        const formSetoran = document.querySelector('.setoran-form');
-        const fileInputLabel = document.getElementById('fileInputLabel');
-        const fileName = document.getElementById('fileName');
+        const jenisSetoran = $('#jenis_setoran');
+        const metodeSetoran = $('#metode_setoran');
+        const grupDetailLainnya = $('#detail_lainnya_group');
+        const grupBuktiTransfer = $('#bukti_transfer_group');
+        const jumlahSetoran = $('#jumlah_setoran');
+        const formSetoran = $('.setoran-form');
+        const fileInputLabel = $('#fileInputLabel');
+        const fileName = $('#fileName');
 
-        if (jenisSetoran && grupDetailLainnya) {
-            jenisSetoran.addEventListener('change', function() {
-                if (this.value === 'lainnya') {
-                    grupDetailLainnya.style.display = 'block';
+        if (jenisSetoran.length && grupDetailLainnya.length) {
+            jenisSetoran.on('change', function() {
+                if ($(this).val() === 'lainnya') {
+                    grupDetailLainnya.show();
                     setTimeout(() => {
-                        const inputDetail = document.getElementById('detail_lainnya');
-                        if (inputDetail) inputDetail.focus();
+                        const inputDetail = $('#detail_lainnya');
+                        if (inputDetail.length) inputDetail.trigger('focus');
                     }, 100);
                 } else {
-                    grupDetailLainnya.style.display = 'none';
-                    document.getElementById('detail_lainnya').value = '';
+                    grupDetailLainnya.hide();
+                    $('#detail_lainnya').val('');
                 }
             });
 
-            if (jenisSetoran.value === 'lainnya') {
-                grupDetailLainnya.style.display = 'block';
+            if (jenisSetoran.val() === 'lainnya') {
+                grupDetailLainnya.show();
             }
         }
 
-        if (metodeSetoran && grupBuktiTransfer) {
-            metodeSetoran.addEventListener('change', function() {
-                if (this.value === 'transfer') {
-                    grupBuktiTransfer.style.display = 'block';
+        if (metodeSetoran.length && grupBuktiTransfer.length) {
+            metodeSetoran.on('change', function() {
+                if ($(this).val() === 'transfer') {
+                    grupBuktiTransfer.show();
                     setTimeout(() => {
-                        const inputBukti = document.getElementById('bukti_transfer');
-                        if (inputBukti) inputBukti.focus();
+                        const inputBukti = $('#bukti_transfer');
+                        if (inputBukti.length) inputBukti.trigger('focus');
                     }, 100);
                 } else {
-                    grupBuktiTransfer.style.display = 'none';
-                    const buktiTransfer = document.getElementById('bukti_transfer');
-                    if (buktiTransfer) {
-                        buktiTransfer.value = '';
-                        const existingPreview = document.getElementById('bukti_preview');
-                        if (existingPreview) {
+                    grupBuktiTransfer.hide();
+                    const buktiTransfer = $('#bukti_transfer');
+                    if (buktiTransfer.length) {
+                        buktiTransfer.val('');
+                        const existingPreview = $('#bukti_preview');
+                        if (existingPreview.length) {
                             existingPreview.remove();
                         }
-                        if (fileInputLabel) {
-                            fileInputLabel.classList.remove('has-file');
-                            fileInputLabel.innerHTML = '📎 Klik untuk upload bukti transfer<div class="file-name" id="fileName"></div>';
+                        if (fileInputLabel.length) {
+                            fileInputLabel.removeClass('has-file');
+                            fileInputLabel.html('📎 Klik untuk upload bukti transfer<div class="file-name" id="fileName"></div>');
                         }
                     }
                 }
             });
 
-            if (metodeSetoran.value === 'transfer') {
-                grupBuktiTransfer.style.display = 'block';
+            if (metodeSetoran.val() === 'transfer') {
+                grupBuktiTransfer.show();
             }
         }
 
-        const buktiTransferInput = document.getElementById('bukti_transfer');
-        if (buktiTransferInput && fileInputLabel) {
-            buktiTransferInput.addEventListener('change', function(e) {
+        const buktiTransferInput = $('#bukti_transfer');
+        if (buktiTransferInput.length && fileInputLabel.length) {
+            buktiTransferInput.on('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    fileInputLabel.classList.add('has-file');
-                    if (fileName) {
-                        fileName.textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+                    fileInputLabel.addClass('has-file');
+                    if (fileName.length) {
+                        fileName.text(`File: ${file.name} (${formatFileSize(file.size)})`);
                     }
 
                     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -559,51 +633,51 @@ document.addEventListener("DOMContentLoaded", function () {
                     
                     if (!allowedTypes.includes(file.type)) {
                         tampilkanError('Format file tidak didukung. Gunakan JPG, PNG, PDF, atau DOC.');
-                        this.value = '';
-                        fileInputLabel.classList.remove('has-file');
-                        if (fileName) fileName.textContent = '';
+                        $(this).val('');
+                        fileInputLabel.removeClass('has-file');
+                        if (fileName.length) fileName.text('');
                         return;
                     }
                     
                     if (file.size > maxSize) {
                         tampilkanError('Ukuran file terlalu besar. Maksimal 5MB.');
-                        this.value = '';
-                        fileInputLabel.classList.remove('has-file');
-                        if (fileName) fileName.textContent = '';
+                        $(this).val('');
+                        fileInputLabel.removeClass('has-file');
+                        if (fileName.length) fileName.text('');
                         return;
                     }
                     
                     if (file.type.startsWith('image/')) {
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            const existingPreview = document.getElementById('bukti_preview');
-                            if (existingPreview) {
+                            const existingPreview = $('#bukti_preview');
+                            if (existingPreview.length) {
                                 existingPreview.remove();
                             }
                             
-                            const preview = document.createElement('div');
-                            preview.id = 'bukti_preview';
-                            preview.className = 'bukti-preview';
-                            preview.innerHTML = `
-                                <img src="${e.target.result}" alt="Preview Bukti Transfer">
-                                <div class="preview-label">Preview Bukti Transfer</div>
-                            `;
+                            const preview = $('<div>')
+                                .attr('id', 'bukti_preview')
+                                .addClass('bukti-preview')
+                                .html(`
+                                    <img src="${e.target.result}" alt="Preview Bukti Transfer">
+                                    <div class="preview-label">Preview Bukti Transfer</div>
+                                `);
                             
-                            buktiTransferInput.parentNode.appendChild(preview);
+                            buktiTransferInput.parent().append(preview);
                         };
                         reader.readAsDataURL(file);
                     } else {
-                        const existingPreview = document.getElementById('bukti_preview');
-                        if (existingPreview) {
+                        const existingPreview = $('#bukti_preview');
+                        if (existingPreview.length) {
                             existingPreview.remove();
                         }
                     }
                 } else {
-                    fileInputLabel.classList.remove('has-file');
-                    if (fileName) fileName.textContent = '';
+                    fileInputLabel.removeClass('has-file');
+                    if (fileName.length) fileName.text('');
                     
-                    const existingPreview = document.getElementById('bukti_preview');
-                    if (existingPreview) {
+                    const existingPreview = $('#bukti_preview');
+                    if (existingPreview.length) {
                         existingPreview.remove();
                     }
                 }
@@ -611,18 +685,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         updateSaldoTersedia();
-        
-        if (jumlahSetoran) {
-            jumlahSetoran.addEventListener('blur', function() {
-                const value = this.value.replace(/[^\d]/g, '');
+        if (jumlahSetoran.length) {
+            jumlahSetoran.on('blur', function() {
+                const value = $(this).val().replace(/[^\d]/g, '');
                 if (value && parseInt(value) === 0) {
                     tampilkanError('Jumlah setoran harus lebih besar dari 0.');
-                    this.value = '';
-                    this.focus();
+                    $(this).val('');
+                    $(this).trigger('focus');
                 }
             });
 
-            jumlahSetoran.addEventListener('keypress', function(e) {
+            jumlahSetoran.on('keypress', function(e) {
                 const char = String.fromCharCode(e.keyCode || e.which);
                 if (!/[\d]/.test(char)) {
                     e.preventDefault();
@@ -630,31 +703,31 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        if (formSetoran) {
-            formSetoran.addEventListener('submit', function(e) {
+        if (formSetoran.length) {
+            formSetoran.on('submit', function(e) {
                 if (isSubmitting) {
                     e.preventDefault();
                     tampilkanError('Sedang memproses setoran sebelumnya...');
                     return;
                 }
 
-                const tombolSubmit = this.querySelector('.setoran-submit');
-                const jumlah = document.getElementById('jumlah_setoran');
-                const jenis = document.getElementById('jenis_setoran');
-                const metode = document.getElementById('metode_setoran');
-                const keterangan = document.getElementById('keterangan_setoran');
-                const buktiTransfer = document.getElementById('bukti_transfer');
+                const tombolSubmit = $(this).find('.setoran-submit');
+                const jumlah = $('#jumlah_setoran');
+                const jenis = $('#jenis_setoran');
+                const metode = $('#metode_setoran');
+                const keterangan = $('#keterangan_setoran');
+                const buktiTransfer = $('#bukti_transfer');
 
-                if (!jumlah || !jenis || !metode || !keterangan) {
+                if (!jumlah.length || !jenis.length || !metode.length || !keterangan.length) {
                     e.preventDefault();
                     tampilkanError('Form tidak lengkap. Silakan refresh halaman.');
                     return;
                 }
 
-                const nilaiJumlah = jumlah.value;
-                const nilaiJenis = jenis.value;
-                const nilaiMetode = metode.value;
-                const nilaiKeterangan = keterangan.value.trim();
+                const nilaiJumlah = jumlah.val();
+                const nilaiJenis = jenis.val();
+                const nilaiMetode = metode.val();
+                const nilaiKeterangan = keterangan.val().trim();
 
                 if (!nilaiJumlah || !nilaiJenis || !nilaiMetode || !nilaiKeterangan) {
                     e.preventDefault();
@@ -663,10 +736,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 if (nilaiMetode === 'transfer') {
-                    if (!buktiTransfer || !buktiTransfer.files || !buktiTransfer.files[0]) {
+                    if (!buktiTransfer.length || !buktiTransfer[0].files || !buktiTransfer[0].files[0]) {
                         e.preventDefault();
                         tampilkanError('Bukti transfer wajib diupload untuk metode transfer.');
-                        if (buktiTransfer) buktiTransfer.focus();
+                        if (buktiTransfer.length) buktiTransfer.trigger('focus');
                         return;
                     }
                 }
@@ -675,7 +748,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (jumlahNumerik <= 0) {
                     e.preventDefault();
                     tampilkanError('Jumlah setoran harus lebih besar dari 0.');
-                    jumlah.focus();
+                    jumlah.trigger('focus');
                     return;
                 }
 
@@ -683,23 +756,31 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (jumlahNumerik > saldoTersedia) {
                     e.preventDefault();
                     tampilkanError(`Jumlah setoran melebihi saldo tersedia. Saldo tersedia: ${formatRupiah(saldoTersedia)}`);
-                    jumlah.focus();
+                    jumlah.trigger('focus');
+                    return;
+                }
+
+                const sisaSaldo = saldoTersedia - jumlahNumerik;
+                if (sisaSaldo < 100000) {
+                    e.preventDefault();
+                    tampilkanError(`Setoran tidak dapat dilakukan. Minimal sisa saldo harus Rp 100.000. Sisa akan menjadi: ${formatRupiah(sisaSaldo)}`);
+                    jumlah.trigger('focus');
                     return;
                 }
 
                 isSubmitting = true;
-                if (tombolSubmit && !tombolSubmit.disabled) {
-                    tombolSubmit.disabled = true;
-                    const htmlAsli = tombolSubmit.innerHTML;
-                    tombolSubmit.innerHTML = '<span>⏳</span> Memproses Setoran...';
+                if (tombolSubmit.length && !tombolSubmit.prop('disabled')) {
+                    tombolSubmit.prop('disabled', true);
+                    const htmlAsli = tombolSubmit.html();
+                    tombolSubmit.html('<span>⏳</span> Memproses Setoran...');
                     
                     setTimeout(() => {
-                        if (tombolSubmit.disabled) {
-                            tombolSubmit.innerHTML = htmlAsli;
-                            tombolSubmit.disabled = false;
+                        if (tombolSubmit.prop('disabled')) {
+                            tombolSubmit.html(htmlAsli);
+                            tombolSubmit.prop('disabled', false);
                             isSubmitting = false;
                         }
-                    }, 10000); 
+                    }, 10000);
                 }
             });
         }
@@ -714,20 +795,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function inisialisasiNavigasiKeyboard() {
-        document.addEventListener('keydown', function(e) {
+        $(document).on('keydown', function(e) {
             if (e.ctrlKey && e.key >= '1' && e.key <= '3') {
                 e.preventDefault();
                 const indexTab = parseInt(e.key) - 1;
-                const tabs = document.querySelectorAll('.tabs button');
-                if (tabs[indexTab]) {
-                    tabs[indexTab].click();
+                const tabs = $('.tabs button');
+                if (tabs.eq(indexTab).length) {
+                    tabs.eq(indexTab).trigger('click');
                 }
             }
         });
     }
 
     function inisialisasiSimpanOtomatis() {
-        const elemenForm = document.querySelectorAll('input, select, textarea');
+        const elemenForm = $('input, select, textarea');
         const kunciSimpanOtomatis = 'shift_form_draft';
         
         const drafTersimpan = localStorage.getItem(kunciSimpanOtomatis);
@@ -735,9 +816,9 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 const draf = JSON.parse(drafTersimpan);
                 Object.keys(draf).forEach(key => {
-                    const element = document.querySelector(`[name="${key}"]`);
-                    if (element && element.type !== 'password' && element.type !== 'file') {
-                        element.value = draf[key];
+                    const element = $(`[name="${key}"]`);
+                    if (element.length && element.attr('type') !== 'password' && element.attr('type') !== 'file') {
+                        element.val(draf[key]);
                     }
                 });
                 
@@ -752,13 +833,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
         
-        elemenForm.forEach(element => {
-            if (element.name && element.type !== 'password' && element.type !== 'file') {
-                element.addEventListener('input', debounce(function() {
+        elemenForm.each(function() {
+            if ($(this).attr('name') && $(this).attr('type') !== 'password' && $(this).attr('type') !== 'file') {
+                $(this).on('input', debounce(function() {
                     const dataForm = {};
-                    elemenForm.forEach(el => {
-                        if (el.name && el.type !== 'password' && el.type !== 'file') {
-                            dataForm[el.name] = el.value;
+                    elemenForm.each(function() {
+                        if ($(this).attr('name') && $(this).attr('type') !== 'password' && $(this).attr('type') !== 'file') {
+                            dataForm[$(this).attr('name')] = $(this).val();
                         }
                     });
                     localStorage.setItem(kunciSimpanOtomatis, JSON.stringify(dataForm));
@@ -766,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
         
-        document.addEventListener('submit', function() {
+        $(document).on('submit', function() {
             setTimeout(() => {
                 localStorage.removeItem(kunciSimpanOtomatis);
             }, 1000);
@@ -785,16 +866,78 @@ document.addEventListener("DOMContentLoaded", function () {
         };
     }
 
+    function inisialisasiRiwayatShift() {
+        $(document).on('click', '.compact-card', function() {
+            const shiftId = $(this).data('shift-id');
+            showShiftDetail(shiftId);
+        });
+
+        $('.date-search-form').on('submit', function(e) {
+            const dateInput = $(this).find('input[type="date"]');
+            if (!dateInput.val()) {
+                e.preventDefault();
+                dateInput.focus();
+            }
+        });
+    }
+
+    function showShiftDetail(shiftId) {
+        console.log('Menampilkan detail shift:', shiftId);
+        
+        const shiftData = window.shiftHistoryData.find(shift => shift.id === shiftId);
+        const rekapData = window.rekapData[shiftId];
+        
+        if (shiftData) {
+            const modalContent = `
+                <div class="shift-detail">
+                    <h4>Detail Shift: ${shiftData.cashdrawer}</h4>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Saldo Awal:</label>
+                            <span>${formatRupiah(rekapData?.saldo_awal || shiftData.saldo_awal)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Saldo Akhir:</label>
+                            <span>${formatRupiah(rekapData?.saldo_akhir || shiftData.saldo_akhir)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Selisih:</label>
+                            <span class="${(rekapData?.selisih || (shiftData.saldo_akhir - shiftData.saldo_awal)) >= 0 ? 'positif' : 'negatif'}">
+                                ${formatRupiah(Math.abs(rekapData?.selisih || (shiftData.saldo_akhir - shiftData.saldo_awal)))}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Waktu Mulai:</label>
+                            <span>${new Date(shiftData.waktu_mulai).toLocaleString('id-ID')}</span>
+                        </div>
+                        ${rekapData?.waktu_selesai ? `
+                        <div class="detail-item">
+                            <label>Waktu Selesai:</label>
+                            <span>${new Date(rekapData.waktu_selesai).toLocaleString('id-ID')}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            $('#shiftDetailContent').html(modalContent);
+            $('#shiftDetailModal').addClass('aktif');
+        }
+    }
+
     function inisialisasiAplikasi() {
-        console.log('Menginisialisasi aplikasi shift...');
+        console.log('Menginisialisasi aplikasi shift UAM...');
         
         try {
+            saldoAkhirSebelumnya = getSaldoAkhirSebelumnya();
+            
             inisialisasiTab();
             inisialisasiInputSaldo();
             inisialisasiPengirimanForm();
             inisialisasiRefreshCashdrawer();
             inisialisasiPenanganModal();
-            inisialisasiFormSetoran(); 
+            inisialisasiFormSetoran();
+            inisialisasiRiwayatShift();
             inisialisasiNavigasiKeyboard();
             inisialisasiSimpanOtomatis();
             
@@ -802,7 +945,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.history.replaceState(null, null, window.location.href);
             }
             
-            console.log('Aplikasi shift berhasil diinisialisasi');
+            console.log('Aplikasi shift UAM berhasil diinisialisasi');
+            console.log('Saldo akhir sebelumnya:', saldoAkhirSebelumnya);
         } catch (error) {
             console.error('Error menginisialisasi aplikasi:', error);
             tampilkanError('Terjadi error dalam memuat aplikasi. Silakan refresh halaman.');
@@ -810,8 +954,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     inisialisasiAplikasi();
-
-    window.addEventListener('error', function(e) {
-        console.error('Terjadi error global:', e.error);
+    $(window).on('error', function(e) {
+        console.error('Terjadi error global:', e.originalEvent.error);
     });
 });

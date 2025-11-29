@@ -12,8 +12,90 @@ $(document).ready(function () {
   $("#tax").text(tax.toLocaleString("id-ID"));
   $("#total").text(grandTotal.toLocaleString("id-ID"));
   $("#inputBayar").text("0");
+  
   $("#displayTotal").text("Rp " + grandTotal.toLocaleString("id-ID"));
   $("#totalNav").text("Rp " + grandTotal.toLocaleString("id-ID"));
+  
+  setTimeout(() => {
+    $("#inputUangManual").focus();
+  }, 500);
+
+  function setupFormNavigation() {
+    $("input, select, textarea").on("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+
+        const nextElementId = $(this).data("next");
+        if (nextElementId) {
+          if (nextElementId === "confirmBtn") {
+            if (validateForm()) {
+              $("#confirmBtn").trigger("click");
+            }
+          } else {
+            $("#" + nextElementId).focus();
+          }
+        }
+      }
+    });
+  }
+
+  function validateForm() {
+    const metode = $("#metodePembayaran").val();
+    const pelanggan = $("#namaPelanggan").val().trim();
+    const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
+
+    if (metode === "Piutang") {
+      if (!pelanggan) {
+        alert("Nama pelanggan wajib diisi untuk piutang!");
+        $("#namaPelanggan").focus();
+        return false;
+      }
+    } else {
+      if (bayarFinal < grandTotal) {
+        alert(
+          `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString(
+            "id-ID"
+          )}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
+        );
+        $("#inputUangManual").focus();
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function setupManualInput() {
+    $("#inputUangManual").on("focus", function () {
+      $(this).val(bayar === "" ? "" : parseInt(bayar).toLocaleString("id-ID"));
+      $(this).select();
+    });
+
+    $("#inputUangManual").on("blur", function () {
+      const value = $(this).val().replace(/\./g, "");
+      if (value !== "") {
+        const numericValue = parseInt(value) || 0;
+        bayar = numericValue.toString();
+        $(this).val(numericValue.toLocaleString("id-ID"));
+        updateInputDisplay();
+      }
+    });
+
+    $("#inputUangManual").on("input", function () {
+      let value = $(this).val().replace(/\./g, "");
+      value = value.replace(/\D/g, "");
+
+      if (value !== "") {
+        const numericValue = parseInt(value);
+        $(this).val(numericValue.toLocaleString("id-ID"));
+        bayar = numericValue.toString();
+        updateInputDisplay();
+      } else {
+        bayar = "";
+        updateInputDisplay();
+      }
+    });
+  }
 
   function showSuccessModal(total, dibayar, kembalian, metode) {
     $("#modalTotal").text("Rp " + total.toLocaleString("id-ID"));
@@ -93,6 +175,7 @@ $(document).ready(function () {
     bayar = "";
     $(this).addClass("active");
     updateInputDisplay();
+    $("#inputUangManual").focus();
   });
 
   $(".numKey").on("click", function () {
@@ -100,19 +183,25 @@ $(document).ready(function () {
     const val = $(this).text().replace(/\D/g, "");
     bayar += val;
     $("#inputBayar").addClass("active");
+    $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
     updateInputDisplay();
   });
 
   $("#clearInput").on("click", function () {
     bayar = "";
     $("#inputBayar").removeClass("active");
+    $("#inputUangManual").val("");
     updateInputDisplay();
+    $("#inputUangManual").focus();
   });
 
   $("#backspaceBtn").on("click", function () {
     bayar = bayar.slice(0, -1);
     if (bayar === "") {
       $("#inputBayar").removeClass("active");
+      $("#inputUangManual").val("");
+    } else {
+      $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
     }
     updateInputDisplay();
   });
@@ -120,7 +209,9 @@ $(document).ready(function () {
   $("#btnPas").on("click", function () {
     bayar = grandTotal.toString();
     $("#inputBayar").addClass("active");
+    $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
     updateInputDisplay();
+    $("#namaPelanggan").focus();
   });
 
   $(".btnQuick").on("click", function () {
@@ -128,15 +219,21 @@ $(document).ready(function () {
     const value = parseInt($(this).data("value"));
     bayar = (parseInt(bayar || "0") + value).toString();
     $("#inputBayar").addClass("active");
+    $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
     updateInputDisplay();
   });
 
   $(document).on("keydown", function (e) {
     const isInputFocused =
-      $("#namaPelanggan").is(":focus") || $("#keterangan").is(":focus");
+      $("#inputUangManual").is(":focus") ||
+      $("#namaPelanggan").is(":focus") ||
+      $("#keterangan").is(":focus") ||
+      $("#metodePembayaran").is(":focus");
 
     if (isInputFocused) {
-      return;
+      if (e.key === "Enter") {
+        return;
+      }
     }
 
     if (!sedangInput) return;
@@ -144,19 +241,22 @@ $(document).ready(function () {
     if (e.key >= "0" && e.key <= "9") {
       bayar += e.key;
       $("#inputBayar").addClass("active");
+      $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
       updateInputDisplay();
     } else if (["Backspace", "Delete"].includes(e.key)) {
       bayar = bayar.slice(0, -1);
       if (bayar === "") {
         $("#inputBayar").removeClass("active");
+        $("#inputUangManual").val("");
+      } else {
+        $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
       }
       updateInputDisplay();
-    } else if (e.key === "Enter") {
-      $("#confirmBtn").trigger("click");
     } else if (e.key === "Escape") {
       bayar = "";
       sedangInput = false;
       $("#inputBayar").removeClass("active");
+      $("#inputUangManual").val("");
       updateInputDisplay();
     }
   });
@@ -192,11 +292,15 @@ $(document).ready(function () {
     localStorage.removeItem("currentDiscount");
     localStorage.removeItem("currentTax");
     localStorage.removeItem("currentTotal");
-    window.location.href = "/?q=piutang_tambah";
+    window.location.href = "/?q=piutang_tambahpiutang";
   });
 
   $("#confirmBtn").click(function (e) {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     const metode = $("#metodePembayaran").val();
     const pelanggan = $("#namaPelanggan").val().trim();
@@ -205,11 +309,6 @@ $(document).ready(function () {
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
 
     if (metode === "Piutang") {
-      if (!pelanggan) {
-        alert("Nama pelanggan wajib diisi untuk piutang!");
-        return;
-      }
-
       const totalPiutang = grandTotal;
 
       localStorage.setItem("pendingPiutangNama", pelanggan);
@@ -276,15 +375,6 @@ $(document).ready(function () {
       return;
     }
 
-    if (bayarFinal < grandTotal) {
-      alert(
-        `Uang tidak cukup!\nTotal: Rp ${grandTotal.toLocaleString(
-          "id-ID"
-        )}\nDibayar: Rp ${bayarFinal.toLocaleString("id-ID")}`
-      );
-      return;
-    }
-
     const kembalian = bayarFinal - grandTotal;
 
     const dataKirim = {
@@ -326,6 +416,8 @@ $(document).ready(function () {
     });
   });
 
+  setupFormNavigation();
+  setupManualInput();
   $("#metodePembayaran").trigger("change");
   updatePaymentStatus();
 });

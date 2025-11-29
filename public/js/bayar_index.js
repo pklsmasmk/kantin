@@ -13,11 +13,20 @@ function addToCart(nama, harga) {
 $(document).on("click", ".addCart", function () {
   const card = $(this).closest(".menu-card");
   const nama = card.find(".card-title").text().trim();
-  const hargaText = card.find(".card-text").text().replace(/^.* /g, '').replace(/\./g, "").replace(/,/g, ".").trim();
+  const hargaText = card
+    .find(".card-text")
+    .text()
+    .replace(/^.*Rp /g, "")
+    .replace(/\./g, "")
+    .replace(/,00/g, "")
+    .trim();
   const harga = parseInt(hargaText) || 0;
-  // alert(hargaText);
   addToCart(nama, harga);
-}); 
+});
+
+function formatRupiah(angka) {
+  return angka.toLocaleString("id-ID") + ",00";
+}
 
 function renderCart() {
   const tbody = $("#cartList");
@@ -27,19 +36,18 @@ function renderCart() {
 
   if (cart.length === 0) {
     cartSection.hide();
-
     $("#emptyCartMessage").remove();
 
     if (!$("#emptyCartMessage").length) {
       $(".col-md-8").after(`
-                <div class="col-md-4" id="emptyCartMessage">
-                    <div class="card p-4 border-0 shadow-sm text-center">
-                        <i class="bi bi-cart-x display-4 text-muted"></i>
-                        <h5 class="mt-3 text-muted">Keranjang Kosong</h5>
-                        <p class="text-muted small">Tambahkan item dari menu untuk memulai pesanan</p>
-                    </div>
-                </div>
-            `);
+        <div class="col-md-4" id="emptyCartMessage">
+          <div class="card p-4 border-0 shadow-sm text-center">
+            <i class="bi bi-cart-x display-4 text-muted"></i>
+            <h5 class="mt-3 text-muted">Keranjang Kosong</h5>
+            <p class="text-muted small">Tambahkan item dari menu untuk memulai pesanan</p>
+          </div>
+        </div>
+      `);
     }
   } else {
     cartSection.show();
@@ -50,21 +58,21 @@ function renderCart() {
       subtotal += total;
 
       tbody.append(`
-                <tr>
-                    <td>${item.nama}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-secondary minusBtn" data-index="${index}">-</button>
-                        <span class="mx-2">${item.qty}</span>
-                        <button class="btn btn-sm btn-outline-secondary plusBtn" data-index="${index}">+</button>
-                    </td>
-                    <td class="text-end">Rp${total.toLocaleString("id-ID")}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger removeBtn" data-index="${index}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `);
+        <tr>
+          <td>${item.nama}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-secondary minusBtn" data-index="${index}">-</button>
+            <span class="mx-2">${item.qty}</span>
+            <button class="btn btn-sm btn-outline-secondary plusBtn" data-index="${index}">+</button>
+          </td>
+          <td class="text-end">Rp ${formatRupiah(total)}</td>
+          <td>
+            <button class="btn btn-sm btn-danger removeBtn" data-index="${index}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `);
     });
 
     const discountPercent = parseFloat($("#discount").val()) || 0;
@@ -76,10 +84,10 @@ function renderCart() {
     );
     const totalAfter = subtotal - discountAmount + taxAmount;
 
-    $("#cartSubtotal").text(subtotal.toLocaleString("id-ID"));
-    $("#cartDiscount").text(discountAmount.toLocaleString("id-ID"));
-    $("#cartTax").text(taxAmount.toLocaleString("id-ID"));
-    $("#cartTotal").text(totalAfter.toLocaleString("id-ID"));
+    $("#cartSubtotal").text(formatRupiah(subtotal));
+    $("#cartDiscount").text(formatRupiah(discountAmount));
+    $("#cartTax").text(formatRupiah(taxAmount));
+    $("#cartTotal").text(formatRupiah(totalAfter));
   }
 }
 

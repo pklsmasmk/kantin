@@ -1,6 +1,5 @@
 class RekapDetailManager {
     constructor() {
-        this.currentOpenActions = null;
         this.init();
     }
 
@@ -9,6 +8,7 @@ class RekapDetailManager {
         this.setupEventListeners();
         this.autoCloseAlerts();
         this.setupRupiahFormatting();
+        this.setupTransactionTypeHandling();
         
         if (window.transaksiData) {
             console.log('Transaction data loaded:', window.transaksiData);
@@ -16,18 +16,13 @@ class RekapDetailManager {
     }
 
     setupEventListeners() {
-        document.addEventListener('click', (e) => {
-            this.handleTransactionClick(e);
-            this.handleActionButtonClick(e);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
+        $(document).on('click', (e) => {
+            if ($(e.target).hasClass('modal')) {
                 this.closeAllModals();
             }
         });
 
-        document.addEventListener('keydown', (e) => {
+        $(document).on('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeAllModals();
             }
@@ -37,209 +32,178 @@ class RekapDetailManager {
     }
 
     setupRupiahFormatting() {
-        const jumlahInputs = document.querySelectorAll('input[name="jumlah"]');
-        jumlahInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
-                this.formatRupiah(e.target);
-            });
+        $('input[name="jumlah"]').on('input', (e) => {
+            this.formatRupiah(e.target);
         });
-
-        const editJumlahInput = document.getElementById('edit_jumlah');
-        if (editJumlahInput) {
-            editJumlahInput.addEventListener('input', (e) => {
-                this.formatRupiah(e.target);
-            });
-        }
-
-        const mainJumlahInput = document.getElementById('main_jumlah');
-        if (mainJumlahInput) {
-            mainJumlahInput.addEventListener('input', (e) => {
-                this.formatRupiah(e.target);
-            });
-        }
     }
 
     formatRupiah(input) {
-        let value = input.value.replace(/[^\d]/g, '');
+        let value = $(input).val().replace(/[^\d]/g, '');
         
         if (value) {
             value = parseInt(value).toLocaleString('id-ID');
         }
         
-        input.value = value;
+        $(input).val(value);
     }
 
-    handleTransactionClick(event) {
-        const transactionItem = event.target.closest('.transaction-item');
-        if (!transactionItem) return;
-
-        if (event.target.closest('.btn-action')) return;
-
-        const index = transactionItem.getAttribute('data-index');
-        this.toggleTransactionActions(index);
+    setupTransactionTypeHandling() {
+        $('input[name="jenis_transaksi"]').on('change', (e) => {
+            this.updateSubmitButtonText();
+        });
     }
 
-    handleActionButtonClick(event) {
-        if (event.target.closest('.btn-edit')) {
-            event.stopPropagation();
-            const button = event.target.closest('.btn-edit');
-            const index = button.getAttribute('data-index');
-            this.openEditModal(index);
-        }
-    }
-
-    toggleTransactionActions(index) {
-        const actionsElement = document.getElementById(`actions-${index}`);
-        if (!actionsElement) return;
-
-        if (this.currentOpenActions && this.currentOpenActions !== actionsElement) {
-            this.currentOpenActions.style.display = 'none';
-        }
-
-        if (actionsElement.style.display === 'flex') {
-            actionsElement.style.display = 'none';
-            this.currentOpenActions = null;
+    updateSubmitButtonText() {
+        const selectedType = $('input[name="jenis_transaksi"]:checked').val();
+        const $submitButton = $('#submitButton');
+        
+        if (selectedType === 'masuk') {
+            $submitButton.text('Simpan Uang Masuk');
+            $submitButton.removeClass('btn-expense').addClass('btn-income');
         } else {
-            actionsElement.style.display = 'flex';
-            this.currentOpenActions = actionsElement;
+            $submitButton.text('Simpan Uang Keluar');
+            $submitButton.removeClass('btn-income').addClass('btn-expense');
         }
     }
-
-    openEditModal(index) {
-        if (!window.transaksiData || !window.transaksiData[index]) {
-            alert('Data transaksi tidak ditemukan');
-            return;
-        }
-
-        const transaksi = window.transaksiData[index];
-        
-        document.getElementById('edit_id').value = transaksi.id;
-        document.getElementById('edit_jumlah').value = Math.abs(transaksi.nominal).toLocaleString('id-ID');
-        document.getElementById('edit_catatan').value = transaksi.keterangan;
-        
-        let aksiValue;
-        if (transaksi.tipe === 'Penjualan Tunai') {
-            aksiValue = 'penjualan';
-        } else if (transaksi.tipe === 'Pengeluaran') {
-            aksiValue = 'pengeluaran';
-        } else if (transaksi.tipe === 'Masuk Lain') {
-            aksiValue = 'masuk';
-        } else if (transaksi.tipe === 'Keluar Lain') {
-            aksiValue = 'keluar';
-        } else {
-            aksiValue = transaksi.nominal >= 0 ? 'masuk' : 'keluar';
-        }
-        
-        document.getElementById('edit_aksi').value = aksiValue;
-
-        this.showModal('editModal');
-
-        if (this.currentOpenActions) {
-            this.currentOpenActions.style.display = 'none';
-            this.currentOpenActions = null;
-        }
-    }
-
 
     setupFormValidation() {
-        const addForm = document.getElementById('addForm');
-        const editForm = document.getElementById('editForm');
-        const mainTransactionForm = document.getElementById('mainTransactionForm');
+        const $addForm = $('#addForm');
 
-        if (addForm) {
-            addForm.addEventListener('submit', (e) => this.validateForm(e));
-        }
-
-        if (editForm) {
-            editForm.addEventListener('submit', (e) => this.validateForm(e));
-        }
-
-        if (mainTransactionForm) {
-            mainTransactionForm.addEventListener('submit', (e) => this.validateForm(e));
+        if ($addForm.length) {
+            $addForm.on('submit', (e) => this.validateForm(e));
         }
     }
 
     validateForm(event) {
-        const form = event.target;
-        const jumlahInput = form.querySelector('input[name="jumlah"]');
-        const catatanInput = form.querySelector('textarea[name="catatan"]');
+        const $form = $(event.target);
+        const $jenisTransaksi = $form.find('input[name="jenis_transaksi"]:checked');
+        const $jumlahInput = $form.find('input[name="jumlah"]');
+        const $catatanInput = $form.find('textarea[name="catatan"]');
 
-        if (jumlahInput) {
-            const jumlahValue = jumlahInput.value.trim();
+        if (!$jenisTransaksi.length) {
+            event.preventDefault();
+            alert('Pilih jenis transaksi (Masuk atau Keluar)');
+            return false;
+        }
+
+        if ($jumlahInput.length) {
+            const jumlahValue = $jumlahInput.val().trim();
             const jumlahClean = jumlahValue.replace(/[^\d]/g, '');
 
             if (!jumlahClean || parseInt(jumlahClean) <= 0) {
                 event.preventDefault();
                 alert('Masukkan jumlah yang valid (minimal Rp 1)');
-                jumlahInput.focus();
+                $jumlahInput.trigger('focus');
                 return false;
             }
 
-            jumlahInput.value = jumlahClean;
+            $jumlahInput.val(jumlahClean);
         }
 
-        if (catatanInput && !catatanInput.value.trim()) {
+        if ($catatanInput.length && !$catatanInput.val().trim()) {
             event.preventDefault();
             alert('Keterangan harus diisi');
-            catatanInput.focus();
+            $catatanInput.trigger('focus');
             return false;
+        }
+
+        if ($jenisTransaksi.val() === 'keluar') {
+            const jumlahClean = $jumlahInput.val().replace(/[^\d]/g, '');
+            const saldoAkhir = this.getCurrentBalance();
+            
+            if (parseInt(jumlahClean) > saldoAkhir) {
+                event.preventDefault();
+                alert('Saldo tidak mencukupi untuk transaksi pengeluaran ini');
+                $jumlahInput.trigger('focus');
+                return false;
+            }
         }
 
         return true;
     }
 
+    getCurrentBalance() {
+        const $saldoAkhirElement = $('.summary-value.total-amount');
+        if ($saldoAkhirElement.length) {
+            const saldoText = $saldoAkhirElement.text().replace(/[^\d]/g, '');
+            return parseInt(saldoText) || 0;
+        }
+        return 0;
+    }
+
     showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            document.body.style.overflow = 'hidden';
+        const $modal = $(`#${modalId}`);
+        if ($modal.length) {
+            $modal.css({
+                'display': 'flex',
+                'align-items': 'center',
+                'justify-content': 'center'
+            });
+            $('body').css('overflow', 'hidden');
             
-            const firstInput = modal.querySelector('input, textarea, select');
-            if (firstInput) {
-                setTimeout(() => firstInput.focus(), 100);
+            this.initializeModalState();
+            
+            const $firstInput = $modal.find('input, textarea, select').first();
+            if ($firstInput.length) {
+                setTimeout(() => $firstInput.trigger('focus'), 100);
             }
         }
     }
 
+    initializeModalState() {
+        $('input[name="jenis_transaksi"][value="masuk"]').prop('checked', true);
+        this.updateSubmitButtonText();
+        
+        $('#addForm')[0].reset();
+    }
+
     hideModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
+        const $modal = $(`#${modalId}`);
+        if ($modal.length) {
+            $modal.hide();
+            $('body').css('overflow', 'auto');
             
-            const form = modal.querySelector('form');
-            if (form) form.reset();
+            const $form = $modal.find('form');
+            if ($form.length) $form.trigger('reset');
         }
     }
 
     closeAllModals() {
         this.hideModal('addModal');
-        this.hideModal('editModal');
-        this.hideModal('mainTransactionModal');
-        
-        if (this.currentOpenActions) {
-            this.currentOpenActions.style.display = 'none';
-            this.currentOpenActions = null;
-        }
     }
 
     autoCloseAlerts() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
+        $('.alert').each((index, alert) => {
             setTimeout(() => {
-                alert.style.transition = 'opacity 0.3s ease';
-                alert.style.opacity = '0';
+                $(alert).css({
+                    'transition': 'opacity 0.3s ease',
+                    'opacity': '0'
+                });
                 setTimeout(() => {
-                    if (alert.parentNode) {
-                        alert.remove();
+                    if ($(alert).parent().length) {
+                        $(alert).remove();
                     }
                 }, 300);
             }, 5000);
         });
     }
+
+    handleTransactionTypeChange() {
+        const selectedType = $('input[name="jenis_transaksi"]:checked').val();
+        const $jumlahGroup = $('.form-group').has('input[name="jumlah"]');
+        const $catatanInput = $('textarea[name="catatan"]');
+        
+        if (selectedType === 'masuk') {
+            $catatanInput.attr('placeholder', 'Contoh: penerimaan dari...');
+        } else {
+            $catatanInput.attr('placeholder', 'Contoh: pembayaran untuk...');
+        }
+    }
 }
+
+function refreshData() {
+            window.location.reload();
+        }
 
 function openAddModal() {
     if (window.rekapManager) {
@@ -253,44 +217,28 @@ function closeAddModal() {
     }
 }
 
-function openMainTransactionModal() {
-    if (window.rekapManager) {
-        window.rekapManager.showModal('mainTransactionModal');
-    }
-}
-
-function closeMainTransactionModal() {
-    if (window.rekapManager) {
-        window.rekapManager.hideModal('mainTransactionModal');
-    }
-}
-
-function closeEditModal() {
-    if (window.rekapManager) {
-        window.rekapManager.hideModal('editModal');
-    }
-}
-
-function openEditModal(index) {
-    if (window.rekapManager) {
-        window.rekapManager.openEditModal(index);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
+$(function() {
     window.rekapManager = new RekapDetailManager();
     
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal')) {
+    $(document).on('click', function(e) {
+        if ($(e.target).hasClass('modal')) {
             window.rekapManager.closeAllModals();
         }
     });
 
-    document.addEventListener('keydown', function(e) {
+    $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
             window.rekapManager.closeAllModals();
         }
     });
+
+    $(document).on('change', 'input[name="jenis_transaksi"]', function() {
+        window.rekapManager.handleTransactionTypeChange();
+    });
+});
+
+$(document).ready(function() {
+    $('head').append(`<style>${additionalStyles}</style>`);
 });
 
 if (typeof module !== 'undefined' && module.exports) {

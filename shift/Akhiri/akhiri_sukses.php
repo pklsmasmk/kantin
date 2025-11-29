@@ -9,7 +9,6 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
 <head>
     <meta charset="UTF-8">
     <title>Shift Berhasil Diakhiri - UAM</title>
-    <link rel="stylesheet" href="../CSS/akhiri_sukses.css">
 </head>
 <body>
     <div class="container">
@@ -17,7 +16,7 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
             <div class="success-icon">🎉</div>
             <h1>Shift Berhasil Diakhiri</h1>
             <p>Shift kasir telah berhasil disimpan ke sistem dan tidak dapat diubah kembali.</p>
-            
+
             <div class="success-info">
                 <div class="info-item">
                     <span>ID Shift:</span>
@@ -34,13 +33,8 @@ $saldo_akhir = $_GET['saldo_akhir'] ?? '';
             </div>
 
             <div class="action-buttons">
-                <a href="/?q=shift&tab=history" class="btn btn-primary">
-                    <span>📊</span>
-                    Lihat Riwayat Shift
-                </a>
-                <a href="../index.php" class="btn btn-secondary">
-                    <span>🏠</span>
-                    Kembali ke Beranda
+                <a href="../index.php" class="btn btn-primary">
+                    Kembali ke menu utama
                 </a>
             </div>
         </div>

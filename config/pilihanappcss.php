@@ -3,8 +3,6 @@ switch ($_GET["q"] ?? "") {
     case 'retur':
         include("../retur/css/index_css.php");
         break;
-    case 'shift__Rekap_Shift__rekap_shift':
-        include("../shift/css/rekap_shift__rekap_shift.php");
      case 'menu':
         include("../penjualan/css/menu_css.php");
         break;
@@ -20,6 +18,18 @@ switch ($_GET["q"] ?? "") {
       case 'piutang':
         include("../piutangkantin/css/index_css.php");
         break;
+      case 'shift':
+        include("../shift/css/shift_css.php");
+        break;   
+      case 'shift__Rekap_Shift__rekap_shift':
+        include("../shift/css/rekap_shift__rekap_shift.php");
+        break; 
+      case 'shift__Akhiri__akhiri_shift':
+        include("../shift/css/akhiri__akhiri_shift.php");
+        break; 
+      case 'shift__Akhiri__akhiri_sukses':
+        include("../shift/css/akhiri__akhiri_sukses.php");
+        break; 
       default:
         break;
     case 'shift__Rekap_Shift__rekap_detail':
