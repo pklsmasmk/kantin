@@ -315,21 +315,6 @@ $jumlah_penjualan = count($penjualan_hari_ini);
                                                 <div class="customer-name"><?= htmlspecialchars($t['nama_pembeli']) ?></div>
                                             <?php endif; ?>
                                             <?= htmlspecialchars($t['keterangan']) ?>
-                                            
-                                            <?php if ($t['tipe'] === 'Penjualan Tunai' && isset($t['id_penjualan'])): ?>
-                                                <div class="transaction-details">
-                                                    <small>
-                                                        ID: <?= $t['id_penjualan'] ?> 
-                                                        | <?= $t['metode'] ?? 'Tunai' ?>
-                                                        <?php if (isset($t['diskon']) && $t['diskon'] > 0): ?>
-                                                            | Diskon: Rp <?= number_format($t['diskon'], 0, ',', '.') ?>
-                                                        <?php endif; ?>
-                                                        <?php if (isset($t['pajak']) && $t['pajak'] > 0): ?>
-                                                            | Pajak: Rp <?= number_format($t['pajak'], 0, ',', '.') ?>
-                                                        <?php endif; ?>
-                                                    </small>
-                                                </div>
-                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div
