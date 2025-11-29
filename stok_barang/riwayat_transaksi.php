@@ -9,15 +9,36 @@ if (session_status() == PHP_SESSION_NONE) {
 
 function getRiwayatTransaksi() {
     $pdo = getDBConnection();
+    if (!$pdo) {
+        error_log("Koneksi database gagal di getRiwayatTransaksi");
+        return [];
+    }
     
-    $stmt = $pdo->query("
-        SELECT * FROM riwayat_transaksi 
-        ORDER BY created_at DESC
-    ");
-    return $stmt->fetchAll();
+    try {
+        $stmt = $pdo->query("
+            SELECT * FROM riwayat_transaksi 
+            ORDER BY created_at DESC
+        ");
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        error_log("Error getRiwayatTransaksi: " . $e->getMessage());
+        return [];
+    }
 }
 
-$riwayatTransaksi = getRiwayatTransaksi();
+// Ambil data dengan error handling
+$riwayatTransaksi = [];
+$error_message = '';
+
+try {
+    $riwayatTransaksi = getRiwayatTransaksi();
+} catch (Exception $e) {
+    $error_message = "Terjadi kesalahan saat memuat data transaksi: " . $e->getMessage();
+    error_log("Error loading riwayat transaksi: " . $e->getMessage());
+}
+
+// Cek jika tabel tidak ada atau kosong
+$is_table_empty = empty($riwayatTransaksi);
 ?>
 
 <!DOCTYPE html>
@@ -77,6 +98,11 @@ $riwayatTransaksi = getRiwayatTransaksi();
             color: #dc3545;
             font-weight: bold;
         }
+        
+        /* Style untuk error */
+        .alert-danger {
+            border-left: 4px solid #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -116,18 +142,29 @@ $riwayatTransaksi = getRiwayatTransaksi();
             </a>
         </div>
 
+        <!-- PESAN ERROR -->
+        <?php if (!empty($error_message)): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error!</strong> <?= htmlspecialchars($error_message) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
         <!-- TABEL RIWAYAT TRANSAKSI -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 text-success">
                     <i class="fas fa-list me-2"></i>Daftar Transaksi
                 </h5>
-                <div class="badge bg-success">
-                    <i class="fas fa-receipt me-1"></i> Total: <?= count($riwayatTransaksi) ?> Transaksi
-                </div>
+                <?php if (!$is_table_empty): ?>
+                    <div class="badge bg-success">
+                        <i class="fas fa-receipt me-1"></i> Total: <?= count($riwayatTransaksi) ?> Transaksi
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="card-body">
-                <?php if (empty($riwayatTransaksi)): ?>
+                <?php if ($is_table_empty): ?>
                     <div class="text-center text-muted py-5">
                         <i class="fas fa-receipt fa-4x mb-3"></i>
                         <h5>Belum ada data transaksi</h5>
@@ -155,8 +192,19 @@ $riwayatTransaksi = getRiwayatTransaksi();
                             </thead>
                             <tbody>
                                 <?php foreach ($riwayatTransaksi as $index => $transaksi): 
+                                    // Validasi data untuk mencegah error
+                                    $keterangan = $transaksi['keterangan'] ?? '';
+                                    $nama_barang = $transaksi['nama_barang'] ?? '-';
+                                    $pemasok = $transaksi['pemasok'] ?? '-';
+                                    $penjual = $transaksi['penjual'] ?? '-';
+                                    $jenis_transaksi = $transaksi['jenis_transaksi'] ?? '-';
+                                    $jumlah = $transaksi['jumlah'] ?? 0;
+                                    $harga = $transaksi['harga'] ?? 0;
+                                    $total = $transaksi['total'] ?? 0;
+                                    $created_at = $transaksi['created_at'] ?? date('Y-m-d H:i:s');
+                                    
                                     // Cek apakah transaksi ini hutang (case insensitive)
-                                    $keteranganLower = strtolower($transaksi['keterangan']);
+                                    $keteranganLower = strtolower($keterangan);
                                     $isHutang = strpos($keteranganLower, 'hutang') !== false;
                                     $rowClass = $isHutang ? 'hutang-highlight' : '';
                                 ?>
@@ -164,12 +212,12 @@ $riwayatTransaksi = getRiwayatTransaksi();
                                     <td><?= $index + 1 ?></td>
                                     <td>
                                         <small>
-                                            <?= date('d/m/Y', strtotime($transaksi['created_at'])) ?><br>
-                                            <span class="text-muted"><?= date('H:i', strtotime($transaksi['created_at'])) ?></span>
+                                            <?= date('d/m/Y', strtotime($created_at)) ?><br>
+                                            <span class="text-muted"><?= date('H:i', strtotime($created_at)) ?></span>
                                         </small>
                                     </td>
                                     <td>
-                                        <strong><?= htmlspecialchars($transaksi['nama_barang'] ?? '-') ?></strong>
+                                        <strong><?= htmlspecialchars($nama_barang) ?></strong>
                                         <?php if ($isHutang): ?>
                                             <br><span class="badge badge-hutang">HUTANG</span>
                                         <?php endif; ?>
@@ -177,45 +225,48 @@ $riwayatTransaksi = getRiwayatTransaksi();
                                     <td>
                                         <?php
                                         $badge_color = 'bg-secondary';
-                                        $jenis_text = $transaksi['jenis_transaksi'];
+                                        $jenis_text = $jenis_transaksi;
                                         
-                                        if ($transaksi['jenis_transaksi'] == 'tambah_barang') {
+                                        if ($jenis_transaksi == 'tambah_barang') {
                                             $badge_color = 'bg-success';
                                             $jenis_text = 'Tambah Barang';
-                                        } elseif ($transaksi['jenis_transaksi'] == 'restock') {
+                                        } elseif ($jenis_transaksi == 'restock') {
                                             $badge_color = 'bg-info';
                                             $jenis_text = 'Restock';
+                                        } elseif ($jenis_transaksi == 'penjualan') {
+                                            $badge_color = 'bg-warning';
+                                            $jenis_text = 'Penjualan';
                                         }
                                         ?>
                                         <span class="badge <?= $badge_color ?>">
-                                            <?= $jenis_text ?>
+                                            <?= htmlspecialchars($jenis_text) ?>
                                         </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-secondary">
-                                            <i class="fas fa-user me-1"></i><?= htmlspecialchars($transaksi['pemasok'] ?? '-') ?>
+                                            <i class="fas fa-user me-1"></i><?= htmlspecialchars($pemasok) ?>
                                         </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-info">
-                                            <i class="fas fa-user-tie me-1"></i><?= htmlspecialchars($transaksi['penjual'] ?? '-') ?>
+                                            <i class="fas fa-user-tie me-1"></i><?= htmlspecialchars($penjual) ?>
                                         </span>
                                     </td>
                                     <td>
                                         <span class="badge bg-primary">
-                                            <?= $transaksi['jumlah'] ?> pcs
+                                            <?= intval($jumlah) ?> pcs
                                         </span>
                                     </td>
-                                    <td>Rp <?= number_format($transaksi['harga'], 0, ',', '.') ?></td>
+                                    <td>Rp <?= number_format(floatval($harga), 0, ',', '.') ?></td>
                                     <td>
                                         <?php if ($isHutang): ?>
-                                            <strong class="text-hutang">Rp <?= number_format($transaksi['total'], 0, ',', '.') ?></strong>
+                                            <strong class="text-hutang">Rp <?= number_format(floatval($total), 0, ',', '.') ?></strong>
                                         <?php else: ?>
-                                            <strong class="text-success">Rp <?= number_format($transaksi['total'], 0, ',', '.') ?></strong>
+                                            <strong class="text-success">Rp <?= number_format(floatval($total), 0, ',', '.') ?></strong>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <small><?= htmlspecialchars($transaksi['keterangan']) ?></small>
+                                        <small><?= htmlspecialchars($keterangan) ?></small>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

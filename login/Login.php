@@ -196,6 +196,7 @@ if (isset($_POST['login'])) {
     }
   </style>
 </head>
+<<<<<<< HEAD
 <body>
 
 <div class="login-container">
@@ -212,14 +213,8 @@ if (isset($_POST['login'])) {
   <div class="login-right">
     <h3>Belum ada akun?</h3>
     <p>Klik disini untuk daftar</p>
-    <!-- PILIH SALAH SATU OPSI DI BAWAH INI -->
     <a href="../index.php?q=Daftar" class="btn-signup">daftar</a>
-    <!-- ATAU -->
-    <!-- <a href="?q=Daftar" class="btn-signup">daftar</a> -->
-    <!-- ATAU -->
-    <!-- <a href="Daftar.php" class="btn-signup">daftar</a> -->
   </div>
 </div>
-
 </body>
 </html>

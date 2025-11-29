@@ -1,14 +1,29 @@
 <?php
 require_once 'config.php';
-$pdo = getDBConnection();
-$stmt = $pdo->query("SELECT username, nama FROM users");
-$users = $stmt->fetchAll();
 
-echo "<h3>Daftar Users yang tersedia:</h3>";
-echo "<table border='1'>";
-echo "<tr><th>Username</th><th>Nama</th></tr>";
-foreach ($users as $user) {
-    echo "<tr><td>{$user['username']}</td><td>{$user['nama']}</td></tr>";
+$pdo = getDBConnection();
+if (!$pdo) {
+    die("Error: Koneksi database gagal\n");
 }
-echo "</table>";
+
+try {
+    $stmt = $pdo->query("SELECT username, nama FROM users");
+    $users = $stmt->fetchAll();
+
+    echo "Daftar Users yang tersedia:\n";
+    echo "============================\n";
+    
+    if (empty($users)) {
+        echo "Tidak ada data users\n";
+    } else {
+        echo "Username\tNama\n";
+        echo "--------\t----\n";
+        foreach ($users as $user) {
+            echo $user['username'] . "\t\t" . $user['nama'] . "\n";
+        }
+    }
+    
+} catch (PDOException $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
 ?>

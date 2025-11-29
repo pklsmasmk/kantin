@@ -216,5 +216,17 @@
         "description": "mmmm",
         "items": [],
         "createdAt": "2025-10-22 05:24:05"
+    },
+    {
+        "id": "rec_69095df3f2043",
+        "type": "piutang",
+        "name": "tgtg",
+        "amount": 59904,
+        "dueDate": "2025-11-04",
+        "status": "belum lunas",
+        "paymentMethod": "Cash",
+        "description": "tgt",
+        "items": [],
+        "createdAt": "2025-11-04 02:59:15"
     }
 ]

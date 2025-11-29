@@ -29,28 +29,139 @@ body {
   border-color: #0d6efd;
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
+
+/* Menu Horizontal Layout */
+.menu-horizontal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.menu-horizontal-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.item-number {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #0d6efd, #0a58ca);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+}
+
 .menu-card {
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  flex: 1;
+  border-radius: 10px;
+  transition: all 0.3s ease;
   background: #fff;
+  min-height: 80px;
 }
+
 .menu-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
 }
-.menu-img {
-  height: 120px;
+
+.menu-img-small {
+  width: 60px;
+  height: 60px;
   object-fit: cover;
-  border-bottom: 1px solid #eee;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
-.addCart {
+
+.menu-info {
+  flex: 1;
+}
+
+.menu-info .card-title {
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.menu-info .card-text {
   font-size: 0.85rem;
   font-weight: 600;
+  color: #28a745;
+}
+
+.menu-action {
+  flex-shrink: 0;
+}
+
+.addCart {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  white-space: nowrap;
+  border-radius: 6px;
 }
 .addCart i {
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .menu-horizontal-item {
+    gap: 0.75rem;
+  }
+  
+  .item-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .menu-img-small {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .menu-info .card-title {
+    font-size: 0.9rem;
+  }
+  
+  .menu-info .card-text {
+    font-size: 0.8rem;
+  }
+  
+  .addCart {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+  
+  .card-body {
+    padding: 0.75rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .menu-horizontal-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .item-number {
+    align-self: flex-start;
+  }
+  
+  .menu-card .card-body {
+    flex-direction: row !important;
+  }
+}
+
 #cartList tr td {
   vertical-align: middle;
   font-size: 0.85rem;

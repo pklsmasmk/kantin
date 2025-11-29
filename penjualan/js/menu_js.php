@@ -1,0 +1,1 @@
+<script src="js/bayar_index.js"></script>

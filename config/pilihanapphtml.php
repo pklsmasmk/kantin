@@ -33,7 +33,7 @@ switch ($_GET["q"] ?? "") {
   case 'hutang':
     include("../hutang/tampil_hutang.php");
     break;
-  case 'riwayat_pembayaran':  // TAMBAHAN BARU
+  case 'riwayat_pembayaran':
     include("../hutang/riwayat_pembayaran.php");
     break;
   case 'hutang__bayar':
@@ -66,7 +66,6 @@ switch ($_GET["q"] ?? "") {
   case 'shift__Akhiri__akhiri_sukses':
     include("../shift/Akhiri/akhiri_sukses.php");
     break;
-
   default:
     include("../konten/ori.php");
     break;

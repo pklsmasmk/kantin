@@ -10,181 +10,243 @@ if (session_status() == PHP_SESSION_NONE) {
 $success = '';
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Cek koneksi database di awal
+$pdo = getDBConnection();
+if (!$pdo) {
+    $error = "Koneksi database gagal. Periksa konfigurasi database.";
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $pdo) {
     if (isset($_POST['action'])) {
-        switch ($_POST['action']) {
-            case 'tambah_barang':
-                $data = [
-                    'nama_barang' => $_POST['nama_barang'],
-                    'tipe_barang' => $_POST['tipe_barang'],
-                    'stok' => $_POST['stok'],
-                    'harga_dasar' => $_POST['harga_dasar'],
-                    'harga_jual' => $_POST['harga_jual']
-                ];
-
-                if (tambahBarang($data)) {
-                    $pdo = getDBConnection();
-                    $lastId = $pdo->lastInsertId();
-
-                    // Ambil data barang yang baru ditambahkan
-                    $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
-                    $stmt->execute([$lastId]);
-                    $barang = $stmt->fetch();
-
-                    $transaksiData = [
-                        'nama_barang' => $barang['nama_barang'],
-                        'jenis_transaksi' => 'tambah_barang',
-                        'pemasok' => $_SESSION['username'] ?? 'karyawan',
-                        'penjual' => $_POST['penjual'],
-                        'jumlah' => $data['stok'],
-                        'harga' => $data['harga_dasar'],
-                        'total' => $data['stok'] * $data['harga_dasar'],
-                        'keterangan' => 'Penambahan barang baru: ' . $data['nama_barang']
-                    ];
-
-                    // INTEGRASI HUTANG UNTUK TAMBAH BARANG
-                    if ($_POST['metode_bayar'] == 'hutang') {
-                        require_once '../hutang/tambah_hutang.php';
-
-                        $dataHutang = [
-                            'pemasok' => $_POST['penjual'],
-                            'nama_barang' => $data['nama_barang'],
-                            'jumlah' => $data['stok'],
-                            'harga_dasar' => $data['harga_dasar'],
-                            'total_hutang' => $data['stok'] * $data['harga_dasar']
-                        ];
-
-                        // Tambahkan ke tabel hutang
-                        tambahHutang($dataHutang);
-
-                        // Update keterangan transaksi
-                        $transaksiData['keterangan'] = 'Penambahan barang baru (HUTANG): ' . $data['nama_barang'];
+        try {
+            switch ($_POST['action']) {
+                case 'tambah_barang':
+                    // Validasi input
+                    if (empty($_POST['nama_barang']) || empty($_POST['tipe_barang']) || 
+                        empty($_POST['stok']) || empty($_POST['harga_dasar']) || empty($_POST['harga_jual'])) {
+                        $error = "Semua field harus diisi!";
+                        break;
                     }
 
-                    catatTransaksi($transaksiData);
-                    $success = "Barang berhasil ditambahkan!" . ($_POST['metode_bayar'] == 'hutang' ? " (Mode Hutang)" : " (Mode Cash)");
-                } else {
-                    $error = "Gagal menambahkan barang!";
-                }
-                break;
-
-            case 'restock':
-                $id = $_POST['id'];
-                $jumlah = $_POST['jumlah'];
-                $harga_dasar_restock = $_POST['harga_dasar_restock'];
-                $metode_bayar_restock = $_POST['metode_bayar_restock'];
-                $penjual_restock = $_POST['penjual_restock'];
-
-                if (updateStokBarang($id, $jumlah)) {
-                    $pdo = getDBConnection();
-                    $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
-                    $stmt->execute([$id]);
-                    $barang = $stmt->fetch();
-
-                    $transaksiData = [
-                        'nama_barang' => $barang['nama_barang'],
-                        'jenis_transaksi' => 'restock',
-                        'pemasok' => $_SESSION['username'] ?? 'karyawan',
-                        'penjual' => $penjual_restock,
-                        'jumlah' => $jumlah,
-                        'harga' => $harga_dasar_restock,
-                        'total' => $jumlah * $harga_dasar_restock,
-                        'keterangan' => 'Restock barang: ' . $barang['nama_barang'] . ' - Harga: Rp ' . number_format($harga_dasar_restock, 0, ',', '.')
+                    $data = [
+                        'nama_barang' => trim($_POST['nama_barang']),
+                        'tipe_barang' => $_POST['tipe_barang'],
+                        'stok' => intval($_POST['stok']),
+                        'harga_dasar' => floatval($_POST['harga_dasar']),
+                        'harga_jual' => floatval($_POST['harga_jual'])
                     ];
 
-                    // INTEGRASI HUTANG UNTUK RESTOCK
-                    if ($metode_bayar_restock == 'hutang') {
-                        require_once '../hutang/tambah_hutang.php';
-
-                        $dataHutang = [
-                            'pemasok' => $penjual_restock,
-                            'nama_barang' => $barang['nama_barang'],
-                            'jumlah' => $jumlah,
-                            'harga_dasar' => $harga_dasar_restock,
-                            'total_hutang' => $jumlah * $harga_dasar_restock
-                        ];
-
-                        // Tambahkan ke tabel hutang
-                        tambahHutang($dataHutang);
-
-                        // Update keterangan transaksi
-                        $transaksiData['keterangan'] = 'Restock barang (HUTANG): ' . $barang['nama_barang'] . ' - Harga: Rp ' . number_format($harga_dasar_restock, 0, ',', '.');
+                    if ($data['stok'] <= 0 || $data['harga_dasar'] <= 0 || $data['harga_jual'] <= 0) {
+                        $error = "Stok dan harga harus lebih dari 0!";
+                        break;
                     }
 
-                    catatTransaksi($transaksiData);
-                    $success = "Restock berhasil dilakukan!" . ($metode_bayar_restock == 'hutang' ? " (Mode Hutang)" : " (Mode Cash)");
-                } else {
-                    $error = "Gagal melakukan restock!";
-                }
-                break;
+                    if (tambahBarang($data)) {
+                        $lastId = $pdo->lastInsertId();
 
-            case 'multi_restock':
-                $restock_items = $_POST['restock_items'];
-                $penjual_multi = $_POST['penjual_multi'];
-                $processed_count = 0;
-                $total_items = count($restock_items);
+                        // Ambil data barang yang baru ditambahkan
+                        $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
+                        $stmt->execute([$lastId]);
+                        $barang = $stmt->fetch();
 
-                $total_pembelian = 0;
+                        if ($barang) {
+                            $transaksiData = [
+                                'nama_barang' => $barang['nama_barang'],
+                                'jenis_transaksi' => 'tambah_barang',
+                                'pemasok' => $_SESSION['username'] ?? 'karyawan',
+                                'penjual' => $_POST['penjual'] ?? '',
+                                'jumlah' => $data['stok'],
+                                'harga' => $data['harga_dasar'],
+                                'total' => $data['stok'] * $data['harga_dasar'],
+                                'keterangan' => 'Penambahan barang baru: ' . $data['nama_barang']
+                            ];
 
-                foreach ($restock_items as $item) {
-                    if (!empty($item['id']) && !empty($item['jumlah']) && !empty($item['harga_dasar'])) {
-                        $id = $item['id'];
-                        $jumlah = $item['jumlah'];
-                        $harga_dasar = $item['harga_dasar'];
-                        $metode_bayar = $item['metode_bayar'];
+                            // INTEGRASI HUTANG UNTUK TAMBAH BARANG
+                            if (($_POST['metode_bayar'] ?? '') == 'hutang') {
+                                $hutang_file = '../hutang/tambah_hutang.php';
+                                if (file_exists($hutang_file)) {
+                                    require_once $hutang_file;
 
-                        if (updateStokBarang($id, $jumlah)) {
-                            $pdo = getDBConnection();
-                            $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
-                            $stmt->execute([$id]);
-                            $barang = $stmt->fetch();
+                                    if (function_exists('tambahHutang')) {
+                                        $dataHutang = [
+                                            'pemasok' => $_POST['penjual'] ?? '',
+                                            'nama_barang' => $data['nama_barang'],
+                                            'jumlah' => $data['stok'],
+                                            'harga_dasar' => $data['harga_dasar'],
+                                            'total_hutang' => $data['stok'] * $data['harga_dasar']
+                                        ];
 
-                            $subtotal = $jumlah * $harga_dasar;
-                            $total_pembelian += $subtotal;
+                                        tambahHutang($dataHutang);
+                                        $transaksiData['keterangan'] = 'Penambahan barang baru (HUTANG): ' . $data['nama_barang'];
+                                    }
+                                }
+                            }
 
+                            catatTransaksi($transaksiData);
+                            $success = "Barang berhasil ditambahkan!" . (($_POST['metode_bayar'] ?? '') == 'hutang' ? " (Mode Hutang)" : " (Mode Cash)");
+                        }
+                    } else {
+                        $error = "Gagal menambahkan barang!";
+                    }
+                    break;
+
+                case 'restock':
+                    // Validasi input
+                    if (empty($_POST['id']) || empty($_POST['jumlah']) || empty($_POST['harga_dasar_restock'])) {
+                        $error = "Data restock tidak lengkap!";
+                        break;
+                    }
+
+                    $id = intval($_POST['id']);
+                    $jumlah = intval($_POST['jumlah']);
+                    $harga_dasar_restock = floatval($_POST['harga_dasar_restock']);
+                    $metode_bayar_restock = $_POST['metode_bayar_restock'] ?? 'cash';
+                    $penjual_restock = $_POST['penjual_restock'] ?? '';
+
+                    if ($jumlah <= 0 || $harga_dasar_restock <= 0) {
+                        $error = "Jumlah dan harga harus lebih dari 0!";
+                        break;
+                    }
+
+                    if (updateStokBarang($id, $jumlah)) {
+                        $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
+                        $stmt->execute([$id]);
+                        $barang = $stmt->fetch();
+
+                        if ($barang) {
                             $transaksiData = [
                                 'nama_barang' => $barang['nama_barang'],
                                 'jenis_transaksi' => 'restock',
                                 'pemasok' => $_SESSION['username'] ?? 'karyawan',
-                                'penjual' => $penjual_multi,
+                                'penjual' => $penjual_restock,
                                 'jumlah' => $jumlah,
-                                'harga' => $harga_dasar,
-                                'total' => $subtotal,
-                                'keterangan' => 'Multi Restock: ' . $barang['nama_barang']
+                                'harga' => $harga_dasar_restock,
+                                'total' => $jumlah * $harga_dasar_restock,
+                                'keterangan' => 'Restock barang: ' . $barang['nama_barang'] . ' - Harga: Rp ' . number_format($harga_dasar_restock, 0, ',', '.')
                             ];
 
-                            // Integrasi hutang
-                            if ($metode_bayar == 'hutang') {
-                                require_once '../hutang/tambah_hutang.php';
-                                $dataHutang = [
-                                    'pemasok' => $penjual_multi,
-                                    'nama_barang' => $barang['nama_barang'],
-                                    'jumlah' => $jumlah,
-                                    'harga_dasar' => $harga_dasar,
-                                    'total_hutang' => $subtotal
-                                ];
-                                tambahHutang($dataHutang);
-                                $transaksiData['keterangan'] = 'Multi Restock (HUTANG): ' . $barang['nama_barang'];
+                            // INTEGRASI HUTANG UNTUK RESTOCK
+                            if ($metode_bayar_restock == 'hutang') {
+                                $hutang_file = '../hutang/tambah_hutang.php';
+                                if (file_exists($hutang_file)) {
+                                    require_once $hutang_file;
+
+                                    if (function_exists('tambahHutang')) {
+                                        $dataHutang = [
+                                            'pemasok' => $penjual_restock,
+                                            'nama_barang' => $barang['nama_barang'],
+                                            'jumlah' => $jumlah,
+                                            'harga_dasar' => $harga_dasar_restock,
+                                            'total_hutang' => $jumlah * $harga_dasar_restock
+                                        ];
+
+                                        tambahHutang($dataHutang);
+                                        $transaksiData['keterangan'] = 'Restock barang (HUTANG): ' . $barang['nama_barang'] . ' - Harga: Rp ' . number_format($harga_dasar_restock, 0, ',', '.');
+                                    }
+                                }
                             }
 
                             catatTransaksi($transaksiData);
-                            $processed_count++;
+                            $success = "Restock berhasil dilakukan!" . ($metode_bayar_restock == 'hutang' ? " (Mode Hutang)" : " (Mode Cash)");
+                        }
+                    } else {
+                        $error = "Gagal melakukan restock!";
+                    }
+                    break;
+
+                case 'multi_restock':
+                    $restock_items = $_POST['restock_items'] ?? [];
+                    $penjual_multi = $_POST['penjual_multi'] ?? '';
+                    $processed_count = 0;
+                    $total_items = count($restock_items);
+
+                    if (empty($restock_items)) {
+                        $error = "Tidak ada barang yang dipilih untuk restock!";
+                        break;
+                    }
+
+                    foreach ($restock_items as $item) {
+                        if (!empty($item['id']) && !empty($item['jumlah']) && !empty($item['harga_dasar'])) {
+                            $id = intval($item['id']);
+                            $jumlah = intval($item['jumlah']);
+                            $harga_dasar = floatval($item['harga_dasar']);
+                            $metode_bayar = $item['metode_bayar'] ?? 'cash';
+
+                            if ($jumlah > 0 && $harga_dasar > 0) {
+                                if (updateStokBarang($id, $jumlah)) {
+                                    $stmt = $pdo->prepare("SELECT nama_barang FROM stok_barang WHERE id = ?");
+                                    $stmt->execute([$id]);
+                                    $barang = $stmt->fetch();
+
+                                    if ($barang) {
+                                        $subtotal = $jumlah * $harga_dasar;
+
+                                        $transaksiData = [
+                                            'nama_barang' => $barang['nama_barang'],
+                                            'jenis_transaksi' => 'restock',
+                                            'pemasok' => $_SESSION['username'] ?? 'karyawan',
+                                            'penjual' => $penjual_multi,
+                                            'jumlah' => $jumlah,
+                                            'harga' => $harga_dasar,
+                                            'total' => $subtotal,
+                                            'keterangan' => 'Multi Restock: ' . $barang['nama_barang']
+                                        ];
+
+                                        // Integrasi hutang
+                                        if ($metode_bayar == 'hutang') {
+                                            $hutang_file = '../hutang/tambah_hutang.php';
+                                            if (file_exists($hutang_file)) {
+                                                require_once $hutang_file;
+                                                
+                                                if (function_exists('tambahHutang')) {
+                                                    $dataHutang = [
+                                                        'pemasok' => $penjual_multi,
+                                                        'nama_barang' => $barang['nama_barang'],
+                                                        'jumlah' => $jumlah,
+                                                        'harga_dasar' => $harga_dasar,
+                                                        'total_hutang' => $subtotal
+                                                    ];
+                                                    tambahHutang($dataHutang);
+                                                    $transaksiData['keterangan'] = 'Multi Restock (HUTANG): ' . $barang['nama_barang'];
+                                                }
+                                            }
+                                        }
+
+                                        catatTransaksi($transaksiData);
+                                        $processed_count++;
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                if ($processed_count > 0) {
-                    $success = "Multi Restock berhasil! " . $processed_count . " dari " . $total_items . " barang berhasil di-restock.";
-                } else {
-                    $error = "Tidak ada barang yang berhasil di-restock!";
-                }
-                break;
+                    if ($processed_count > 0) {
+                        $success = "Multi Restock berhasil! " . $processed_count . " dari " . $total_items . " barang berhasil di-restock.";
+                    } else {
+                        $error = "Tidak ada barang yang berhasil di-restock!";
+                    }
+                    break;
+            }
+        } catch (Exception $e) {
+            $error = "Terjadi kesalahan: " . $e->getMessage();
+            error_log("Error in stok_barang: " . $e->getMessage());
         }
     }
 }
 
-// Ambil data stok barang untuk ditampilkan
-$stokBarang = getAllStokBarang();
+// Ambil data stok barang untuk ditampilkan dengan error handling
+try {
+    $stokBarang = getAllStokBarang();
+    if ($stokBarang === false) {
+        $stokBarang = [];
+        if (empty($error)) {
+            $error = "Gagal memuat data stok barang";
+        }
+    }
+} catch (Exception $e) {
+    $stokBarang = [];
+    $error = "Error memuat data stok: " . $e->getMessage();
+}
 ?>
 
 <!DOCTYPE html>
@@ -716,7 +778,7 @@ $stokBarang = getAllStokBarang();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Data barang untuk dropdown
-        const barangList = <?= json_encode($stokBarang) ?>;
+        const barangList = <?= json_encode($stokBarang ?? []) ?>;
 
         // Counter untuk row
         let restockRowCount = 0;
