@@ -126,6 +126,7 @@ unset($_SESSION["error"], $_SESSION["success"]);
                             Ini adalah shift pertama sistem. Silakan pilih cashdrawer dan input saldo awal modal.
                     <?php else: ?>
                             <strong>SHIFT BERJALAN</strong><br>
+                            Jika belum memulai Shift sudah bisa akses Rekap Shift harap login ulang!<br>
                             Saldo awal otomatis dari saldo akhir shift sebelumnya: <strong><?= format_rupiah($history[0]["saldo_akhir"]) ?></strong>
                     <?php endif; ?>
                 </section>

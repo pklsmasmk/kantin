@@ -30,22 +30,18 @@ function validateAmount($amount)
     return is_numeric($amount_clean) && $amount_clean > 0 ? (int) $amount_clean : false;
 }
 
-// FUNGSI BARU: Cek struktur tabel penjualan
 function get_penjualan_columns($pdo) {
     $stmt = $pdo->query("SHOW COLUMNS FROM penjualan");
     $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
     return $columns;
 }
 
-// FUNGSI BARU: Ambil data penjualan dari database dengan menyesuaikan struktur
 function get_penjualan_terbaru($pdo)
 {
     $tanggal_hari_ini = date('Y-m-d');
     
-    // Cek kolom yang ada di tabel penjualan
     $columns = get_penjualan_columns($pdo);
     
-    // Buat SELECT berdasarkan kolom yang ada
     $select_columns = [];
     if (in_array('id', $columns)) $select_columns[] = 'id';
     if (in_array('id_penjualan', $columns)) $select_columns[] = 'id_penjualan';
@@ -64,7 +60,6 @@ function get_penjualan_terbaru($pdo)
         return [];
     }
     
-    // Hanya ambil data yang statusnya "Lunas"
     $sql = "SELECT " . implode(', ', $select_columns) . " 
             FROM penjualan 
             WHERE DATE(tanggal) = ? AND status = 'Lunas'
@@ -75,21 +70,16 @@ function get_penjualan_terbaru($pdo)
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// FUNGSI BARU: Sinkronkan data penjualan ke transaksi
 function sync_penjualan_to_transaksi($pdo, &$transaksi)
 {
-    // Ambil data penjualan terbaru (hanya yang Lunas)
     $penjualan_terbaru = get_penjualan_terbaru($pdo);
     
-    // Filter transaksi yang bukan Penjualan Tunai (untuk mempertahankan data uang lain)
     $transaksi_lain = array_filter($transaksi, function($t) {
         return isset($t['tipe']) && $t['tipe'] !== 'Penjualan Tunai';
     });
     
-    // Konversi penjualan menjadi format transaksi
     $transaksi_penjualan = [];
     foreach ($penjualan_terbaru as $penjualan) {
-        // Tentukan ID yang benar
         $id_penjualan = isset($penjualan['id_penjualan']) ? $penjualan['id_penjualan'] : 
                         (isset($penjualan['id']) ? $penjualan['id'] : uniqid());
         
