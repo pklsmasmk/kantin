@@ -140,8 +140,15 @@ $(document).ready(function () {
   }
 
   function updatePaymentStatus() {
+    const metode = $("#metodePembayaran").val();
     const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
     const changeDisplay = $("#changeDisplay");
+
+    // Jangan tampilkan change display untuk metode Piutang
+    if (metode === "Piutang") {
+      changeDisplay.hide();
+      return;
+    }
 
     if (bayarFinal === 0) {
       changeDisplay.hide();
@@ -171,6 +178,9 @@ $(document).ready(function () {
   }
 
   $("#inputBayar").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan input uang untuk Piutang
+    
     sedangInput = true;
     bayar = "";
     $(this).addClass("active");
@@ -179,6 +189,9 @@ $(document).ready(function () {
   });
 
   $(".numKey").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan input numpad untuk Piutang
+    
     sedangInput = true;
     const val = $(this).text().replace(/\D/g, "");
     bayar += val;
@@ -188,6 +201,9 @@ $(document).ready(function () {
   });
 
   $("#clearInput").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan clear input untuk Piutang
+    
     bayar = "";
     $("#inputBayar").removeClass("active");
     $("#inputUangManual").val("");
@@ -196,6 +212,9 @@ $(document).ready(function () {
   });
 
   $("#backspaceBtn").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan backspace untuk Piutang
+    
     bayar = bayar.slice(0, -1);
     if (bayar === "") {
       $("#inputBayar").removeClass("active");
@@ -207,6 +226,9 @@ $(document).ready(function () {
   });
 
   $("#btnPas").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan uang pas untuk Piutang
+    
     bayar = grandTotal.toString();
     $("#inputBayar").addClass("active");
     $("#inputUangManual").val(parseInt(bayar).toLocaleString("id-ID"));
@@ -215,6 +237,9 @@ $(document).ready(function () {
   });
 
   $(".btnQuick").on("click", function () {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan quick buttons untuk Piutang
+    
     sedangInput = true;
     const value = parseInt($(this).data("value"));
     bayar = (parseInt(bayar || "0") + value).toString();
@@ -224,6 +249,9 @@ $(document).ready(function () {
   });
 
   $(document).on("keydown", function (e) {
+    const metode = $("#metodePembayaran").val();
+    if (metode === "Piutang") return; // Jangan izinkan keyboard input untuk Piutang
+    
     const isInputFocused =
       $("#inputUangManual").is(":focus") ||
       $("#namaPelanggan").is(":focus") ||
@@ -266,9 +294,17 @@ $(document).ready(function () {
     if (metode === "Piutang") {
       $("#namaPelanggan").prop("required", true);
       $("#uangSection").hide();
+      $("#uangInputSection").hide(); // Sembunyikan input uang manual
+      $("#changeDisplay").hide(); // Sembunyikan display kembalian
+      // Reset input uang
+      bayar = "";
+      $("#inputBayar").text("0");
+      $("#inputUangManual").val("");
     } else {
       $("#namaPelanggan").prop("required", false);
       $("#uangSection").show();
+      $("#uangInputSection").show(); // Tampilkan input uang manual
+      updatePaymentStatus(); // Perbarui status pembayaran
     }
   });
 
@@ -305,7 +341,7 @@ $(document).ready(function () {
     const metode = $("#metodePembayaran").val();
     const pelanggan = $("#namaPelanggan").val().trim();
     const keterangan = $("#keterangan").val().trim();
-    const bayarFinal = bayar === "" ? 0 : parseInt(bayar);
+    const bayarFinal = metode === "Piutang" ? 0 : (bayar === "" ? 0 : parseInt(bayar));
     const makananList = JSON.parse(localStorage.getItem("cartItems")) || [];
 
     if (metode === "Piutang") {

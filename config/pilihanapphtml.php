@@ -47,7 +47,19 @@
         break;
       case 'logout':
         include("../login/Logout.php");
+      case 'shift__Rekap_Shift__rekap_shift':
+        include("../shift/Rekap_Shift/rekap_shift.php");
         break;
+      case 'shift__Rekap_Shift__rekap_detail':
+        include("../shift/Rekap_Shift/rekap_detail.php");
+        break;
+      case 'shift__Akhiri__akhiri_shift':
+        include("../shift/Akhiri/akhiri_shift.php");
+        break;  
+      case 'shift__Akhiri__akhiri_sukses':
+        include("../shift/Akhiri/akhiri_sukses.php");
+        break;
+        
       default:
         include("../konten/ori.php");
         break;

@@ -1,0 +1,542 @@
+/* Modal Styles */
+#shiftDetailModal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+#shiftDetailModal.modal-active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#shiftDetailModal .modal-content {
+    background-color: #ffffff;
+    margin: 2% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid #e0e0e0;
+    animation: scaleIn 0.3s ease;
+    position: relative;
+}
+
+#shiftDetailModal .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+#shiftDetailModal .modal-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.3rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+#shiftDetailModal .modal-body {
+    padding: 1.5rem;
+    background: #f8f9fa;
+}
+
+/* Shift Detail Styles */
+.shift-detail {
+    font-size: 14px;
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.cashdrawer-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+    font-size: 1.3rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.cashdrawer-info small {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.shift-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.shift-status.completed {
+    background: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.shift-status.active {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.user-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+}
+
+.time-info {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.time-item {
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.time-item strong {
+    color: #2c3e50;
+}
+
+.saldo-details, .transaction-breakdown {
+    margin-bottom: 1.5rem;
+}
+
+.saldo-details h5, .transaction-breakdown h5 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.saldo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.transaction-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.saldo-item {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease;
+}
+
+.saldo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.saldo-item.highlight {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+    border: 2px solid #28a745;
+}
+
+.saldo-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.saldo-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: block;
+}
+
+.selisih-positif {
+    color: #28a745;
+}
+
+.selisih-negatif {
+    color: #dc3545;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.transaction-item:hover {
+    background: #e9ecef;
+    transform: translateX(4px);
+}
+
+.transaction-item span:first-child {
+    color: #495057;
+    font-weight: 500;
+}
+
+.amount {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.amount.income {
+    color: #28a745;
+}
+
+.amount.expense {
+    color: #dc3545;
+}
+
+.sync-info {
+    text-align: center;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+    font-family: 'Poppins', sans-serif;
+}
+
+.sync-info.synced {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.sync-info.not-synced {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+}
+
+.sync-status {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.sync-info.synced .sync-status {
+    color: #28a745;
+}
+
+.sync-info.not-synced .sync-status {
+    color: #ffc107;
+}
+
+.sync-info small {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    min-width: 120px;
+    text-align: center;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: 1px solid #6c757d;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+    border: 1px solid #218838;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* Loading and Error States */
+.loading-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #28a745;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.error-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #dc3545;
+}
+
+.error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.error-state h4 {
+    margin-bottom: 0.5rem;
+    color: #dc3545;
+}
+
+.btn-retry {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.btn-retry:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #shiftDetailModal .modal-content {
+        margin: 5% auto;
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .saldo-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .detail-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .shift-status {
+        align-self: center;
+    }
+    
+    .time-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.25rem;
+    }
+    
+    .detail-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #shiftDetailModal .modal-content {
+        margin: 2% auto;
+        width: 98%;
+    }
+    
+    #shiftDetailModal .modal-header,
+    #shiftDetailModal .modal-body {
+        padding: 1rem;
+    }
+    
+    .shift-detail {
+        padding: 1rem;
+    }
+    
+    .saldo-item {
+        padding: 1rem;
+    }
+    
+    .transaction-item {
+        padding: 0.75rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+}
+
+/* Styling untuk tidak ada data */
+.no-cashflow, .no-transactions {
+    text-align: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 1.5rem;
+}
+
+.no-cashflow p, .no-transactions p {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.no-cashflow small, .no-transactions small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Styling untuk cash flow summary */
+.cash-flow-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cash-flow-item {
+    padding: 1.25rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.cash-flow-item.income {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: rgba(40, 167, 69, 0.3);
+}
+
+.cash-flow-item.expense {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.cash-flow-breakdown {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.cash-flow-breakdown small {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.saldo-numeric {
+    display: block;
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 4px;
+    font-family: monospace;
+}
+
+@media (max-width: 768px) {
+    .cash-flow-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .analysis-grid {
+        grid-template-columns: 1fr;
+    }
+}
