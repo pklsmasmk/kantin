@@ -68,7 +68,6 @@ class RekapDetailManager {
 
     setupFormValidation() {
         const $addForm = $('#addForm');
-
         if ($addForm.length) {
             $addForm.on('submit', (e) => this.validateForm(e));
         }
@@ -162,9 +161,6 @@ class RekapDetailManager {
         if ($modal.length) {
             $modal.hide();
             $('body').css('overflow', 'auto');
-            
-            const $form = $modal.find('form');
-            if ($form.length) $form.trigger('reset');
         }
     }
 
@@ -179,18 +175,12 @@ class RekapDetailManager {
                     'transition': 'opacity 0.3s ease',
                     'opacity': '0'
                 });
-                setTimeout(() => {
-                    if ($(alert).parent().length) {
-                        $(alert).remove();
-                    }
-                }, 300);
             }, 5000);
         });
     }
 
     handleTransactionTypeChange() {
         const selectedType = $('input[name="jenis_transaksi"]:checked').val();
-        const $jumlahGroup = $('.form-group').has('input[name="jumlah"]');
         const $catatanInput = $('textarea[name="catatan"]');
         
         if (selectedType === 'masuk') {
