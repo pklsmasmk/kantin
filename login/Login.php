@@ -144,22 +144,18 @@ if (isset($_POST['login'])) {
     background-size: cover;
     color: #fff;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 40px;
-    position: relative;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+      position: relative;
     }
 
     .login-right h3 {
       font-weight: 700;
       margin-bottom: 10px;
       font-size: 2rem;
-    }
-
-    .login-right {
-      color: #28a745;
     }
 
     .login-right p {
@@ -177,11 +173,14 @@ if (isset($_POST['login'])) {
       font-weight: 500;
       text-decoration: none;
       transition: all 0.3s;
+      display: inline-block;
     }
 
     .btn-signup:hover {
       background-color: #f1f1f1;
       transform: scale(1.05);
+      text-decoration: none;
+      color: #16a085;
     }
 
     @media (max-width: 900px) {
@@ -213,7 +212,12 @@ if (isset($_POST['login'])) {
   <div class="login-right">
     <h3>Belum ada akun?</h3>
     <p>Klik disini untuk daftar</p>
-    <a href="/?q=daftar" class="btn-signup">daftar</a>
+    <!-- PILIH SALAH SATU OPSI DI BAWAH INI -->
+    <a href="../index.php?q=Daftar" class="btn-signup">daftar</a>
+    <!-- ATAU -->
+    <!-- <a href="?q=Daftar" class="btn-signup">daftar</a> -->
+    <!-- ATAU -->
+    <!-- <a href="Daftar.php" class="btn-signup">daftar</a> -->
   </div>
 </div>
 

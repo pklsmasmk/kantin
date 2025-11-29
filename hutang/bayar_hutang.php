@@ -1,25 +1,14 @@
 <?php
-require_once '..Database/config.php';
+require_once '../Database/config.php';
+require_once '../Database/functions.php'; // TAMBAH INI
 
 header('Content-Type: application/json');
 
 try {
-    $conn = getDBConnection();
-
-    $hutang_id = intval($_POST['hutang_id'] ?? 0);
-    $jumlah_bayar = intval($_POST['jumlah_bayar'] ?? 0);
-    $metode_bayar = $_POST['metode_bayar'] ?? 'Tunai';
-
-    if ($hutang_id <= 0 || $jumlah_bayar <= 0) {
-        throw new Exception('Data tidak valid');
-    }
-
-    // Simpan pembayaran
-    $sql = "INSERT INTO pembayaran_hutang (hutang_id, jumlah_bayar, metode_bayar) 
-            VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
+    // ... kode existing ...
     
-    if ($stmt->execute([$hutang_id, $jumlah_bayar, $metode_bayar])) {
+    // GUNAKAN FUNCTION YANG SUDAH ADA
+    if (bayarHutang($hutang_id, $jumlah_bayar, $_SESSION['username'] ?? 'system')) {
         echo json_encode(['status' => 'success', 'message' => 'Pembayaran berhasil dicatat']);
     } else {
         throw new Exception('Gagal mencatat pembayaran');

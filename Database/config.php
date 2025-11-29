@@ -12,8 +12,11 @@ try {
     die("Koneksi database gagal: " . $e->getMessage());
 }
 
-function getDBConnection() {
-    global $pdo;
-    return $pdo;
+// Cek apakah fungsi sudah ada sebelum mendeklarasikannya
+if (!function_exists('getDBConnection')) {
+    function getDBConnection() {
+        global $pdo;
+        return $pdo;
+    }
 }
 ?>

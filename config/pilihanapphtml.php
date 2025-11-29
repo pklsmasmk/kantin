@@ -33,6 +33,9 @@ switch ($_GET["q"] ?? "") {
   case 'hutang':
     include("../hutang/tampil_hutang.php");
     break;
+  case 'riwayat_pembayaran':  // TAMBAHAN BARU
+    include("../hutang/riwayat_pembayaran.php");
+    break;
   case 'hutang__bayar':
     include("../hutang/bayar_hutang.php");
     break;
@@ -44,6 +47,9 @@ switch ($_GET["q"] ?? "") {
     break;
   case 'Daftar':
     include("../login/Daftar.php");
+    break;
+  case 'multi_restock':
+    include("../stok_barang/multi_restock.php");
     break;
   case 'shift':
     include("../shift/index.php");
