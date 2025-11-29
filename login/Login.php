@@ -9,8 +9,10 @@ if (isset($_POST['login'])) {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username OR email = :username");
+    // Perbaikan: bind parameter untuk kedua kondisi
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username OR email = :email");
     $stmt->bindParam(':username', $username);
+    $stmt->bindParam(':email', $username); // Bind parameter kedua
     $stmt->execute();
     $data = $stmt->fetch();
 
@@ -212,7 +214,7 @@ if (isset($_POST['login'])) {
   <div class="login-right">
     <h3>Belum ada akun?</h3>
     <p>Klik disini untuk daftar</p>
-    <a href="../index.php?q=Daftar" class="btn-signup">daftar</a>
+    <a href="/?q=daftar" class="btn-signup">daftar</a>
   </div>
 </div>
 </body>
