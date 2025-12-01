@@ -4,7 +4,7 @@ switch ($_GET["q"] ?? "") {
     include("../konten/dungo.php");
     break;
   case 'retur':
-    include("../retur/html/index.php");
+    include("../retur/html/index_retur.php");
     break;
   case 'retur__tampilstok':
     include("../retur/html/tampil_stok.php");
